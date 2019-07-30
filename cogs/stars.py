@@ -1,14 +1,13 @@
 import discord
 from discord.ext import commands
-import random
-import asyncio
 
-from cogs.utils import settings
 from cogs.classes.plugin import Plugin
+from cogs.utils import settings
+
 
 #Its heartboard but some variables are named "star" why? Because i've got idea to make heartboard when i finished starboard and i didnt want to broke code again, so i just changed visual things :).
 
-class Stars(commands.Cog):
+class Stars(Plugin):
     def __init__(self, bot):
         self.bot = bot
         self.emotka = "❤"

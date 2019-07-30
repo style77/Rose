@@ -1,32 +1,19 @@
-import discord
 import asyncio
-import re
-import json
-
 import random
-import typing
-import textwrap
-import aiohttp
-
+import re
 import traceback
-import psutil
-import time
-import os
+import typing
 
-from cogs.utils import utils
-from cogs.utils import dtab
-from cogs.utils import settings
-from cogs.fun import uptime
-from cogs.music import add_react
+import aiohttp
+import discord
+from discord.ext import commands, tasks
+from discord.ext.commands.cooldowns import BucketType
 
 from cogs.classes.converters import EasyOneDayTime, TrueFalseConverter, TrueFalseError, ModerationReason
 from cogs.classes.plugin import Plugin
-
-from datetime import datetime
-from datetime import timedelta
-
-from discord.ext import commands, tasks
-from discord.ext.commands.cooldowns import BucketType
+from cogs.music import add_react
+from cogs.utils import settings
+from cogs.utils import utils
 
 invite_regex = re.compile(r"(?:https?://)?discord(?:app\.com/invite|\.gg)/?[a-zA-Z0-9]+/?")
 link_regex = re.compile(

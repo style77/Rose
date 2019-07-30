@@ -1,15 +1,12 @@
+import datetime
+import typing
+from io import BytesIO
+
+import aiohttp
 import discord
 from discord.ext import commands
-import re
+
 from cogs import utils
-from PIL import Image, ImageDraw, ImageFont
-from functools import partial
-from io import BytesIO
-from typing import Union
-import aiohttp
-import typing
-import asyncio
-import datetime
 
 
 class TagNotFound(commands.CommandError):

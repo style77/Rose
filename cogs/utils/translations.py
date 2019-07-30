@@ -1,5 +1,6 @@
-import json
 import builtins
+import json
+
 
 def translate(lang, text):
     if lang not in ["ENG"]:
@@ -17,7 +18,8 @@ async def language(bot, guild_id):
     z = await bot.pg_con.fetch("SELECT lang FROM guild_settings WHERE guild_id = $1", guild.id)
     if not z or not guild:
         lang = "ENG"
-    lang = z[0]['lang']
+    else:
+        lang = z[0]['lang']
     return lang
 
 builtins._ = translate
