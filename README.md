@@ -7,7 +7,7 @@ Właściciel bota: `@Style#9809`
 
 Ostatnia aktualizacja: `01/06/2019`
 
-**Rose <3 i używa:**
+**Rose <3 and use:**
 
 *   Discord.py
 *   discordBadoszApiWrapper
