@@ -1,27 +1,22 @@
-import discord
 import asyncio
-import asyncpg
-
-import json
 import os
-import traceback
 import random
+import traceback
+
+import asyncpg
 import dbl
-#import logging
-
-import wrapper
-import redis
+import discord
+# import redis
 import wavelink
-
+import wrapper
 from discord.ext import commands
 
-from cogs.fun import uptime
-from cogs.classes.context import Context
-from cogs.utils import utils
-from cogs.utils import dtab
 from cogs.eh import MemberInBlacklist
+# from cogs.fun import uptime
+# from cogs.classes.context import Context
+from cogs.utils import utils
 
-from cogs.utils import translations
+# import logging
 
 os.environ["JISHAKU_HIDE"] = "1"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "1"
