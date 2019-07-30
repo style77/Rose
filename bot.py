@@ -6,17 +6,12 @@ import traceback
 import asyncpg
 import dbl
 import discord
-# import redis
 import wavelink
 import wrapper
 from discord.ext import commands
 
 from cogs.eh import MemberInBlacklist
-# from cogs.fun import uptime
-# from cogs.classes.context import Context
 from cogs.utils import utils
-
-# import logging
 
 os.environ["JISHAKU_HIDE"] = "1"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "1"
