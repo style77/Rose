@@ -133,12 +133,19 @@ class Music(commands.Cog):
 
     @tasks.loop(minutes=10)
     async def leave_channels(self):
-        for player in self.bot.wavelink.players:
+        try:
+            for player in self.bot.wavelink.players:
 
-            vc = player._voice_state
+                vc = self.bot.get_channel(player.channel_id)
 
-            if len(vc.channel.members) == 1:
-                await vc.channel.disconnect()
+                if len(vc.members) == 1:
+                    await vc.disconnect()
+        except Exception as e:
+            print(e)
+
+    @leave_channels.before_loop
+    async def before_leave_channels(self):
+        await self.bot.wait_until_ready()
 
     def event_hook(self, event):
         if isinstance(event, wavelink.TrackEnd):
