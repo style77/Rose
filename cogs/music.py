@@ -138,6 +138,9 @@ class Music(commands.Cog):
 
                 vc = self.bot.get_channel(self.bot.wavelink.players[player].channel_id)
 
+                if not vc:
+                    continue
+
                 if len(vc.members) == 1:
                     await vc.disconnect()
         except Exception as e:
