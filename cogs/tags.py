@@ -57,7 +57,7 @@ class Tags(Plugin):
         if not tag_name:
             raise commands.UserInputError()
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
-                                           str(ctx.guild.id), tag_name.lower())
+                                           ctx.guild.id, tag_name.lower())
         if not tage:
             z = await self.suggest_box(ctx.guild.id, tag_name)
             return await ctx.send(z)
@@ -70,7 +70,7 @@ class Tags(Plugin):
             file = None
         await ctx.send(content, file=file)
         await self.bot.pg_con.execute("UPDATE tags SET tag_uses = $1 WHERE guild_id = $2 AND tag_name = $3",
-                                      tage[0]['tag_uses'] + 1, str(ctx.guild.id), tag_name)
+                                      tage[0]['tag_uses'] + 1, ctx.guild.id, tag_name)
 
     @tag.command()
     async def search(self, ctx, tag: str = None):
@@ -82,7 +82,7 @@ class Tags(Plugin):
                     ORDER BY similarity(tag_name, $2) DESC
                     LIMIT 100;
                  """
-            results = await self.bot.pg_con.fetch(sql, str(ctx.guild.id), tag)
+            results = await self.bot.pg_con.fetch(sql, ctx.guild.id, tag)
 
             if results:
                 try:
@@ -96,7 +96,7 @@ class Tags(Plugin):
     @tag.command(invoke_without_command=True)
     async def raw(self, ctx, *, tag: str = None):
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
-                                           str(ctx.guild.id), tag.lower())
+                                           ctx.guild.id, tag.lower())
 
         clean_content = discord.utils.escape_markdown(tage[0]['tag_content'])
         clean_content.replace('<', '\\<')
@@ -111,15 +111,15 @@ class Tags(Plugin):
         elif not tage[0]['tag_content'] and tage[0]['img_link']:
             await ctx.send(f"{tage[0]['img_link']}")
         await self.bot.pg_con.execute("UPDATE tags SET tag_uses = $1 WHERE guild_id = $2 AND tag_name = $3",
-                                      tage[0]['tag_uses'] + 1, str(ctx.guild.id), tag)
+                                      tage[0]['tag_uses'] + 1, ctx.guild.id, tag)
 
     @commands.command()
     async def tags(self, ctx, member: typing.Optional[discord.Member] = None):
         """Zwraca wszystkie tagi z serwera."""
-        tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1", str(ctx.guild.id))
+        tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1", ctx.guild.id)
         if member:
             tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_author_id = $2",
-                                               str(ctx.guild.id), str(member.id))
+                                               ctx.guild.id, member.id)
         entries = [t['tag_name'] for t in tage]
         if len(entries) < 1:
             return await ctx.send(_(ctx.lang, "Serwer nie posiada żadnych tagów."))
@@ -134,7 +134,7 @@ class Tags(Plugin):
         z = tag.split(" - ")
         tag_name = z[0].lower()
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
-                                           str(ctx.guild.id), tag_name.lower())
+                                           ctx.guild.id, tag_name.lower())
         if tage:
             raise TagAlreadyExists(tage[0])
         tag_result = "\n".join(z[1:])
@@ -155,7 +155,7 @@ class Tags(Plugin):
         if not tage:
             await self.bot.pg_con.execute(
                 "INSERT INTO tags (guild_id, tag_name, tag_content, tag_author_id, tag_created_at, tag_uses, img_link) VALUES ($1,$2,$3,$4,$5,0,$6)",
-                str(ctx.guild.id), tag_name, str(tag_result), str(ctx.author.id), str(ctx.message.created_at), link)
+                ctx.guild.id, tag_name, tag_result, ctx.author.id, str(ctx.message.created_at), link)
             await ctx.send(_(ctx.lang, "**{}** stworzony.").format(tag_name))
 
     @tag.command()
@@ -164,7 +164,7 @@ class Tags(Plugin):
         z = tag_name.split(" - ")
         tag_name = z[0].lower()
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
-                                           str(ctx.guild.id), tag_name)
+                                           ctx.guild.id, tag_name)
         if not tage:
             raise TagNotFound(tag_name)
         if ctx.author.id != int(tage[0]['tag_author_id']):
@@ -190,22 +190,22 @@ class Tags(Plugin):
             return await ctx.send(_(ctx.lang, "Tagi nie mogą posiadać więcej niż 2000 znaków."))
 
         await self.bot.pg_con.execute("UPDATE tags SET tag_content = $1 WHERE guild_id = $2 AND tag_name = $3",
-                                      tag_result, str(ctx.guild.id), tag_name)
+                                      tag_result, ctx.guild.id, tag_name)
         if link:
             await self.bot.pg_con.execute(
                 "UPDATE tags SET tag_content = $1 AND img_link = $4 WHERE guild_id = $2 AND tag_name = $3", tag_result,
-                str(ctx.guild.id), tag_name, link)
+                ctx.guild.id, tag_name, link)
         await ctx.send(_(ctx.lang, "Tag zedytowany."))
 
     @tag.command(aliases=['delete'])
     async def remove(self, ctx, *, tag: str = None):
         """Usuń tag."""
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
-                                           str(ctx.guild.id), tag)
+                                           ctx.guild.id, tag)
         if not tage:
             raise TagNotFound(tag)
         if ctx.author.id == int(tage[0]['tag_author_id']) or ctx.author.guild_permissions.manage_guild:
-            await self.bot.pg_con.execute("DELETE FROM tags WHERE guild_id = $1 AND tag_name = $2", str(ctx.guild.id),
+            await self.bot.pg_con.execute("DELETE FROM tags WHERE guild_id = $1 AND tag_name = $2", ctx.guild.id,
                                           tag)
             await ctx.send(':ok_hand:')
         else:
@@ -216,7 +216,7 @@ class Tags(Plugin):
     async def _info(self, ctx, *, tag: str = None):
         """Pokaż informacje o tagu."""
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
-                                           str(ctx.guild.id), tag)
+                                           ctx.guild.id, tag)
         if not tage:
             raise TagNotFound(tag)
         author = await self.bot.fetch_user(int(tage[0]['tag_author_id']))
@@ -230,7 +230,7 @@ class Tags(Plugin):
     @tag.command()
     async def claim(self, ctx, *, tag: str = None):
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
-                                           str(ctx.guild.id), tag)
+                                           ctx.guild.id, tag)
         if not tage:
             raise TagNotFound(tag)
         author = await self.bot.fetch_user(int(tage[0]['tag_author_id']))
@@ -238,15 +238,15 @@ class Tags(Plugin):
             return await ctx.send(_(ctx.lang, "Nie możesz zabrać swojego tag-a."))
         if author in ctx.guild.members:
             return await ctx.send(_(ctx.lang, "Właściciel tag-a ciągle jest na tym serwerze."))
-        await self.bot.pg_con.execute("UPDATE tags SET tag_author_id = $1 WHERE tag_name = $2", str(ctx.author.id),
-                                      str(tag))
+        await self.bot.pg_con.execute("UPDATE tags SET tag_author_id = $1 WHERE tag_name = $2", ctx.author.id,
+                                      tag)
         return await ctx.send(_(ctx.lang, "Pomyślnie zostałeś właścicielem tego taga."))
 
     @tag.command()
     async def top(self, ctx):
         """Top tagów pod względem użyć na serwerze."""
         top10 = await self.bot.pg_con.fetch(f'SELECT * FROM tags WHERE guild_id = $1 ORDER BY tag_uses DESC LIMIT 10',
-                                            str(ctx.guild.id))
+                                            ctx.guild.id)
         z = ""
         inte = 0
         cor = "użyć"
@@ -260,9 +260,9 @@ class Tags(Plugin):
         await ctx.send(_(ctx.lang, "```{}\nRanking dla {}```").format(z, ctx.guild.id))
 
     @tag.group(name='global', invoke_without_command=True)
-    async def global_(self, ctx, guild_id=None, *, tag: str = None):
+    async def global_(self, ctx, guild_id: int=None, *, tag: str = None):
         """Nie dodaje użyć!"""
-        tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2", str(guild_id),
+        tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2", guild_id,
                                            tag)
         if not tage:
             z = await self.suggest_box(ctx.guild.id, tag)
@@ -279,11 +279,11 @@ class Tags(Plugin):
     @global_.command()
     async def info(self, ctx, guild_id=None, *, tag: str = None):
         """Informacje o globalnym tagu."""
-        tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2", str(guild_id),
+        tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2", guild_id,
                                            tag)
         if not tage:
             raise TagNotFound(tag)
-        author = await self.bot.fetch_user(int(tage[0]['tag_author_id']))
+        author = await self.bot.fetch_user((tage[0]['tag_author_id'])
         made = datetime.datetime.strptime(tage[0]['tag_created_at'], '%Y-%m-%d %H:%M:%S.%f')
         e = discord.Embed(
             description=_(ctx.lang, "Autor: **{}**\nUżycia: **{}**").format(author.name, tage[0]['tag_uses']),
