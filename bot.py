@@ -13,6 +13,8 @@ from discord.ext import commands
 from cogs.eh import MemberInBlacklist
 from cogs.utils import utils
 
+from cogs.utils import translations
+
 os.environ["JISHAKU_HIDE"] = "1"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "1"
 os.environ["JISHAKU_RETAIN"] = "1"

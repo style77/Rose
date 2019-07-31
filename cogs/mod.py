@@ -1181,3 +1181,4 @@ class Mod(Plugin):
 def setup(bot):
     bot.add_cog(Settings(bot))
     bot.add_cog(Mod(bot))
+    bot.add_cog(Plugins(bot))
