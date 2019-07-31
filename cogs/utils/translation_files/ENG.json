@@ -334,6 +334,8 @@
     "Equalizer został ustawiony na `{}`.": "The player Equalizer was set to `{}`.",
     "Nie jestem na żadnym kanale.": "I am not on any voice channel.",
     "{} nie został wyrzucony.": "{} was not kicked.",
-        "{} ma już maksymalną ilość ostrzeżeń.\nPowinno się wyrzucić użykownika?": "{} has the maximum number of warnings.\nShould i kick user?",
-    "{} został wyrzucony.": "{} was kicked."
+    "{} ma już maksymalną ilość ostrzeżeń.\nPowinno się wyrzucić użykownika?": "{} has the maximum number of warnings.\nShould i kick user?",
+    "{} został wyrzucony.": "{} was kicked.",
+    "Nie ma takiego modułu, bądź nie jest on możliwy do wyłączenia.": "There is no module like that, or it is not possible to disable it.",
+    "Nie ma takiego modułu, bądź nie jest on możliwy do włączenia.": "There is no module like that, or it is not possible to enable it."
 }
