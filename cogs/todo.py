@@ -1,3 +1,5 @@
+import asyncio
+
 from discord.ext import commands
 
 #from cogs.utils.checks import has_todos
@@ -101,7 +103,10 @@ class Todo(commands.Cog):
                 return m.author.id == ctx.author.id and m.channel == ctx.channel
 
             await ctx.send(_(ctx.lang, "Wpisz teraz na co chcesz zeedytować {}.").format(todo[0]['description']))
-            msg = await self.bot.wait_for('message', check=check)
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=225)
+            except asyncio.TimeoutError:
+                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
             content = msg.content
 
         await self.bot.pg_con.execute("UPDATE todo SET description = $1 WHERE user_id = $2 AND id = $3", content, ctx.author.id, id_)

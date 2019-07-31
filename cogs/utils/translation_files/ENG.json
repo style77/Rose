@@ -65,7 +65,7 @@
     "Musisz być właścicielem bota, aby wykonać tą komende.": "You must be the owner of the bot to execute this command.",
     "Poczekaj jeszcze {time}.": "Wait {time}.",
     "**{cmd_name}** nie może być użyta w prywatnych wiadomościach.": "**{cmd_name}** cannot be used in private messages.",
-    "Użycie `{prefix}{cmd_name} {args}`": "Using `{prefix}{cmd_name} {args}`",
+    "Użycie `{prefix}{cmd_name} {args}`": "Proper use `{prefix}{cmd_name} {args}`",
     "Tworzy tweeta.": "Creates a tweet.",
     "Tworzy obrazek oparty na 3 kolorach discorda.": "Creates a picture based on 3 discord colors.",
     "Zwraca obrazek z czapką na twoim lub czyimś awatarze.": "Returns a picture with a hat on your or someone's avatar.",
@@ -337,5 +337,6 @@
     "{} ma już maksymalną ilość ostrzeżeń.\nPowinno się wyrzucić użykownika?": "{} has the maximum number of warnings.\nShould i kick user?",
     "{} został wyrzucony.": "{} was kicked.",
     "Nie ma takiego modułu, bądź nie jest on możliwy do wyłączenia.": "There is no module like that, or it is not possible to disable it.",
-    "Nie ma takiego modułu, bądź nie jest on możliwy do włączenia.": "There is no module like that, or it is not possible to enable it."
+    "Nie ma takiego modułu, bądź nie jest on możliwy do włączenia.": "There is no module like that, or it is not possible to enable it.",
+    "Czas na odpowiedź minął.": "Time for answer expired."
 }

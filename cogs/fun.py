@@ -294,7 +294,7 @@ class Fun(commands.Cog):
             def check(m):
                 return m.channel == ctx.channel and m.content == member.name or m.content.lower() == member.name.lower() or m.content == member.mention
 
-            r = await self.bot.wait_for('message',check=check,timeout=15)
+            r = await self.bot.wait_for('message', check=check, timeout=15)
             await ctx.send(_(ctx.lang, "{mention} tak to był {member}.").format(mention=r.author.mention, member=member))
 
         except asyncio.TimeoutError:

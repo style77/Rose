@@ -101,7 +101,10 @@ class Reminder(commands.Cog):
             return m.author == ctx.author and m.channel == ctx.channel
 
         await ctx.send(_(ctx.lang, "Wpisz teraz na co chcesz zmienić {}.").format(reminder))
-        msg = await self.bot.wait_for('message', check=check, timeout=120)
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=120)
+        except asyncio.TimeoutError:
+            return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
         if msg.content.lower() == timer[0]['reminder'].lower():
             return await ctx.send(_(ctx.lang, "Treść nowego przypomnienia nie może być taka sama jak starego."))
         await self.bot.pg_con.execute("UPDATE timers SET reminder = $1 WHERE user_id = $2 AND reminder = $3", msg.content, ctx.author.id, old_rem)

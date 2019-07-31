@@ -460,7 +460,10 @@ class Settings(Plugin):
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
         lang = ctx.lang
-        msg = await self.bot.wait_for('message', check=check, timeout=40)
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=40)
+        except asyncio.TimeoutError:
+            return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
         if msg.content.lower() in ["tak", "yes"]:
             await self.bot.pg_con.execute("DELETE FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
             await ctx.send(_(lang, "Więc zaczynamy.\nJeśli nie będziesz chciał czegoś ustawiać zamiast oznaczania kanały bądź wpisywania `make`, wpisz `None`.\nOznacz kanał jakim ma być `heartboard` albo wpisz `make`, aby stworzyć kanał."))
@@ -1080,7 +1083,11 @@ class Mod(Plugin):
         def check(r, u):
             return u == ctx.author
 
-        r, u = await self.bot.wait_for('reaction_add', check=check)
+        try:
+            r, u = await self.bot.wait_for('reaction_add', check=check)
+        except asyncio.TimeoutError:
+            return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
+
         if str(r.emoji) == '<:checkmark:601123463859535885>':
             await msg.edit(content=_(ctx.lang, "{} został wyrzucony.").format(str(member)))
             return True

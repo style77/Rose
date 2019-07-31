@@ -133,7 +133,10 @@ class Music(commands.Cog):
 
     @tasks.loop(minutes=10)
     async def leave_channels(self):
-        for vc in self.bot.voice_clients:
+        for player in self.bot.wavelink.players:
+
+            vc = player._voice_state
+
             if len(vc.channel.members) == 1:
                 await vc.channel.disconnect()
 
@@ -156,7 +159,7 @@ class Music(commands.Cog):
                 return 2
 
         return math.ceil((len(channel.members) - 1) / 2.5)
-        
+
     async def has_perms(self, ctx, **perms):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
@@ -209,7 +212,7 @@ class Music(commands.Cog):
     async def connect_handler(self, ctx, msg):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if ctx.guild.me.voice:      
+        if ctx.guild.me.voice:
             if ctx.guild.me.voice.channel == ctx.author.voice.channel:
                 await msg.edit(content=_(ctx.lang, "Jestem już z tobą na kanale."))
                 return await add_react(ctx.message, False)
@@ -229,7 +232,7 @@ class Music(commands.Cog):
         msg = await ctx.send(_(ctx.lang, "Łączenie z `{}`.").format(ctx.author.voice.channel.name))
 
         x = await self.connect_handler(ctx, msg)
-        
+
         try:
             await ctx.guild.me.edit(deafen=True)
         except discord.HTTPException:
@@ -238,7 +241,7 @@ class Music(commands.Cog):
         if x == False:
             await msg.edit(content=_(ctx.lang, "Wystąpił błąd podczas łączenia."))
             return await add_react(ctx.message, False)
-        
+
         await msg.edit(content=_(ctx.lang, "Połączono z `{}`.").format(ctx.author.voice.channel.name))
         return await add_react(ctx.message, True)
 
@@ -394,7 +397,7 @@ class Music(commands.Cog):
 
         if (len(player.entries) + 1 if player.current else 0) == 0:
             await ctx.send(_(ctx.lang, "Nie ma już żadnych piosenek do przewinięcia."))
-            return await add_react(ctx.message, False)          
+            return await add_react(ctx.message, False)
 
         if not player.is_connected or not ctx.guild.me.voice:
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
@@ -480,7 +483,7 @@ class Music(commands.Cog):
         if not upcoming:
             await ctx.send(_(ctx.lang, "W kolejce nie ma obecnie żadnych utworów."))
             return await add_react(ctx.message, False)
-        
+
         fmt = '\n'.join(f'**`{str(song)}`**' for song in upcoming)
         e = discord.Embed(description=fmt)
         e.set_author(name=_(ctx.lang, "Następne {} utworów").format(len(upcoming)), icon_url=self.bot.user.avatar_url)

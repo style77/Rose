@@ -248,7 +248,10 @@ class Cat(commands.Cog):
 
         if await self.bot.is_owner(ctx.author):
             await ctx.send(_(ctx.lang, "Siema mordo, mam tu dla ciebie takiego specjalnego **FIOLETOWEGO** kotka, trzymaj!\nTeraz napisz jak chcesz go nazwać."))
-            msg = await self.bot.wait_for('message', check=check)
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=30)
+            except asyncio.TimeoutError:
+                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
             name = msg.content
             name = name[:1].upper() + name[1:].lower()
             await self.adopt_cat(ctx.author.id, name, "owner_cat")
@@ -260,7 +263,10 @@ class Cat(commands.Cog):
                   "szarego": "grey",
                   "brązowego": "brown"}
         await ctx.send(_(ctx.lang, "Adoptowałeś {kolor} kota! Gratulacje.\nNapisz teraz jak chcesz go nazwać.").format(kolor=kolor))
-        msg = await self.bot.wait_for('message', check=check)
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=30)
+        except asyncio.TimeoutError:
+            return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
         name = msg.content
         name = name[:1].upper() + name[1:].lower()
         k = colors[kolor]

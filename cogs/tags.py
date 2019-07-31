@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import typing
 from io import BytesIO
@@ -52,10 +53,8 @@ class Tags(Plugin):
 
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
-    async def tag(self, ctx, *, tag_name: str = None):
+    async def tag(self, ctx, *, tag_name: str):
         """Pokazuje tag."""
-        if not tag_name:
-            raise commands.UserInputError()
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
                                            ctx.guild.id, tag_name.lower())
         if not tage:
@@ -144,7 +143,10 @@ class Tags(Plugin):
                 return m.author.id == ctx.author.id and m.channel == ctx.channel
 
             await ctx.send(_(ctx.lang, "Wpisz teraz co ma zawierać `{}`.").format(tag_name))
-            msg = await self.bot.wait_for('message', check=check)
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=300)
+            except asyncio.TimeoutError:
+                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
             tag_result = msg.content
             if msg.attachments:
                 link = msg.attachments[0].url
@@ -181,7 +183,10 @@ class Tags(Plugin):
 
         if not tag_result:
             await ctx.send(_(ctx.lang, "Wpisz teraz na co chcesz zeedytować {}.").format(tag_name))
-            msg = await self.bot.wait_for('message', check=check)
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=300)
+            except asyncio.TimeoutError:
+                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
             tag_result = msg.content
             if msg.attachments:
                 link = ctx.message.attachments[0].url

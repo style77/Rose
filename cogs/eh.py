@@ -11,8 +11,10 @@ from cogs.mod import NewGuild
 from cogs.music import add_react
 from cogs.tags import TagAlreadyExists, TagNotFound
 
+
 class MemberInBlacklist(commands.CommandError):
     pass
+
 
 class CommandErrorHandler(commands.Cog):
     def __init__(self, bot):
@@ -75,10 +77,6 @@ class CommandErrorHandler(commands.Cog):
                 await ctx.author.send(_("ENG", "**{cmd_name}** nie może być użyta w prywatnych wiadomościach.").format(cmd_name=ctx.command.name)) # i dont have idea how to make it so lemme use eng as default language
             except:
                 pass
-            return await add_react(ctx.message, False)
-
-        elif isinstance(error, (asyncio.TimeoutError, asyncio.CancelledError)):
-            await ctx.send("Czas na odpowiedź minął.")
             return await add_react(ctx.message, False)
 
         elif isinstance(error, MemberDoesNotHaveCat):

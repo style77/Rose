@@ -181,7 +181,7 @@ class Stars(Plugin):
             if msg.attachments:
                 embed.set_image(url=msg.attachments[0].url)
             elif msg.embeds:
-                e.set_image(url=msg.embeds[0].image.url)
+                embed.set_image(url=msg.embeds[0].image.url)
             embed.set_footer(text=author.name, icon_url=author.avatar_url)
             await ctx.send(embed=embed)
         elif not star:
