@@ -168,6 +168,16 @@ async def blacklist(ctx):
     else:
         return True
 
+@bot.check
+async def plugins(ctx):
+    plugins = await ctx.bot.pg_con.fetchrow("SELECT plugins_off FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+    if not ctx.cog:
+        return True
+    if ctx.cog.qualified_name in plugins[0]:
+        return False
+    else:
+        return True
+
 @bot.before_invoke
 async def get_lang(ctx):
     if not ctx.guild:

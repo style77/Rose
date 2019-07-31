@@ -1,15 +1,15 @@
-import traceback
-import sys
-import discord
 import asyncio
-
-from discord.ext import commands
-from cogs.mod import NewGuild
-from cogs.tags import TagNotFound, TagAlreadyExists
-from cogs.cat import MemberDoesNotHaveCat, CatIsDead
+import traceback
 from datetime import datetime
+
+import discord
+from discord.ext import commands
+
+from cogs.cat import CatIsDead, MemberDoesNotHaveCat
 from cogs.classes.converters import TrueFalseError
+from cogs.mod import NewGuild
 from cogs.music import add_react
+from cogs.tags import TagAlreadyExists, TagNotFound
 
 class MemberInBlacklist(commands.CommandError):
     pass

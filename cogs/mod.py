@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 
-from cogs.classes.converters import EasyOneDayTime, TrueFalseConverter, TrueFalseError, ModerationReason
+from cogs.classes.converters import EasyOneDayTime, ModerationReason, TrueFalseConverter, TrueFalseError
 from cogs.classes.plugin import Plugin
 from cogs.music import add_react
 from cogs.utils import settings
@@ -1037,16 +1037,37 @@ class Mod(Plugin):
         warn_num = 1
         await self.bot.pg_con.execute("INSERT INTO warns (user_id, guild_id, warn_num, reason, moderator) VALUES ($1, $2, $3, $4, $5)", user_id, guild_id, warn_num, reason, responsible_moderator_id)
 
-    async def add_warn(self, db, responsible_moderator_id, reason):
+    async def ask_for_action(self, ctx, member):
+        msg = await ctx.send(_(ctx.lang, "{} ma już maksymalną ilość ostrzeżeń.\nPowinno się wyrzucić użykownika?").format(member.mention))
+        await add_react(msg, True)
+        await add_react(msg, False)
+
+        def check(r, u):
+            return u == ctx.author
+
+        r, u = await self.bot.wait_for('reaction_add', check=check)
+        if str(r.emoji) == '<:checkmark:601123463859535885>':
+            await msg.edit(_(ctx.lang, "{} został wyrzucony.").format(str(member)))
+            return True
+        elif str(r.emoji) == '<:wrongmark:601124568387551232>':
+            await msg.edit(_(ctx.lang, "{} nie został wyrzucony.").format(str(member)))
+            return False
+        else:
+            await msg.edit(_(ctx.lang, "To nie jest prawidłowa reakcja."))
+            return False
+
+    async def add_warn(self, db, responsible_moderator_id, reason, ctx):
         warn_num = await self.warns_num(db['user_id'], db['guild_id'])
         await self.bot.pg_con.execute("INSERT INTO warns (user_id, guild_id, warn_num, reason, moderator) VALUES ($1, $2, $3, $4, $5)", db['user_id'], db['guild_id'], warn_num, reason, responsible_moderator_id)
         if await self.check(db['user_id'], db['guild_id']):
             member = self.bot.get_guild(
                 db['guild_id']).get_member(db['user_id'])
-            await member.kick()
+            ask = await self.ask_for_action(ctx)
+            if ask:
+                await member.kick(reason=reason)
 
     @commands.group(invoke_without_command=True, aliases=['w'])
-    @check_permissions(manage_guild=True)
+    @check_permissions(kick_members=True)
     async def warn(self, ctx, member: discord.Member=None, *, reason: ModerationReason='Brak powodu'):
         """Daje ostrzeżenie."""
         if ctx.lang == "ENG" and reason == "Brak powodu":
@@ -1054,7 +1075,7 @@ class Mod(Plugin):
         await ctx.invoke(self.bot.get_command("warn add"), member=member, reason=reason)
 
     @warn.command()
-    @check_permissions(manage_guild=True)
+    @check_permissions(kick_members=True)
     async def add(self, ctx, member: discord.Member=None, *, reason: ModerationReason='Brak powodu'):
         """Daje ostrzeżenie."""
         if ctx.lang == "ENG" and reason == "Brak powodu":
@@ -1067,11 +1088,11 @@ class Mod(Plugin):
         if not m:
             await self.add_first_warn(member.id, ctx.guild.id, ctx.author.id, reason)
         else:
-            await self.add_warn(m, ctx.author.id, reason)
+            await self.add_warn(m, ctx.author.id, reason, ctx)
         return await ctx.send(_(ctx.lang, "{}, dostał ostrzeżenie za `{}`.").format(member.mention, reason))
 
     @warn.command()
-    @check_permissions(manage_guild=True)
+    @check_permissions(kick_members=True)
     async def remove(self, ctx, member: discord.Member=None, number: int=None):
         """Usuwa ostrzeżenie po id."""
         if member.id == self.bot.user.id:
@@ -1083,7 +1104,7 @@ class Mod(Plugin):
         return await ctx.send(_(ctx.lang, "{} usunął ostrzeżenie {}.").format(ctx.author.mention, member.mention))
 
     @warn.command(aliases=['purge'])
-    @check_permissions(manage_guild=True)
+    @check_permissions(kick_members=True)
     async def clear(self, ctx, member: discord.Member=None):
         """Usuwa wszystkie ostrzeżenia."""
         if member.id == self.bot.user.id:
@@ -1095,7 +1116,7 @@ class Mod(Plugin):
         return await ctx.send(_(ctx.lang, "{} wyczyscił ostrzeżenia {}.").format(ctx.author.mention, member.mention))
 
     @commands.command()
-    @check_permissions(manage_guild=True)
+    @check_permissions(kick_members=True)
     async def warns(self, ctx, member: typing.Union[discord.User, discord.Member]=None):
         """Pokazuje wszystkie ostrzeżenia."""
         member = member or ctx.author
