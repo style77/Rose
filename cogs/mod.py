@@ -1062,7 +1062,7 @@ class Mod(Plugin):
         if await self.check(db['user_id'], db['guild_id']):
             member = self.bot.get_guild(
                 db['guild_id']).get_member(db['user_id'])
-            ask = await self.ask_for_action(ctx)
+            ask = await self.ask_for_action(ctx, member)
             if ask:
                 await member.kick(reason=reason)
 
