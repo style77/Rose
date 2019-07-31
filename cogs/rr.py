@@ -2,9 +2,9 @@ import discord
 from discord.ext import commands
 
 from cogs.classes.converters import EmojiConverter
+from cogs.classes.plugin import Plugin
 
-
-class RR(commands.Cog):
+class RR(Plugin):
     def __init__(self, bot):
         self.bot = bot
 

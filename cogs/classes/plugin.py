@@ -20,16 +20,20 @@ class Plugin(commands.Cog):
 
         return commands_
 
-    async def turn_off(self, db, guild_id):
+    async def set_plugins(self, db, guild_id, on=True):
         plugins = await db.fetchrow("SELECT plugins_off FROM guild_settings WHERE guild_id = $1", guild_id)
-        if self.name in plugins[0]:
-            raise PluginException("Ten plugin jest już wyłączony.")
-        plugins[0].append(self.name)
+        if on is False:
+            if self.name in plugins[0]:
+                raise PluginException("Ten plugin jest już wyłączony.")
+            plugins[0].append(self.name)
+        else:
+            if self.name not in plugins[0]:
+                raise PluginException("Ten plugin jest już włączony.")
+            plugins[0].remove(self.name)
         await db.execute("UPDATE guild_settings SET plugins_off = $1 WHERE guild_id = $2", plugins[0], guild_id)
 
+    async def turn_off(self, db, guild_id):
+        await self.set_plugins(db, guild_id, False)
+
     async def turn_on(self, db, guild_id):
-        plugins = await db.fetchrow("SELECT plugins_off FROM guild_settings WHERE guild_id = $1", guild_id)
-        if self.name in plugins[0]:
-            raise PluginException("Ten plugin jest już włączony.")
-        plugins[0].remove(self.name)
-        await db.execute("UPDATE guild_settings SET plugins_off = $1 WHERE guild_id = $2", plugins[0], guild_id)
+        await self.set_plugins(db, guild_id)

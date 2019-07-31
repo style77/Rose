@@ -4,13 +4,12 @@
 # i wasnt even testing this
 
 import discord
-import wrapper
 import nekos
-
-from cogs.utils import utils
 from discord.ext import commands
 
-class Nsfw(commands.Cog):
+from cogs.classes.plugin import Plugin
+
+class Nsfw(Plugin):
     def __init__(self, bot):
         self.bot = bot
 

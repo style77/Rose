@@ -52,8 +52,41 @@ class EmojiCensor:
         else:
             return None
 
+class Plugins(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-class Settings(commands.Cog):
+    @commands.group(invoke_without_command=True)
+    @check_permissions(manage_guild=True)
+    async def plugin(self, ctx):
+        z = []
+        for cmd in self.bot.get_command("plugin").commands:
+            z.append(f"- {cmd.name}")
+        await ctx.send(_(ctx.lang, "Komendy w tej grupie:\n```\n{}```").format('\n'.join(z)))
+
+    @plugin.command(aliases=['on'])
+    @check_permissions(manage_guild=True)
+    async def enable(self, ctx, module: str):
+        cog = self.bot.get_cog(module.lower())
+        cant_off_modules = ['plugins']
+
+        if not cog or module.lower() in cant_off_modules:
+            return await ctx.send(_(ctx.lang, "Nie ma takiego modułu, bądź nie jest on możliwy do włączenia."))
+
+        await cog.turn_on(ctx.bot.pg_con, ctx.guild.id)
+
+    @plugin.command(aliases=['off'])
+    @check_permissions(manage_guild=True)
+    async def disable(self, ctx, module: str):
+        cog = self.bot.get_cog(module.lower())
+        cant_off_modules = ['plugins']
+
+        if not cog or module.lower() in cant_off_modules:
+            return await ctx.send(_(ctx.lang, "Nie ma takiego modułu, bądź nie jest on możliwy do wyłączenia."))
+
+        await cog.turn_off(ctx.bot.pg_con, ctx.guild.id)
+
+class Settings(Plugin):
     """
         Komendy moderacyjne. Bardzo wiele opcji dostosowania serwera do swoich potrzeb.
          Jeśli potrzebujesz pomocy sprobuj komendy /support.
@@ -1064,7 +1097,7 @@ class Mod(Plugin):
                 db['guild_id']).get_member(db['user_id'])
             ask = await self.ask_for_action(ctx, member)
             if ask:
-                await member.kick(reason=reason)
+                return await member.kick(reason=reason)
 
     @commands.group(invoke_without_command=True, aliases=['w'])
     @check_permissions(kick_members=True)
