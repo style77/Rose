@@ -67,24 +67,26 @@ class Plugins(commands.Cog):
     @plugin.command(aliases=['on'])
     @check_permissions(manage_guild=True)
     async def enable(self, ctx, module: str):
-        cog = self.bot.get_cog(module.lower())
+        cog = self.bot.get_cog(module)
         cant_off_modules = ['plugins']
 
         if not cog or module.lower() in cant_off_modules:
             return await ctx.send(_(ctx.lang, "Nie ma takiego modułu, bądź nie jest on możliwy do włączenia."))
 
         await cog.turn_on(ctx.bot.pg_con, ctx.guild.id)
+        return await ctx.send(":ok_hand:")
 
     @plugin.command(aliases=['off'])
     @check_permissions(manage_guild=True)
     async def disable(self, ctx, module: str):
-        cog = self.bot.get_cog(module.lower())
+        cog = self.bot.get_cog(module)
         cant_off_modules = ['plugins']
 
         if not cog or module.lower() in cant_off_modules:
             return await ctx.send(_(ctx.lang, "Nie ma takiego modułu, bądź nie jest on możliwy do wyłączenia."))
 
         await cog.turn_off(ctx.bot.pg_con, ctx.guild.id)
+        return await ctx.send(":ok_hand:")
 
 class Settings(Plugin):
     """
