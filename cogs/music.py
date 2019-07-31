@@ -136,7 +136,7 @@ class Music(commands.Cog):
         try:
             for player in self.bot.wavelink.players:
 
-                vc = self.bot.get_channel(player.channel_id)
+                vc = self.bot.get_channel(player)
 
                 if len(vc.members) == 1:
                     await vc.disconnect()
