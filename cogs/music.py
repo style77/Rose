@@ -134,15 +134,15 @@ class Music(commands.Cog):
     @tasks.loop(minutes=10)
     async def leave_channels(self):
         try:
-            for player in self.bot.wavelink.players:
+            for guild_id, player in self.bot.wavelink.players:
 
-                vc = self.bot.get_channel(self.bot.wavelink.players[player].channel_id)
-
+                guild = self.bot.get_guild(guild_id)
+                vc = guild.me.voice
                 if not vc:
                     continue
 
-                if len(vc.members) == 1:
-                    await vc.disconnect()
+                if len(vc.channel.members) == 1:
+                    await player.disconnect()
         except Exception as e:
             print(e)
 
