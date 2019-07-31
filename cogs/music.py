@@ -137,7 +137,12 @@ class Music(commands.Cog):
             for guild_id, player in self.bot.wavelink.players.items():
 
                 guild = self.bot.get_guild(guild_id)
+
+                if not guild:
+                    continue
+
                 vc = guild.me.voice
+
                 if not vc:
                     continue
 
