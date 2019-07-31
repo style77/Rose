@@ -283,7 +283,7 @@ class Tags(Plugin):
                                            tag)
         if not tage:
             raise TagNotFound(tag)
-        author = await self.bot.fetch_user((tage[0]['tag_author_id'])
+        author = await self.bot.fetch_user(tage[0]['tag_author_id'])
         made = datetime.datetime.strptime(tage[0]['tag_created_at'], '%Y-%m-%d %H:%M:%S.%f')
         e = discord.Embed(
             description=_(ctx.lang, "Autor: **{}**\nUżycia: **{}**").format(author.name, tage[0]['tag_uses']),
