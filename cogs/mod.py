@@ -1047,13 +1047,13 @@ class Mod(Plugin):
 
         r, u = await self.bot.wait_for('reaction_add', check=check)
         if str(r.emoji) == '<:checkmark:601123463859535885>':
-            await msg.edit(_(ctx.lang, "{} został wyrzucony.").format(str(member)))
+            await msg.edit(content=_(ctx.lang, "{} został wyrzucony.").format(str(member)))
             return True
         elif str(r.emoji) == '<:wrongmark:601124568387551232>':
-            await msg.edit(_(ctx.lang, "{} nie został wyrzucony.").format(str(member)))
+            await msg.edit(content=_(ctx.lang, "{} nie został wyrzucony.").format(str(member)))
             return False
         else:
-            await msg.edit(_(ctx.lang, "To nie jest prawidłowa reakcja."))
+            await msg.edit(content=_(ctx.lang, "To nie jest prawidłowa reakcja."))
             return False
 
     async def add_warn(self, db, responsible_moderator_id, reason, ctx):
