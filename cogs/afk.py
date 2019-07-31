@@ -28,7 +28,10 @@ class AFK(commands.Cog):
                 user = self.bot.get_user(afk[0]['user_id'])
                 if afk and message.mentions[n].id == afk[0]['user_id']:
                     await message.channel.send(_(await get_language(self.bot, message.guild.id), "Nie oznaczaj **{user}**. Jest on afk, {reason}.").format(user=user.name, reason=afk[0]['reason']))
-                    await message.delete()
+                    try:
+                        await message.delete()
+                    except discord.Forbidden:
+                        pass
             n += 1
 
 
