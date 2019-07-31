@@ -332,5 +332,8 @@
     "Gram teraz `{}`.": "Im playing {} now.",
     "`{}` nie jest prawidłowym equalizerem!\nSpróbuj `Flat, Boost, Metal, Piano`.": "`{}` is not correct equalizer!\nTry `Flat, Boost, Metal, Piano`.",
     "Equalizer został ustawiony na `{}`.": "The player Equalizer was set to `{}`.",
-    "Nie jestem na żadnym kanale.": "I am not on any voice channel."
+    "Nie jestem na żadnym kanale.": "I am not on any voice channel.",
+    "{} nie został wyrzucony.": "{} was not kicked.",
+        "{} ma już maksymalną ilość ostrzeżeń.\nPowinno się wyrzucić użykownika?": "{} has the maximum number of warnings.\nShould i kick user?",
+    "{} został wyrzucony.": "{} was kicked."
 }
