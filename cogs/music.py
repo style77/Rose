@@ -134,7 +134,7 @@ class Music(commands.Cog):
     @tasks.loop(minutes=10)
     async def leave_channels(self):
         try:
-            for guild_id, player in self.bot.wavelink.players:
+            for guild_id, player in self.bot.wavelink.players.items():
 
                 guild = self.bot.get_guild(guild_id)
                 vc = guild.me.voice
