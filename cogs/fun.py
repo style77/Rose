@@ -67,9 +67,9 @@ class Fun(commands.Cog):
     @commands.command(aliases=['fw', 'fullwidth', 'ａｅｓｔｈｅｔｉｃ'])
     async def aesthetic(self, ctx, *, msg: str="iam gay"):
         """ａｅｓｔｈｅｔｉｃ"""
-        FULLWIDTH_OFFSET = 65248
+        fullwidth_offset = 65248
         await ctx.send("".join(map(
-            lambda c: chr(ord(c) + FULLWIDTH_OFFSET) if (ord(c)
+            lambda c: chr(ord(c) + fullwidth_offset) if (ord(c)
                                                          >= 0x21 and ord(c) <= 0x7E) else c,
             msg)).replace(" ", chr(0x3000)))
 
