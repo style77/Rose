@@ -162,6 +162,7 @@ async def block_commands(ctx):
     else:
         raise Blocked("{} is blocked.".format(ctx.command))
 
+
 @bot.check
 async def blacklist(ctx):
     blocked_members = await ctx.bot.pg_con.fetchrow("SELECT * FROM blacklist WHERE user_id = $1", ctx.author.id)
@@ -170,15 +171,23 @@ async def blacklist(ctx):
     else:
         return True
 
+
 @bot.check
 async def plugins(ctx):
-    plugins = await ctx.bot.pg_con.fetchrow("SELECT plugins_off FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+    if not ctx.guild:
+        return True
+
+    plugins_off = await ctx.bot.pg_con.fetchrow("SELECT plugins_off FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+    if not plugins_off:
+        return True
+
     if not ctx.cog:
         return True
-    if ctx.cog.qualified_name in plugins[0]:
+    if ctx.cog.qualified_name in plugins_off[0]:
         return False
     else:
         return True
+
 
 @bot.before_invoke
 async def get_lang(ctx):

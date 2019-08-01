@@ -8,14 +8,16 @@ class Levels(commands.Cog):
         self.bot = bot
 
     async def create_acc(self, user_id, guild_id):
-        user = await self.bot.pg_con.fetchrow("INSERT INTO levels (user_id, guild_id) VALUES ($1, $2) RETURNING *", user_id, guild_id)
+        user = await self.bot.pg_con.fetchrow("INSERT INTO levels (user_id, guild_id) VALUES ($1, $2) RETURNING *",
+                                              user_id, guild_id)
         return user
 
     @commands.Cog.listener()
     async def on_message(self, m):
         if not m.guild:
             return
-        settings = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", m.guild.id)
+        settings = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1",
+                                                  m.guild.id)
         if not settings or not settings['levels']:
             return
         if m.guild.id in [336642139381301249, 264445053596991498]:
@@ -23,17 +25,20 @@ class Levels(commands.Cog):
         if m.author.bot:
             return
         
-        user = await self.bot.pg_con.fetchrow("SELECT * FROM levels WHERE user_id = $1 AND guild_id = $2", m.author.id, m.guild.id)
+        user = await self.bot.pg_con.fetchrow("SELECT * FROM levels WHERE user_id = $1 AND guild_id = $2",
+                                              m.author.id, m.guild.id)
 
         if not user:
             user = await self.create_acc(m.author.id, m.guild.id)
 
-        await self.bot.pg_con.execute("UPDATE levels SET messages = messages + 1 WHERE user_id = $1 AND guild_id = $2", m.author.id, m.guild.id)
+        await self.bot.pg_con.execute("UPDATE levels SET messages = messages + 1 WHERE user_id = $1 AND guild_id = $2",
+                                      m.author.id, m.guild.id)
 
-        if user['level']*500 == user['messages']:
-            await self.bot.pg_con.execute("UPDATE levels SET level = level + 1 WHERE user_id = $1 AND guild_id = $2", m.author.id, m.guild.id)
+        if round((user['level']*400)*2) >= user['messages']:
+            await self.bot.pg_con.execute("UPDATE levels SET level = level + 1 WHERE user_id = $1 AND guild_id = $2",
+                                          m.author.id, m.guild.id)
             if not settings['level_message']:
-                level_msg = _(await get_lang(self.bot, m.guild.id), "<@USER> awansował na <LEVEL> level.")
+                level_msg = _(await get_language(self.bot, m.guild.id), "<@USER> awansował na <LEVEL> level.")
             else:
                 level_msg = settings['level_message']
             

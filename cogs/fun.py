@@ -75,6 +75,8 @@ class Fun(commands.Cog):
 
     @commands.command(aliases=["hb", "note"])
     async def hastebin(self, ctx, *, content):
+        if not content:
+            raise commands.UserInputError()
         async with aiohttp.ClientSession() as session:
             async with session.post("https://hastebin.com/documents", data=content.encode('utf-8')) as post:
                 post = await post.json()

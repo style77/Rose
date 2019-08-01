@@ -749,10 +749,13 @@ class Settings(Plugin):
         all_commands = []
         for cmd in self.bot.walk_commands():
             all_commands.append(cmd.name)
-        if not command in all_commands:
+
+        if command not in all_commands:
             return await ctx.send(_(ctx.lang, "Nie ma takiej komendy."))
+
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        if not command in option[0]['blocked_commands']:
+
+        if command not in option[0]['blocked_commands']:
             return await ctx.send(_(ctx.lang, "Ta komenda nie jest zablokowana."))
 
         option[0]['blocked_commands'].remove(command.lower())
@@ -762,11 +765,8 @@ class Settings(Plugin):
 
     @set_.command(aliases=['auto_role'])
     @check_permissions(manage_guild=True)
-    async def autorole(self, ctx, role: str = None):
+    async def autorole(self, ctx, role: str):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-
-        if not role:
-            raise commands.UserInputError()
 
         if role.lower() == 'none':
             role = None
