@@ -93,6 +93,7 @@ class Settings(Plugin):
         Komendy moderacyjne. Bardzo wiele opcji dostosowania serwera do swoich potrzeb.
          Jeśli potrzebujesz pomocy sprobuj komendy /support.
     """
+
     def __init__(self, bot):
         self.bot = bot
         self.bansays_pl = ["**{}** został wysłany na wakacje.",
@@ -116,7 +117,7 @@ class Settings(Plugin):
 
     @commands.command(hidden=True)
     @commands.is_owner()
-    async def block(self, ctx, user: discord.User=None, *, reason: str='Brak powodu'):
+    async def block(self, ctx, user: discord.User = None, *, reason: str = 'Brak powodu'):
         """Blokuje użytkownikowi dostęp do komend bota."""
         blocked_members = await self.bot.pg_con.fetchrow("SELECT * FROM blacklist WHERE user_id = $1", user.id)
         if blocked_members:
@@ -126,7 +127,7 @@ class Settings(Plugin):
 
     @commands.command(hidden=True)
     @commands.is_owner()
-    async def unblock(self, ctx, user: discord.User=None):
+    async def unblock(self, ctx, user: discord.User = None):
         blocked_members = await self.bot.pg_con.fetchrow("SELECT * FROM blacklist WHERE user_id = $1", user.id)
         if not blocked_members:
             return await ctx.send(_(ctx.lang, "Ta osoba nie jest w blackliście."))
@@ -140,7 +141,8 @@ class Settings(Plugin):
             for sub in subs:
                 name = sub['name']
                 async with aiohttp.ClientSession() as cs:
-                    async with cs.get(f"https://www.googleapis.com/youtube/v3/channels?part=statistics&forUsername={name}&key={self.youtube_key}") as r:
+                    async with cs.get(
+                            f"https://www.googleapis.com/youtube/v3/channels?part=statistics&forUsername={name}&key={self.youtube_key}") as r:
                         res = await r.json()
                         try:
                             new_subs = res["items"][0]["statistics"]["subscriberCount"]
@@ -171,38 +173,42 @@ class Settings(Plugin):
 
     @youtube_.command(name="add")
     @check_permissions(manage_guild=True)
-    async def add_(self, ctx, channel: discord.VoiceChannel=None, *, channel_name=None):
+    async def add_(self, ctx, channel: discord.VoiceChannel = None, *, channel_name=None):
         member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
         if not member:
             return await ctx.send(_(ctx.lang, "{}, nie posiadasz konta premium.").format(ctx.author.mention))
-        if len(member[0]['youtube_stats'])+1 >= member[0]['stats_limit']:
+        if len(member[0]['youtube_stats']) + 1 >= member[0]['stats_limit']:
             return await ctx.send(_(ctx.lang, "{}, nie możesz już dodawać statystyk.").format(ctx.author.mention))
         elif channel.id in member[0]['youtube_stats']:
             return await ctx.send(_(ctx.lang, "Ten kanał już jest używany jako licznik subskrybcji."))
-        await self.bot.pg_con.execute("INSERT INTO youtube_stats(guild_id, channel_id, name) VALUES ($1, $2, $3)", ctx.guild.id, channel.id, channel_name)
+        await self.bot.pg_con.execute("INSERT INTO youtube_stats(guild_id, channel_id, name) VALUES ($1, $2, $3)",
+                                      ctx.guild.id, channel.id, channel_name)
         member[0]['youtube_stats'].append(channel.id)
-        await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'], ctx.author.id)
+        await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'],
+                                      ctx.author.id)
         await ctx.send(_(ctx.lang, ":ok_hand:, pamiętaj jeśli ten kanał nie istnieje to nic tutaj nie zadziała."))
 
     @youtube_.command(name="edit")
     @check_permissions(manage_guild=True)
-    async def edit_(self, ctx, channel: discord.VoiceChannel=None, *, channel_name=None):
+    async def edit_(self, ctx, channel: discord.VoiceChannel = None, *, channel_name=None):
         chan = await self.bot.pg_con.fetch("SELECT * FROM youtube_stats WHERE channel_id = $1", channel.id)
         if not chan:
             return await ctx.send(_(ctx.lang, "Ten kanał nie posiada statystyk subskrybcji."))
-        await self.bot.pg_con.execute("UPDATE youtube_stats SET name = $1 WHERE channel_id = $2", channel_name, channel.id)
+        await self.bot.pg_con.execute("UPDATE youtube_stats SET name = $1 WHERE channel_id = $2", channel_name,
+                                      channel.id)
         member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
         if not member:
             return await ctx.send(_(ctx.lang, "{}, nie posiadasz konta premium.").format(ctx.author.mention))
         elif channel.id in member[0]['youtube_stats']:
             return await ctx.send(_(ctx.lang, "Ten kanał już jest używany jako licznik subskrybcji."))
         member[0]['youtube_stats'].append(channel.id)
-        await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'], ctx.author.id)
+        await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'],
+                                      ctx.author.id)
         await ctx.send(":ok_hand:")
 
     @youtube_.command(name="remove", aliases=['delete'])
     @check_permissions(manage_guild=True)
-    async def remove_(self, ctx, channel: discord.VoiceChannel=None):
+    async def remove_(self, ctx, channel: discord.VoiceChannel = None):
         chan = await self.bot.pg_con.fetch("SELECT * FROM youtube_stats WHERE channel_id = $1", channel.id)
         if not chan:
             return await ctx.send(_(ctx.lang, "Ten kanał nie posiada statystyk subskrybcji."))
@@ -210,13 +216,14 @@ class Settings(Plugin):
         member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
         if channel.id in member[0]['youtube_stats']:
             member[0]['youtube_stats'].pop(channel.id)
-            await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'], ctx.author.id)
+            await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2",
+                                          member[0]['youtube_stats'], ctx.author.id)
         await ctx.send(":ok_hand:")
         await channel.delete()
 
     @youtube_.command(hidden=True)
     @commands.is_owner()
-    async def limit(self, ctx, member: discord.Member=None, number: int=None):
+    async def limit(self, ctx, member: discord.Member = None, number: int = None):
         member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
         if not member:
             return await ctx.send(_(ctx.lang, "{}, nie posiada konta premium.").format(ctx.author))
@@ -273,8 +280,10 @@ class Settings(Plugin):
         pre = await utils.get_pre(self.bot, m)
         if m.content.lower() in ["<@538369596621848577>", "<@!538369596621848577>"]:
             if not m.guild:
-                return m.author.send("Nie musisz używać prefixu w prywatnych wiadomościach.\nYou don't have to use prefix in dms")
-            return await m.channel.send(_(await get_language(self.bot, m.guild.id), "Prefix dla tego serwera to: `{}`.").format(pre[0]))
+                return m.author.send(
+                    "Nie musisz używać prefixu w prywatnych wiadomościach.\nYou don't have to use prefix in dms")
+            return await m.channel.send(
+                _(await get_language(self.bot, m.guild.id), "Prefix dla tego serwera to: `{}`.").format(pre[0]))
 
         if ctx.prefix is not None:
             p = self.bot.get_command(m.content.lower().replace(ctx.prefix, ""))
@@ -290,9 +299,9 @@ class Settings(Plugin):
                 emoji_censor = guild[0]['emoji_censor']
                 anti_raid = guild[0]['anti_raid']
                 anti_link = guild[0]['anti_link']
-                
+
                 emoji_re = re.compile(r"(;\w+;)")
-                
+
                 msg_search_for_emote = re.findall(emoji_re, m.content.lower())
                 if global_emojis and msg_search_for_emote:
                     i = 0
@@ -311,7 +320,7 @@ class Settings(Plugin):
                             return
 
                     await m.channel.send(' '.join(emotes))
-                mc = m.content.lower() #await commands.clean_content().convert(ctx, m.content.lower())
+                mc = m.content.lower()  # await commands.clean_content().convert(ctx, m.content.lower())
                 if mc in blacklist and m.author.guild_permissions.administrator == False:
                     await m.channel.send(settings.replace_with_args(guild['blacklist_warn'], m.author))
                     ctx.author = self.bot.user
@@ -325,7 +334,9 @@ class Settings(Plugin):
                         return
                     match = re.findall(invite_regex, mc)
                     if match:
-                        await m.channel.send(_(ctx.lang, "{author}, reklamowanie innych serwerów jest tutaj zabronione.").format(author=m.author.mention))
+                        await m.channel.send(
+                            _(ctx.lang, "{author}, reklamowanie innych serwerów jest tutaj zabronione.").format(
+                                author=m.author.mention))
                         ctx.author = self.bot.user
                         await ctx.invoke(self.bot.get_command("warn add"), member=m.author, reason="Invite blocker")
                         try:
@@ -334,51 +345,53 @@ class Settings(Plugin):
                             raise commands.BotMissingPermissions(["manage_messages"])
                         finally:
                             return
-                
-                if emoji_censor and m.author.guild_permissions.administrator == False:          
+
+                if emoji_censor and m.author.guild_permissions.administrator == False:
                     if m.author == self.bot.user:
                         return
-                    
+
                     new_cont = self.replace_bad_words(mc.split())
-                    
+
                     if new_cont is not None:
                         try:
                             await m.delete()
                         except discord.Forbidden:
                             raise commands.BotMissingPermissions(["manage_messages"])
                         await m.channel.send("{}: {}".format(m.author.mention, new_cont))
-                
+
                 if anti_raid and m.author.guild_permissions.administrator == False:
-                        if m.content is None and m.attachments:
-                            return
-                        if m.content.lower() in ["@everyone", "@here"]:
-                            ctx.author = self.bot.user
-                            await ctx.invoke(self.bot.get_command("warn add"), member=m.author, reason="Anti raid")
-                            try:
-                                await m.delete()
-                            except discord.Forbidden:
-                                raise commands.BotMissingPermissions(["manage_messages"])
-                        if m.content.startswith(("?", "!", ".", "+", "/", "$", "%", "!!", "t!", "p!", "~", ">", "-", ">>", "pls", "++", "$$", "\\", ":", "..", "//", "´", ",", ";")):
-                            return
-                        if m.author.id in self.msgs:
-                            if self.msgs[m.author.id]['content'] == m.content.lower():
-                                self.msgs[m.author.id]['count'] += 1
-                                if self.msgs[m.author.id]['count'] >= 2:
-                                    ctx.author = self.bot.user
-                                    await ctx.invoke(self.bot.get_command("warn add"), member=m.author, reason="Anti raid")
-                                    self.msgs.pop(m.author.id)
-                            else:
+                    if m.content is None and m.attachments:
+                        return
+                    if m.content.lower() in ["@everyone", "@here"]:
+                        ctx.author = self.bot.user
+                        await ctx.invoke(self.bot.get_command("warn add"), member=m.author, reason="Anti raid")
+                        try:
+                            await m.delete()
+                        except discord.Forbidden:
+                            raise commands.BotMissingPermissions(["manage_messages"])
+                    if m.content.startswith(("?", "!", ".", "+", "/", "$", "%", "!!", "t!", "p!", "~", ">", "-", ">>",
+                                             "pls", "++", "$$", "\\", ":", "..", "//", "´", ",", ";")):
+                        return
+                    if m.author.id in self.msgs:
+                        if self.msgs[m.author.id]['content'] == m.content.lower():
+                            self.msgs[m.author.id]['count'] += 1
+                            if self.msgs[m.author.id]['count'] >= 2:
+                                ctx.author = self.bot.user
+                                await ctx.invoke(self.bot.get_command("warn add"), member=m.author, reason="Anti raid")
                                 self.msgs.pop(m.author.id)
                         else:
-                            self.msgs[m.author.id] = {}
-                            self.msgs[m.author.id]['content'] = m.content.lower()
-                            self.msgs[m.author.id]['count'] = 0
+                            self.msgs.pop(m.author.id)
+                    else:
+                        self.msgs[m.author.id] = {}
+                        self.msgs[m.author.id]['content'] = m.content.lower()
+                        self.msgs[m.author.id]['count'] = 0
                 if anti_link and m.author.guild_permissions.administrator == False:
                     if m.author == self.bot.user:
                         return
                     match = re.findall(link_regex, mc)
                     if match:
-                        await m.channel.send(_(ctx.lang, "{author}, wysyłanie linków jest tutaj zabronione.").format(author=m.author.mention))
+                        await m.channel.send(_(ctx.lang, "{author}, wysyłanie linków jest tutaj zabronione.").format(
+                            author=m.author.mention))
                         ctx.author = self.bot.user
                         await ctx.invoke(self.bot.get_command("warn add"), member=m.author, reason="Anti link")
                         try:
@@ -420,7 +433,7 @@ class Settings(Plugin):
 
     @commands.command(hidden=True)
     @commands.is_owner()
-    async def invoke(self, ctx, name: str=None):
+    async def invoke(self, ctx, name: str = None):
         """Wywołaj komende bez cooldowna."""
         await ctx.invoke(self.bot.get_command(name))
 
@@ -459,6 +472,7 @@ class Settings(Plugin):
 
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
+
         lang = ctx.lang
         try:
             msg = await self.bot.wait_for('message', check=check, timeout=40)
@@ -466,7 +480,8 @@ class Settings(Plugin):
             return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
         if msg.content.lower() in ["tak", "yes"]:
             await self.bot.pg_con.execute("DELETE FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-            await ctx.send(_(lang, "Więc zaczynamy.\nJeśli nie będziesz chciał czegoś ustawiać zamiast oznaczania kanały bądź wpisywania `make`, wpisz `None`.\nOznacz kanał jakim ma być `heartboard` albo wpisz `make`, aby stworzyć kanał."))
+            await ctx.send(_(lang,
+                             "Więc zaczynamy.\nJeśli nie będziesz chciał czegoś ustawiać zamiast oznaczania kanały bądź wpisywania `make`, wpisz `None`.\nOznacz kanał jakim ma być `heartboard` albo wpisz `make`, aby stworzyć kanał."))
             msg1 = await self.bot.wait_for('message', check=check)
             channel1 = None
             if msg1.content.lower() == 'make':
@@ -477,7 +492,8 @@ class Settings(Plugin):
             else:
                 channel1 = await commands.TextChannelConverter().convert(ctx, msg1.content)
                 ch = channel1.id
-            await self.bot.pg_con.execute("INSERT INTO guild_settings (heartboard, guild_id) VALUES ($1, $2)", ch, ctx.guild.id)
+            await self.bot.pg_con.execute("INSERT INTO guild_settings (heartboard, guild_id) VALUES ($1, $2)", ch,
+                                          ctx.guild.id)
             await ctx.send(':ok_hand:')
 
             await ctx.send(_(lang, "Oznacz kanał jakim ma być `welcomer` albo wpisz `make`, aby stworzyć kanał."))
@@ -490,14 +506,17 @@ class Settings(Plugin):
             else:
                 channel2 = await commands.TextChannelConverter().convert(ctx, msg2.content)
                 ch2 = channel2.id
-            await self.bot.pg_con.execute("INSERT INTO guild_settings (welcomer_channel, guild_id) VALUES ($1, $2)", ch2, ctx.guild.id)
-            await ctx.send(_(lang, "Teraz ustawimy tekst powitalny.\nDodatkowe argumenty:\n```\n<@USER> - oznaczenie usera\n<USER> - nazwa usera\n<GUILD> - nazwa serwera\n\nReszte znajdziesz w dokumentacji - style77.github.io```"))
+            await self.bot.pg_con.execute("INSERT INTO guild_settings (welcomer_channel, guild_id) VALUES ($1, $2)",
+                                          ch2, ctx.guild.id)
+            await ctx.send(_(lang,
+                             "Teraz ustawimy tekst powitalny.\nDodatkowe argumenty:\n```\n<@USER> - oznaczenie usera\n<USER> - nazwa usera\n<GUILD> - nazwa serwera\n\nReszte znajdziesz w dokumentacji - style77.github.io```"))
 
             msg3 = await self.bot.wait_for('message', check=check)
             text = msg3.content
             if text.lower() == 'none':
                 text = None
-            await self.bot.pg_con.execute("INSERT INTO guild_settings (welcome_text, guild_id) VALUES ($1, $2)", text, ctx.guild.id)
+            await self.bot.pg_con.execute("INSERT INTO guild_settings (welcome_text, guild_id) VALUES ($1, $2)", text,
+                                          ctx.guild.id)
             await ctx.send(':ok_hand:')
 
             if ch is not None:
@@ -510,7 +529,8 @@ class Settings(Plugin):
                 else:
                     await ctx.send(_(lang, "To nie jest prawidłowa odpowiedź. Ustawiam `False`."))
                     answer = False
-                await self.bot.pg_con.execute("UPDATE guild_settings SET self_starring = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+                await self.bot.pg_con.execute("UPDATE guild_settings SET self_starring = $1 WHERE guild_id = $2",
+                                              answer, ctx.guild.id)
                 await ctx.send(':ok_hand:')
 
             await ctx.send(_(lang, "Czy chcesz włączyć `invite_blocker`? Odpowiedz `True` lub `False`."))
@@ -522,7 +542,8 @@ class Settings(Plugin):
             else:
                 await ctx.send(_(lang, "To nie jest prawidłowa odpowiedź. Ustawiam `False`."))
                 answer = False
-            await self.bot.pg_con.execute("UPDATE guild_settings SET invite_blocker = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET invite_blocker = $1 WHERE guild_id = $2", answer,
+                                          ctx.guild.id)
             await ctx.send(':ok_hand:')
 
             await ctx.send(_(lang, "Czy chcesz włączyć `emoji_censor`? Odpowiedz `True` lub `False`."))
@@ -534,7 +555,8 @@ class Settings(Plugin):
             else:
                 await ctx.send(_(lang, "To nie jest prawidłowa odpowiedź. Ustawiam `False`."))
                 answer = False
-            await self.bot.pg_con.execute("UPDATE guild_settings SET emoji_censor = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET emoji_censor = $1 WHERE guild_id = $2", answer,
+                                          ctx.guild.id)
             await ctx.send(':ok_hand:')
 
             await ctx.send(_(lang, "Czy chcesz włączyć `anti_raid`? Odpowiedz `True` lub `False`."))
@@ -546,7 +568,8 @@ class Settings(Plugin):
             else:
                 await ctx.send(_(lang, "To nie jest prawidłowa odpowiedź. Ustawiam `False`."))
                 answer = False
-            await self.bot.pg_con.execute("UPDATE guild_settings SET anti_raid = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET anti_raid = $1 WHERE guild_id = $2", answer,
+                                          ctx.guild.id)
             await ctx.send(':ok_hand:')
 
             await ctx.send(_(lang, "Czy chcesz włączyć `anti_link`? Odpowiedz `True` lub `False`."))
@@ -558,16 +581,21 @@ class Settings(Plugin):
             else:
                 await ctx.send(_(lang, "To nie jest prawidłowa odpowiedź. Ustawiam `False`."))
                 answer = False
-            await self.bot.pg_con.execute("UPDATE guild_settings SET anti_link = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET anti_link = $1 WHERE guild_id = $2", answer,
+                                          ctx.guild.id)
             await ctx.send(':ok_hand:')
 
             if channel1 is not None:
                 await ctx.send(_(lang, "Ile ma być reakcji pod wiadomością, aby pojawiła się na `heartboardzie`?"))
                 msgg = await self.bot.wait_for('message', check=check)
                 if str(msgg.content).isdigit():
-                    await self.bot.pg_con.execute("UPDATE guild_settings SET stars_count = $1 WHERE guild_id = $2", int(msgg.content), ctx.guild.id)
+                    await self.bot.pg_con.execute("UPDATE guild_settings SET stars_count = $1 WHERE guild_id = $2",
+                                                  int(msgg.content), ctx.guild.id)
                 else:
-                    await ctx.send(_(lang, "To nie jest prawidłowa liczba.\nSprawdź czy dobrze wpisałeś liczbę, jeśli błąd dalej będzie się powtarzał zgłoś go na serwerze do pomocy `{}support`.").format(ctx.prefix))
+                    await ctx.send(_(lang,
+                                     "To nie jest prawidłowa liczba.\nSprawdź czy dobrze wpisałeś liczbę,"
+                                     " jeśli błąd dalej będzie się powtarzał zgłoś go na serwerze do "
+                                     "pomocy `{}support`.").format(ctx.prefix))
 
             await ctx.send(_(lang, "Oznacz rangę jaka ma być przyznawana nowym użytkownikom tego serwera."))
             msg = await self.bot.wait_for('message', check=check)
@@ -577,9 +605,13 @@ class Settings(Plugin):
                 role = await commands.RoleConverter().convert(ctx, msg.content)
                 if not role:
                     role = None
-                    await ctx.send(_(lang, "Wystąpił problem z przekonwertowaniem roli.\nSprawdź poprawność nazwy/id, a jeśli ją oznaczyłeś zgłoś błąd na serwerze do pomocy `{}support`.").format(ctx.prefix))
+                    await ctx.send(_(lang,
+                                     "Wystąpił problem z przekonwertowaniem roli.\nSprawdź poprawność nazwy/id, "
+                                     "a jeśli ją oznaczyłeś zgłoś błąd na serwerze do pomocy `{}support`.").format(
+                        ctx.prefix))
                 role = role.id
-            await self.bot.pg_con.execute("UPDATE guild_settings SET auto_role = $1 WHERE guild_id = $2", role, ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET auto_role = $1 WHERE guild_id = $2", role,
+                                          ctx.guild.id)
 
             await ctx.send('Zezwalasz na `global_emojis`? Odpowiedz `True` lub `False`')
             msgg = await self.bot.wait_for('message', check=check)
@@ -587,7 +619,8 @@ class Settings(Plugin):
                 answer = True
             elif msgg.content.lower() in ['false', '0', 'disable']:
                 answer = False
-            await self.bot.pg_con.execute("UPDATE guild_settings SET global_emojis = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET global_emojis = $1 WHERE guild_id = $2", answer,
+                                          ctx.guild.id)
 
             # await ctx.send('Zezwalasz na `levels`? Odpowiedz `True` lub `False`')
             # msgg = await self.bot.wait_for('message', check=check)
@@ -597,7 +630,10 @@ class Settings(Plugin):
             #     answer = False
             # await self.bot.pg_con.execute("UPDATE guild_settings SET levels = $1 WHERE guild_id = $2", answer, ctx.guild.id)
 
-            await ctx.send(_(lang, ":ok_hand:\nZakończono ustawianie serwera.\nAby ustawić blacklistę wyrazów sprawdz komende `{}set blacklist`.").format(ctx.prefix))
+            await ctx.send(_(lang,
+                             ":ok_hand:\nZakończono ustawianie serwera.\nAby ustawić blacklistę wyrazów "
+                             "sprawdz komende `{}set blacklist`.").format(
+                ctx.prefix))
         else:
             return await ctx.send(_(lang, "Anulowano ustawianie serwera."))
 
@@ -609,28 +645,54 @@ class Settings(Plugin):
             z.append(f"- {cmd.name}")
         await ctx.send(_(ctx.lang, "Możesz ustawić:\n```\n{}```").format('\n'.join(z)))
 
+    @set_.command()
+    @check_permissions(manage_guild=True)
+    async def logs(self, ctx, channel: discord.TextChannel = None):
+        if not channel:
+            await ctx.send(_(ctx.lang, "Podaj kanał na którym będą wysyłane wszystkie logi."))
+
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=60)
+            except asyncio.TimeoutError:
+                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
+
+            if msg.content.lower() == 'none':
+                channel = None
+            else:
+                channel = await commands.TextChannelConverter().convert(ctx, msg.content.lower())
+                if not channel:
+                    return await ctx.send(_(ctx.lang, "Nie znaleziono tego kanału."))
+
+        await self.bot.pg_con.execute("UPDATE guild_settings SET logs = $1 WHERE guild_id = $2",
+                                      channel.id, ctx.guild.id)
+        return await ctx.send(":ok_hand:")
+
     @set_.command(aliases=['lang'])
     @check_permissions(manage_guild=True)
     @commands.cooldown(1, 15, BucketType.guild)
-    async def language(self, ctx, language: str=None):
-
-        if not language:
-            raise commands.UserInputError()
-
+    async def language(self, ctx, language: str):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if not option:
             await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", ctx.guild.id)
+
         langs = ["PL", "ENG"]
         if not language.upper() in langs:
             return await ctx.send(_(ctx.lang, "Nie ma takiego języka. Użyj {}").format(', '.join(langs)))
-        await self.bot.pg_con.execute("UPDATE guild_settings SET lang = $1 WHERE guild_id = $2", language.upper(), ctx.guild.id)
+
+        await self.bot.pg_con.execute("UPDATE guild_settings SET lang = $1 WHERE guild_id = $2",
+                                      language.upper(), ctx.guild.id)
         return await ctx.send(":ok_hand:")
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def warns_kick(self, ctx, number: int=None):
-        option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        await self.bot.pg_con.execute("UPDATE guild_settings SET warns_kick = $1 WHERE guild_id = $2", number, ctx.guild.id)
+    async def warns_kick(self, ctx, number: int = None):
+        option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1",
+                                             ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET warns_kick = $1 WHERE guild_id = $2",
+                                      number, ctx.guild.id)
         return await ctx.send(":ok_hand:")
 
     @set_.group(invoke_without_command=True)
@@ -644,7 +706,9 @@ class Settings(Plugin):
     @blocked_commands.command(name="show", aliases=['list'])
     @check_permissions(manage_guild=True)
     async def show__(self, ctx):
-        blocked_commands = await self.bot.pg_con.fetchval("SELECT blocked_commands FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+        blocked_commands = await self.bot.pg_con.fetchval(
+            "SELECT blocked_commands FROM guild_settings WHERE guild_id = $1",
+            ctx.guild.id)
         if len(blocked_commands) == 0:
             return await ctx.send(_(ctx.lang, "Nie ma żadnych zablokowanych komend."))
         return await ctx.send("```" + '\n'.join(blocked_commands) + "```")
@@ -665,7 +729,8 @@ class Settings(Plugin):
                 functional_commands.append(cmd.name)
 
         if command in functional_commands:
-            return await ctx.send(random.choice(["O.o", "o.O"])) # yes im sending this only when you are doing something silly
+            return await ctx.send(
+                random.choice(["O.o", "o.O"]))  # yes im sending this only when you are doing something silly
 
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
 
@@ -673,7 +738,8 @@ class Settings(Plugin):
             return await ctx.send(_(ctx.lang, "Ta komenda jest już zablokowana."))
 
         option[0]['blocked_commands'].append(command.lower())
-        await self.bot.pg_con.execute("UPDATE guild_settings SET blocked_commands = $1 WHERE guild_id = $2", option[0]['blocked_commands'], ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET blocked_commands = $1 WHERE guild_id = $2",
+                                      option[0]['blocked_commands'], ctx.guild.id)
         return await ctx.send(":ok_hand:")
 
     @blocked_commands.command(name="remove")
@@ -683,19 +749,20 @@ class Settings(Plugin):
         all_commands = []
         for cmd in self.bot.walk_commands():
             all_commands.append(cmd.name)
-        if not command in all_commands: # TODO: walk_commands
+        if not command in all_commands:
             return await ctx.send(_(ctx.lang, "Nie ma takiej komendy."))
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if not command in option[0]['blocked_commands']:
             return await ctx.send(_(ctx.lang, "Ta komenda nie jest zablokowana."))
 
         option[0]['blocked_commands'].remove(command.lower())
-        await self.bot.pg_con.execute("UPDATE guild_settings SET blocked_commands = $1 WHERE guild_id = $2", option[0]['blocked_commands'], ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET blocked_commands = $1 WHERE guild_id = $2",
+                                      option[0]['blocked_commands'], ctx.guild.id)
         return await ctx.send(":ok_hand:")
 
     @set_.command(aliases=['auto_role'])
     @check_permissions(manage_guild=True)
-    async def autorole(self, ctx, role: str=None):
+    async def autorole(self, ctx, role: str = None):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
 
         if not role:
@@ -706,7 +773,8 @@ class Settings(Plugin):
         else:
             role = await commands.RoleConverter().convert(ctx, role)
             role = role.id
-        await self.bot.pg_con.execute("UPDATE guild_settings SET auto_role = $1 WHERE guild_id = $2", role, ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET auto_role = $1 WHERE guild_id = $2", role,
+                                      ctx.guild.id)
         return await ctx.send(":ok_hand:")
 
     @commands.Cog.listener()
@@ -750,7 +818,7 @@ class Settings(Plugin):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if not option[0]['blacklist']:
             return await ctx.send(_(ctx.lang, "Nie ma żadnych wyrazów w blackliście."))
-        return await ctx.send('```'+", ".join(option[0]['blacklist'])+'```')
+        return await ctx.send('```' + ", ".join(option[0]['blacklist']) + '```')
 
     @blacklist.command(aliases=['warn'])
     @check_permissions(manage_guild=True)
@@ -760,7 +828,8 @@ class Settings(Plugin):
             return await ctx.send(f"```{guild[0]['blacklist_warn']}```")
         if not text:
             return await ctx.send("Podaj tekst.")
-        await self.bot.pg_con.execute("UPDATE guild_settings SET blacklist_warn = $1 WHERE guild_id = $2", text, ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET blacklist_warn = $1 WHERE guild_id = $2", text,
+                                      ctx.guild.id)
         await ctx.send(':ok_hand:')
 
     @blacklist.command()
@@ -773,7 +842,8 @@ class Settings(Plugin):
             return await ctx.send(_(ctx.lang, "W blackliście jest już taki wyraz."))
 
         option[0]['blacklist'].append(word.lower())
-        await self.bot.pg_con.execute("UPDATE guild_settings SET blacklist = $1 WHERE guild_id = $2", option[0]['blacklist'], ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET blacklist = $1 WHERE guild_id = $2",
+                                      option[0]['blacklist'], ctx.guild.id)
         return await ctx.send(":ok_hand:")
 
     @blacklist.command()
@@ -786,7 +856,8 @@ class Settings(Plugin):
             return await ctx.send(_(ctx.lang, "W blackliście nie ma takiego wyrazu."))
 
         option[0]['blacklist'].remove(word.lower())
-        await self.bot.pg_con.execute("UPDATE guild_settings SET blacklist = $1 WHERE guild_id = $2", option[0]['blacklist'], ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET blacklist = $1 WHERE guild_id = $2",
+                                      option[0]['blacklist'], ctx.guild.id)
         return await ctx.send(":ok_hand:")
 
     @set_.command()
@@ -794,27 +865,30 @@ class Settings(Plugin):
     async def stars_count(self, ctx, number=None):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if str(number).isdigit():
-            await self.bot.pg_con.execute("UPDATE guild_settings SET stars_count = $1 WHERE guild_id = $2", int(number), ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET stars_count = $1 WHERE guild_id = $2", int(number),
+                                          ctx.guild.id)
             return await ctx.send(":ok_hand:")
         else:
             return await ctx.send(_(ctx.lang, "To nie jest prawidłowa liczba."))
 
     @set_.group(invoke_without_command=True)
     @check_permissions(manage_guild=True)
-    async def global_emojis(self, ctx, answer: TrueFalseConverter=None):
+    async def global_emojis(self, ctx, answer: TrueFalseConverter = None):
         if not answer:
             raise TrueFalseError()
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        await self.bot.pg_con.execute("UPDATE guild_settings SET global_emojis = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET global_emojis = $1 WHERE guild_id = $2", answer,
+                                      ctx.guild.id)
         await ctx.send(_(ctx.lang, 'Ustawiono `global_emojis` na `{}`.').format(answer))
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def self_starring(self, ctx, answer: TrueFalseConverter=None):
+    async def self_starring(self, ctx, answer: TrueFalseConverter = None):
         if not answer:
             raise TrueFalseError()
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        await self.bot.pg_con.execute("UPDATE guild_settings SET self_starring = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET self_starring = $1 WHERE guild_id = $2", answer,
+                                      ctx.guild.id)
         await ctx.send(_(ctx.lang, "Ustawiono `self_starring` na `{}`.").format(answer))
 
     # @set_.command()
@@ -823,48 +897,53 @@ class Settings(Plugin):
     #     if not answer:
     #         raise TrueFalseError()
     #     option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-    #     await self.bot.pg_con.execute("UPDATE guild_settings SET levels = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+    #     await self.bot.pg_con.execute("
+    #     UPDATE guild_settings SET levels = $1 WHERE guild_id = $2", answer, ctx.guild.id)
     #     await ctx.send(_(ctx.lang, "Ustawiono `levels` na `{}`.").format(answer))
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def invite_blocker(self, ctx, answer: TrueFalseConverter=None):
+    async def invite_blocker(self, ctx, answer: TrueFalseConverter = None):
         if not answer:
             raise TrueFalseError()
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        await self.bot.pg_con.execute("UPDATE guild_settings SET invite_blocker = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET invite_blocker = $1 WHERE guild_id = $2", answer,
+                                      ctx.guild.id)
         await ctx.send(_(ctx.lang, "Ustawiono `invite_blocker` na `{}`.").format(answer))
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def emoji_censor(self, ctx, answer: TrueFalseConverter=None):
+    async def emoji_censor(self, ctx, answer: TrueFalseConverter = None):
         if not answer:
             raise TrueFalseError()
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        await self.bot.pg_con.execute("UPDATE guild_settings SET emoji_censor = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET emoji_censor = $1 WHERE guild_id = $2", answer,
+                                      ctx.guild.id)
         await ctx.send(_(ctx.lang, "Ustawiono `emoji_censor` na `{}`.").format(answer))
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def anti_raid(self, ctx, answer: TrueFalseConverter=None):
+    async def anti_raid(self, ctx, answer: TrueFalseConverter = None):
         if not answer:
             raise TrueFalseError()
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        await self.bot.pg_con.execute("UPDATE guild_settings SET anti_raid = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET anti_raid = $1 WHERE guild_id = $2", answer,
+                                      ctx.guild.id)
         await ctx.send(_(ctx.lang, "Ustawiono `anti_raid` na `{}`.").format(answer))
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def anti_link(self, ctx, answer: TrueFalseConverter=None):
+    async def anti_link(self, ctx, answer: TrueFalseConverter = None):
         if not answer:
             raise TrueFalseError()
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        await self.bot.pg_con.execute("UPDATE guild_settings SET anti_link = $1 WHERE guild_id = $2", answer, ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET anti_link = $1 WHERE guild_id = $2", answer,
+                                      ctx.guild.id)
         await ctx.send(_(ctx.lang, "Ustawiono `anti_link` na `{}`.").format(answer))
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def welcomer_channel(self, ctx, *, channel: str=None):
+    async def welcomer_channel(self, ctx, *, channel: str = None):
         welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if not channel and welcomer:
             return await ctx.send(ctx.guild.get_channel(welcomer[0]['welcomer_channel']).mention)
@@ -875,10 +954,12 @@ class Settings(Plugin):
             chann = channel.id
         if not channel:
             chan = await ctx.guild.create_text_channel(name='welcomer')
-            await self.bot.pg_con.execute("UPDATE guild_settings SET welcomer_channel = $1 WHERE guild_id = $2", chan.id, ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET welcomer_channel = $1 WHERE guild_id = $2",
+                                          chan.id, ctx.guild.id)
             await ctx.send(':ok_hand:')
         if channel and welcomer:
-            await self.bot.pg_con.execute("UPDATE guild_settings SET welcomer_channel = $1 WHERE guild_id = $2", chann, ctx.guild.id)
+            await self.bot.pg_con.execute("UPDATE guild_settings SET welcomer_channel = $1 WHERE guild_id = $2", chann,
+                                          ctx.guild.id)
             await ctx.send(':ok_hand:')
 
     @set_.command()
@@ -891,7 +972,8 @@ class Settings(Plugin):
             return await ctx.send(_(ctx.lang, "Najpierw ustaw kanał do powitań."))
         if not text:
             raise commands.UserInputError()
-        await self.bot.pg_con.execute("UPDATE guild_settings SET welcome_text = $1 WHERE guild_id = $2", str(text), ctx.guild.id)
+        await self.bot.pg_con.execute("UPDATE guild_settings SET welcome_text = $1 WHERE guild_id = $2", str(text),
+                                      ctx.guild.id)
         await ctx.send(':ok_hand:')
 
     @commands.Cog.listener()
@@ -909,7 +991,10 @@ class Settings(Plugin):
         await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", g.id)
         for channel in g.text_channels:
             try:
-                await channel.send(_(await get_language(self.bot, g.id), "Cześć, jestem {}. Dziękuje za dodanie mnie.\n\nJeśli będziesz potrzebował pomocy, dołącz - `/support`!\nAby wyświetlić pełną liste komend - `/help`.").format(self.bot.user.name))
+                await channel.send(_(await get_language(self.bot, g.id),
+                                     "Cześć, jestem {}. Dziękuje za dodanie mnie.\n\nJeśli będziesz potrzebował pomocy,"
+                                     " dołącz - `/support`!\nAby wyświetlić pełną liste komend - `/help`.").format(
+                    self.bot.user.name))
                 break
             except discord.Forbidden:
                 pass
@@ -927,7 +1012,8 @@ class Mod(Plugin):
     @commands.command(aliases=['b'])
     @check_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def ban(self, ctx, member: typing.Union[discord.Member, discord.User], *, reason: ModerationReason="Brak powodu"):
+    async def ban(self, ctx, member: typing.Union[discord.Member, discord.User], *,
+                  reason: ModerationReason = "Brak powodu"):
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
             return await add_react(ctx.message, False)
@@ -952,7 +1038,7 @@ class Mod(Plugin):
     @commands.command(aliases=['k'])
     @commands.bot_has_permissions(kick_members=True)
     @check_permissions(kick_members=True)
-    async def kick(self, ctx, member: discord.Member=None, *, reason: ModerationReason="Brak powodu"):
+    async def kick(self, ctx, member: discord.Member = None, *, reason: ModerationReason = "Brak powodu"):
         """Wyrzuca osobe z serwera."""
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
@@ -978,7 +1064,7 @@ class Mod(Plugin):
     @commands.command()
     @commands.bot_has_permissions(kick_members=True)
     @check_permissions(kick_members=True)
-    async def mute(self, ctx, member: discord.Member=None, *, time: EasyOneDayTime = None):
+    async def mute(self, ctx, member: discord.Member = None, *, time: EasyOneDayTime = None):
         """Wycisza osobe na zawsze, badź dany czas."""
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
@@ -1001,7 +1087,7 @@ class Mod(Plugin):
     @commands.command()
     @commands.bot_has_permissions(kick_members=True)
     @check_permissions(kick_members=True)
-    async def unmute(self, ctx, member: discord.Member=None):
+    async def unmute(self, ctx, member: discord.Member = None):
         """Odcisza wyciszoną osobe."""
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
@@ -1018,11 +1104,11 @@ class Mod(Plugin):
     @commands.command(name="clear", aliases=["purge"])
     @commands.bot_has_permissions(manage_messages=True)
     @check_permissions(manage_messages=True)
-    async def clear_(self, ctx, member: typing.Optional[discord.Member]=None, liczba=None):
+    async def clear_(self, ctx, member: typing.Optional[discord.Member] = None, liczba=None):
         """Usuwa daną ilość wiadomości."""
         if liczba is None:
             raise commands.UserInputError()
-        
+
         if liczba == "all":
             liczba = None
         else:
@@ -1034,13 +1120,16 @@ class Mod(Plugin):
         if member is not None:
             def check(m):
                 return m.author == member
+
             await ctx.channel.purge(limit=liczba, check=check)
         else:
             await ctx.channel.purge(limit=liczba)
-        await ctx.send(_(ctx.lang, "Wyczyszczono **{}** wiadomości z {}.").format(liczba-1 if liczba is not None else _(ctx.lang, "wszystkie"), ctx.channel.mention), delete_after = 10)
+        await ctx.send(_(ctx.lang, "Wyczyszczono **{}** wiadomości z {}.").format(
+            liczba - 1 if liczba is not None else _(ctx.lang, "wszystkie"), ctx.channel.mention), delete_after=10)
 
     async def get_warns(self, user_id, guild_id, ite=False):
-        warns = await self.bot.pg_con.fetch("SELECT * FROM warns WHERE user_id = $1 AND guild_id = $2 ORDER BY warn_num ASC", user_id, guild_id)
+        warns = await self.bot.pg_con.fetch(
+            "SELECT * FROM warns WHERE user_id = $1 AND guild_id = $2 ORDER BY warn_num ASC", user_id, guild_id)
         if ite:
             if warns:
                 return warns
@@ -1049,18 +1138,20 @@ class Mod(Plugin):
         return None
 
     async def warns_num(self, user_id, guild_id, char="+"):
-        warns = await self.bot.pg_con.fetch("SELECT * FROM warns WHERE user_id = $1 AND guild_id = $2", user_id, guild_id)
+        warns = await self.bot.pg_con.fetch("SELECT * FROM warns WHERE user_id = $1 AND guild_id = $2", user_id,
+                                            guild_id)
         if not warns:
             return 1
         if char == "+":
-            return len(warns)+1
+            return len(warns) + 1
         elif char == "-":
-            return len(warns)-1
+            return len(warns) - 1
         elif char == "/":
             return len(warns)
 
     async def remove_warn(self, user_id, guild_id, num):
-        await self.bot.pg_con.execute("DELETE FROM warns WHERE user_id = $1 AND guild_id = $2 AND warn_num = $3", user_id, guild_id, num)
+        await self.bot.pg_con.execute("DELETE FROM warns WHERE user_id = $1 AND guild_id = $2 AND warn_num = $3",
+                                      user_id, guild_id, num)
 
     async def clear_warns(self, user_id, guild_id):
         await self.bot.pg_con.execute("DELETE FROM warns WHERE user_id = $1 AND guild_id = $2", user_id, guild_id)
@@ -1073,10 +1164,14 @@ class Mod(Plugin):
 
     async def add_first_warn(self, user_id, guild_id, responsible_moderator_id, reason):
         warn_num = 1
-        await self.bot.pg_con.execute("INSERT INTO warns (user_id, guild_id, warn_num, reason, moderator) VALUES ($1, $2, $3, $4, $5)", user_id, guild_id, warn_num, reason, responsible_moderator_id)
+        await self.bot.pg_con.execute(
+            "INSERT INTO warns (user_id, guild_id, warn_num, reason, moderator) VALUES ($1, $2, $3, $4, $5)", user_id,
+            guild_id, warn_num, reason, responsible_moderator_id)
 
     async def ask_for_action(self, ctx, member):
-        msg = await ctx.send(_(ctx.lang, "{} ma już maksymalną ilość ostrzeżeń.\nPowinno się wyrzucić użykownika?").format(member.mention))
+        msg = await ctx.send(
+            _(ctx.lang, "{} ma już maksymalną ilość ostrzeżeń.\nPowinno się wyrzucić użykownika?").format(
+                member.mention))
         await add_react(msg, True)
         await add_react(msg, False)
 
@@ -1100,7 +1195,9 @@ class Mod(Plugin):
 
     async def add_warn(self, db, responsible_moderator_id, reason, ctx):
         warn_num = await self.warns_num(db['user_id'], db['guild_id'])
-        await self.bot.pg_con.execute("INSERT INTO warns (user_id, guild_id, warn_num, reason, moderator) VALUES ($1, $2, $3, $4, $5)", db['user_id'], db['guild_id'], warn_num, reason, responsible_moderator_id)
+        await self.bot.pg_con.execute(
+            "INSERT INTO warns (user_id, guild_id, warn_num, reason, moderator) VALUES ($1, $2, $3, $4, $5)",
+            db['user_id'], db['guild_id'], warn_num, reason, responsible_moderator_id)
         if await self.check(db['user_id'], db['guild_id']):
             member = self.bot.get_guild(
                 db['guild_id']).get_member(db['user_id'])
@@ -1110,7 +1207,7 @@ class Mod(Plugin):
 
     @commands.group(invoke_without_command=True, aliases=['w'])
     @check_permissions(kick_members=True)
-    async def warn(self, ctx, member: discord.Member=None, *, reason: ModerationReason='Brak powodu'):
+    async def warn(self, ctx, member: discord.Member = None, *, reason: ModerationReason = 'Brak powodu'):
         """Daje ostrzeżenie."""
         if ctx.lang == "ENG" and reason == "Brak powodu":
             reason = "No reason"
@@ -1118,7 +1215,7 @@ class Mod(Plugin):
 
     @warn.command()
     @check_permissions(kick_members=True)
-    async def add(self, ctx, member: discord.Member=None, *, reason: ModerationReason='Brak powodu'):
+    async def add(self, ctx, member: discord.Member = None, *, reason: ModerationReason = 'Brak powodu'):
         """Daje ostrzeżenie."""
         if ctx.lang == "ENG" and reason == "Brak powodu":
             reason = "No reason"
@@ -1135,7 +1232,7 @@ class Mod(Plugin):
 
     @warn.command()
     @check_permissions(kick_members=True)
-    async def remove(self, ctx, member: discord.Member=None, number: int=None):
+    async def remove(self, ctx, member: discord.Member = None, number: int = None):
         """Usuwa ostrzeżenie po id."""
         if member.id == self.bot.user.id:
             return await ctx.send(random.choice(["O.o", "o.O"]))
@@ -1147,7 +1244,7 @@ class Mod(Plugin):
 
     @warn.command(aliases=['purge'])
     @check_permissions(kick_members=True)
-    async def clear(self, ctx, member: discord.Member=None):
+    async def clear(self, ctx, member: discord.Member = None):
         """Usuwa wszystkie ostrzeżenia."""
         if member.id == self.bot.user.id:
             return await ctx.send(random.choice(["O.o", "o.O"]))
@@ -1159,7 +1256,7 @@ class Mod(Plugin):
 
     @commands.command()
     @check_permissions(kick_members=True)
-    async def warns(self, ctx, member: typing.Union[discord.User, discord.Member]=None):
+    async def warns(self, ctx, member: typing.Union[discord.User, discord.Member] = None):
         """Pokazuje wszystkie ostrzeżenia."""
         member = member or ctx.author
         warns = await self.get_warns(member.id, ctx.guild.id, True)
@@ -1178,7 +1275,6 @@ class Mod(Plugin):
         for warn in warns:
             z.append("#{}  `{}` {} {}".format(
                 warn['warn_num'], warn['reason'], cor, warn['moderator']))
-        
 
         p = commands.Paginator()
 

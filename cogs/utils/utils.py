@@ -37,10 +37,7 @@ def check_permissions(*, allow_owner=True, **permissions):
                 return True
             raise commands.MissingPermissions(missing)
         func.required_permissions = list(permissions)
-        #print(commands.check(predicate))
-        #print(commands.check(predicate)(func))
         return commands.check(predicate)(func)
     return inner
-
 
 builtins.check_permissions = check_permissions
