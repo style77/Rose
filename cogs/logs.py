@@ -13,10 +13,13 @@ class Logs(plugin.Plugin):
         self.guild = None
         self.author = None
 
-        self.bot.loop.create_task(self.caching_settings())
+        self.caching_settings.start()
 
     # Cache stuff
     # TODO move this to bot.py
+
+    def cog_unload(self):
+        self.caching_settings.cancel()
 
     @tasks.loop(count=1)
     async def caching_settings(self):
