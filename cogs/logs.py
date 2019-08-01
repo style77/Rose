@@ -36,7 +36,7 @@ class Logs(plugin.Plugin):
     @property
     async def channel(self):
         cs = cache.GuildSettingsCache()
-        logs_channel = cs[self.guild_id]
+        logs_channel = cs[self.guild.id]
         if logs_channel:
             channel = self.bot.get_channel(logs_channel['database']['logs'])
             return channel
@@ -57,7 +57,8 @@ class Logs(plugin.Plugin):
                           color=0xb8352c)
         e.set_author(name=m.author, icon_url=m.author.avatar_url)
 
-        await ch.send(embed=e)
+        if ch:
+            await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, m):
@@ -67,17 +68,18 @@ class Logs(plugin.Plugin):
         # P.S. Im little scared that this will be bugged and people could get people from other server as
         # command authors but we will see.
 
-        self.guild = m.guild
+        self.guild = m[0].guild
         ch = await self.channel
 
         e = discord.Embed(title=_(get_language(self.bot, self.guild.id), "Zbiorowe usunięcie wiadomości"),
                           description=_(get_language(self.bot, self.guild.id), "{} wiadomości usuniętych"),
                           color=0x6e100a,
-                          timestamp=datetime.timestamp)
+                          timestamp=m[0].created_at)
         if self.author:
             e.set_author(name=self.author, icon_url=self.author.avatar_url)
 
-        await ch.send(embed=e)
+        if ch:
+            await ch.send(embed=e)
 
 
 def setup(bot):
