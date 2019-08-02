@@ -340,5 +340,21 @@
     "Nie ma takiego modułu, bądź nie jest on możliwy do włączenia.": "There is no module like that, or it is not possible to enable it.",
     "Czas na odpowiedź minął.": "Time for answer expired.",
     "Odbanowano {}.": "Unbanned {}.",
-    "": "Unbanned {}, previously banned for {}."
+    "Odbanowano {}, który poprzednio został zbanowany za {}.": "Unbanned {}, previously banned for {}.",
+    "Wiadomość {} usunięta.": "",
+    "Zbiorowe usunięcie wiadomości": "",
+    "{} wiadomości usuniętych": "",
+    "{} użył komendy `{}`.": "",
+    "Użytkownik dołaczył na serwer": "",
+    "{} dołaczył do `{}`.": "",
+    "Użytkownik wyszedł z serwera": "",
+    "{} opuścił serwer.": "",
+    "{} został zbanowany.": "",
+    "{} został odbanowany.": "",
+    "Rola stworzona": "",
+    "Na serwer została dodana rola {}.": "",
+    "Rola usunięta": "",
+    "Z serwera została usunięta rola {}.": "",
+    "Nowa emotka": "",
+    "Na serwer została dodana emotka {}.": ""
 }

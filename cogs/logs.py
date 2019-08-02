@@ -26,12 +26,12 @@ class Logs(plugin.Plugin):
 
         ch = await self.get_logs_channel(m.guild.id)
 
-        e = discord.Embed(title=_(await get_language(self.bot, m.guild.id),
-                                  "Wiadomość {} usunięta.").format(m.author.name),
-                          description=m.content,
+        e = discord.Embed(description=_(await get_language(self.bot, m.guild.id),
+                                  "**Wiadomość wysłana przez {} w {} została usunięta.**\n").format(m.author.mention, m.channel.mention, m.content),
                           color=0xb8352c,
                           timestamp=m.created_at)
         e.set_author(name=m.author, icon_url=m.author.avatar_url)
+        e.set_footer(text="")
 
         if ch:
             await ch.send(embed=e)
@@ -44,13 +44,16 @@ class Logs(plugin.Plugin):
         # P.S. Im little scared that this will be bugged and people could get people from other server as
         # command authors but we will see.
 
+        # P.S. 2 I have changed this and now its not getting author, instead mod_command_use is invoked and there i can
+        # get author so its perfect
+
         ch = await self.get_logs_channel(m[0].guild.id)
 
-        e = discord.Embed(title=_(await get_language(self.bot, m[0].guild.id), "Zbiorowe usunięcie wiadomości"),
-                          description=_(await get_language(self.bot, m[0].guild.id),
-                                        "{} wiadomości usuniętych").format(len(m)-1),
+        e = discord.Embed(description=_(await get_language(self.bot, m[0].guild.id),
+                                        "{} wiadomości usuniętych w {}").format(len(m)-1, m[0].channel.mention),
                           color=0x6e100a,
                           timestamp=m[0].created_at)
+        e.set_author(name=m[0].guild, icon_url=m[0].guild.icon_url)
 
         if ch:
             await ch.send(embed=e)
@@ -61,10 +64,11 @@ class Logs(plugin.Plugin):
 
         e = discord.Embed(description=_(await get_language(self.bot, ctx.guild.id),
                                         "{} użył komendy `{}`.").format(ctx.author.mention, ctx.command.name),
-                          color=0x6e100a,
+                          color=discord.Color.blurple(),
                           timestamp=ctx.message.created_at)
 
         e.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+        e.set_footer(text="ID: {}".format(ctx.author.id))
 
         if ch:
             await ch.send(embed=e)
@@ -73,10 +77,12 @@ class Logs(plugin.Plugin):
     async def on_member_join(self, member):
         ch = await self.get_logs_channel(member.guild.id)
 
-        e = discord.Embed(title=_(await get_language(self.bot, member.guild.id), "Użytkownik dołaczył na serwer"),
-                          description=_(await get_language(self.bot, member.guild.id),
-                                        "{} dołaczył do `{}`.").format(member.mention, member.guild.name),
-                          color=0x6e100a,
+        e = discord.Embed(description=_(await get_language(self.bot, member.guild.id),
+                                        "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`").format(member.mention,
+                                                                                                   member,
+                                                                                                   member.guild.name,
+                                                                                                str(member.created_at)),
+                          color=discord.Color.green(),
                           timestamp=member.joined_at)
 
         e.set_author(name=member, icon_url=member.avatar_url)
@@ -177,6 +183,9 @@ class Logs(plugin.Plugin):
             if emoji not in after:
                 emote = emoji
                 break
+
+        if not emote:
+            return
 
         e = discord.Embed(title=_(await get_language(self.bot, guild.id), "Nowa emotka"),
                           description=_(await get_language(self.bot, guild.id),

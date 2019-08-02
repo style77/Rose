@@ -101,6 +101,12 @@ class Settings(Plugin):
         self.youtube_key = utils.get_from_config('yt_key')
         self.update_subs.start()
 
+    async def update_cache(self, guild):
+        cache_get = cache.GuildSettingsCache().get(guild.id)
+        if not cache_get:
+            z = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", guild.id)
+            cache.GuildSettingsCache().update(guild, "database", z)
+
     async def cog_check(self, ctx):
         if ctx.guild is None:
             raise commands.NoPrivateMessage()
@@ -668,10 +674,40 @@ class Settings(Plugin):
         await self.bot.pg_con.execute("UPDATE guild_settings SET logs = $1 WHERE guild_id = $2",
                                       channel.id, ctx.guild.id)
 
-        cache_get = cache.GuildSettingsCache().get(ctx.guild.id)
-        if not cache_get:
-            z = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-            cache.GuildSettingsCache().update(ctx.guild, "database", z)
+        await self.update_cache(ctx.guild)
+
+        return await ctx.send(":ok_hand:")
+
+    @set_.command()
+    @check_permissions(manage_guild=True)
+    async def streams(self, ctx, channel: discord.TextChannel = None):
+        option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+        if not option:
+            await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", ctx.guild.id)
+
+        if not channel:
+            await ctx.send(_(ctx.lang,
+                             "Podaj kanał na którym będą wysyłane wszystkie powiadomienia o transmisjach na żywo."))
+
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=60)
+            except asyncio.TimeoutError:
+                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
+
+            if msg.content.lower() == 'none':
+                channel = None
+            else:
+                channel = await commands.TextChannelConverter().convert(ctx, msg.content.lower())
+                if not channel:
+                    return await ctx.send(_(ctx.lang, "Nie znaleziono tego kanału."))
+
+        await self.bot.pg_con.execute("UPDATE guild_settings SET streams_notifications = $1 WHERE guild_id = $2",
+                                      channel.id, ctx.guild.id)
+
+        await self.update_cache(ctx.guild)
 
         return await ctx.send(":ok_hand:")
 

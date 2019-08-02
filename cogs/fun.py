@@ -243,9 +243,7 @@ class Fun(commands.Cog):
             return await ctx.send(_(ctx.lang, "Nie znaleziono **{text}**.").format(text=text))
 
     @commands.command()
-    async def ascii(self, ctx, *, text=None):
-        if not text:
-            raise commands.UserInputError()
+    async def ascii(self, ctx, *, text):
         custom = Figlet()
         ascii = custom.renderText(text)
         await ctx.send(f"```{ascii}```")
@@ -432,7 +430,7 @@ class Fun(commands.Cog):
                                                     global_[0]['commands'],
                                                     server_[0]['commands'],
                                                     member[0]['all_messages'])
-        elif not member:
+        else:
             desc = _(ctx.lang, "**{}** wysłanych wiadomości ogółem\n**{}** wysłanych wiadomości na tym serwerze\n**{}** użytych komend ogółem\n**{}** użytych komend na tym serwerze.").format(global_[0]['messages'],
                                                         server_[0]['messages'],
                                                         global_[0]['commands'],
@@ -464,6 +462,8 @@ class Fun(commands.Cog):
 
         e = discord.Embed(color=member.color)
         e.set_image(url=member.avatar_url)
+        e.set_author(name=member)
+        e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
         await ctx.send(embed=e)
 
     @commands.command(name="user", aliases=["member", "userinfo"])
