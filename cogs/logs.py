@@ -143,7 +143,7 @@ class Logs(plugin.Plugin):
                           color=0x6e100a,
                           timestamp=role.created_at)
 
-        e.set_author(name=role.guild, icon_url=role.guild.avatar_url)
+        e.set_author(name=role.guild, icon_url=role.guild.icon_url)
 
         if ch:
             await ch.send(embed=e)
@@ -158,7 +158,7 @@ class Logs(plugin.Plugin):
                           color=0x6e100a,
                           timestamp=role.created_at)
 
-        e.set_author(name=role.guild, icon_url=role.guild.avatar_url)
+        e.set_author(name=role.guild, icon_url=role.guild.icon_url)
 
         if ch:
             await ch.send(embed=e)
