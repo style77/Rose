@@ -10,51 +10,27 @@ class Logs(plugin.Plugin):
         self.bot = bot
 
         # metadata
-        self.guild = None
         self.author = None
 
-        self.caching_settings.start()
-
-    # Cache stuff
-    # TODO move this to bot.py
-
-    def cog_unload(self):
-        self.caching_settings.cancel()
-
-    @tasks.loop(count=1)
-    async def caching_settings(self):
-        guilds = await self.bot.pg_con.fetch("SELECT * FROM guild_settings")
-        for guild in guilds:
-            discord_guild = self.bot.get_guild(guild['guild_id'])
-            cache.GuildSettingsCache().set(discord_guild, guild)
-
-    @caching_settings.before_loop
-    async def caching_settings_before(self):
-        # we have to wait until bot is connected, otherwise it wont be possible to fetch
-        await self.bot.wait_until_ready()
-
-    @property
-    async def channel(self):
-        cs = cache.GuildSettingsCache()
-        logs_channel = cs[self.guild.id]
+    async def get_logs_channel(self, guild_id):
+        logs_channel = cache.GuildSettingsCache().get(guild_id)
         if logs_channel:
             channel = self.bot.get_channel(logs_channel['database']['logs'])
             return channel
-
-    @commands.Cog.listener()
-    async def on_command_completion(self, ctx):
-        mod_commands = ['clear']
-        if ctx.command.name in mod_commands:
-            self.author = ctx.author
+        return None
 
     @commands.Cog.listener()
     async def on_message_delete(self, m):
-        self.guild = m.guild
-        ch = await self.channel
+        if m.author == self.bot.user:
+            return
 
-        e = discord.Embed(title=_(get_language(self.bot, self.guild.id), "Wiadomość usunięta"),
+        ch = await self.get_logs_channel(m.guild.id)
+
+        e = discord.Embed(title=_(await get_language(self.bot, m.guild.id),
+                                  "Wiadomość {} usunięta.").format(m.author.name),
                           description=m.content,
-                          color=0xb8352c)
+                          color=0xb8352c,
+                          timestamp=m.created_at)
         e.set_author(name=m.author, icon_url=m.author.avatar_url)
 
         if ch:
@@ -62,25 +38,156 @@ class Logs(plugin.Plugin):
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, m):
-        # in bulk_message_delete arg m is list of messages, not one message object or bulk message object
+        # in bulk_message_delete event arg m is list of messages, not one message object or bulk message object
         # that's why we cant get its author and I have to set author after using some of mod commands that are specified
         # in mod_commands.
         # P.S. Im little scared that this will be bugged and people could get people from other server as
         # command authors but we will see.
 
-        self.guild = m[0].guild
-        ch = await self.channel
+        ch = await self.get_logs_channel(m[0].guild.id)
 
-        e = discord.Embed(title=_(get_language(self.bot, self.guild.id), "Zbiorowe usunięcie wiadomości"),
-                          description=_(get_language(self.bot, self.guild.id), "{} wiadomości usuniętych"),
+        e = discord.Embed(title=_(await get_language(self.bot, m[0].guild.id), "Zbiorowe usunięcie wiadomości"),
+                          description=_(await get_language(self.bot, m[0].guild.id),
+                                        "{} wiadomości usuniętych").format(len(m)-1),
                           color=0x6e100a,
                           timestamp=m[0].created_at)
-        if self.author:
-            e.set_author(name=self.author, icon_url=self.author.avatar_url)
 
         if ch:
             await ch.send(embed=e)
 
+    @commands.Cog.listener()
+    async def on_mod_command_use(self, ctx):
+        ch = await self.get_logs_channel(ctx.guild.id)
+
+        e = discord.Embed(description=_(await get_language(self.bot, ctx.guild.id),
+                                        "{} użył komendy `{}`.").format(ctx.author.mention, ctx.command.name),
+                          color=0x6e100a,
+                          timestamp=ctx.message.created_at)
+
+        e.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        ch = await self.get_logs_channel(member.guild.id)
+
+        e = discord.Embed(title=_(await get_language(self.bot, member.guild.id), "Użytkownik dołaczył na serwer"),
+                          description=_(await get_language(self.bot, member.guild.id),
+                                        "{} dołaczył do `{}`.").format(member.mention, member.guild.name),
+                          color=0x6e100a,
+                          timestamp=member.joined_at)
+
+        e.set_author(name=member, icon_url=member.avatar_url)
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        ch = await self.get_logs_channel(member.guild.id)
+
+        e = discord.Embed(title=_(await get_language(self.bot, member.guild.id), "Użytkownik wyszedł z serwera"),
+                          description=_(await get_language(self.bot, member.guild.id),
+                                        "{} opuścił serwer.").format(member.mention),
+                          color=0x6e100a,
+                          timestamp=member.joined_at)
+
+        e.set_author(name=member, icon_url=member.avatar_url)
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_member_ban(self, guild, user):
+        ch = await self.get_logs_channel(guild.id)
+
+        e = discord.Embed(title=_(await get_language(self.bot, guild.id), "Ban"),
+                          description=_(await get_language(self.bot, guild.id),
+                                        "{} został zbanowany.").format(user.mention),
+                          color=0x6e100a,
+                          timestamp=user.created_at)
+
+        e.set_author(name=user, icon_url=user.avatar_url)
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_member_unban(self, guild, user):
+        ch = await self.get_logs_channel(guild.id)
+
+        e = discord.Embed(title=_(await get_language(self.bot, guild.id), "Unban"),
+                          description=_(await get_language(self.bot, guild.id),
+                                        "{} został odbanowany.").format(user.mention),
+                          color=0x6e100a,
+                          timestamp=user.created_at)
+
+        e.set_author(name=user, icon_url=user.avatar_url)
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before, update):
+        pass
+
+    @commands.Cog.listener()
+    async def on_guild_role_create(self, role):
+        ch = await self.get_logs_channel(role.guild.id)
+
+        e = discord.Embed(title=_(await get_language(self.bot, role.guild.id), "Rola stworzona"),
+                          description=_(await get_language(self.bot, role.guild.id),
+                                        "Na serwer została dodana rola {}.").format(role.mention),
+                          color=0x6e100a,
+                          timestamp=role.created_at)
+
+        e.set_author(name=role.guild, icon_url=role.guild.avatar_url)
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_guild_role_delete(self, role):
+        ch = await self.get_logs_channel(role.guild.id)
+
+        e = discord.Embed(title=_(await get_language(self.bot, role.guild.id), "Rola usunięta"),
+                          description=_(await get_language(self.bot, role.guild.id),
+                                        "Z serwera została usunięta rola {}.").format(role.name),
+                          color=0x6e100a,
+                          timestamp=role.created_at)
+
+        e.set_author(name=role.guild, icon_url=role.guild.avatar_url)
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
+    async def on_guild_role_update(self, before, after):
+        pass
+
+    @commands.Cog.listener()
+    async def on_guild_emojis_update(self, guild, before, after):
+        ch = await self.get_logs_channel(guild.id)
+
+        emote = None
+
+        for emoji in before:
+            if emoji not in after:
+                emote = emoji
+                break
+
+        e = discord.Embed(title=_(await get_language(self.bot, guild.id), "Nowa emotka"),
+                          description=_(await get_language(self.bot, guild.id),
+                                        "Na serwer została dodana emotka {}.").format(str(emote)),
+                          color=0x6e100a,
+                          timestamp=emote.created_at)
+
+        e.set_author(name=guild, icon_url=guild.avatar_url)
+
+        if ch:
+            await ch.send(embed=e)
 
 def setup(bot):
     bot.add_cog(Logs(bot))

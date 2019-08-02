@@ -338,5 +338,7 @@
     "{} został wyrzucony.": "{} was kicked.",
     "Nie ma takiego modułu, bądź nie jest on możliwy do wyłączenia.": "There is no module like that, or it is not possible to disable it.",
     "Nie ma takiego modułu, bądź nie jest on możliwy do włączenia.": "There is no module like that, or it is not possible to enable it.",
-    "Czas na odpowiedź minął.": "Time for answer expired."
+    "Czas na odpowiedź minął.": "Time for answer expired.",
+    "Odbanowano {}.": "Unbanned {}.",
+    "": "Unbanned {}, previously banned for {}."
 }

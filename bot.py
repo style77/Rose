@@ -12,6 +12,7 @@ from discord.ext import commands
 
 from cogs.eh import MemberInBlacklist
 from cogs.utils import utils
+from cogs.classes import cache
 
 from cogs.utils import translations
 
@@ -56,12 +57,14 @@ class Bot(commands.AutoShardedBot):
             'cogs.todo',
             'cogs.reminder',
             'cogs.nsfw',
-            'cogs.music'
+            'cogs.music',
+            'cogs.logs'
         ]
         self.loop.run_until_complete(self.create_db_pool())
         
         self.loop.create_task(self.changing())
-        
+        self.loop.create_task(self.caching_settings())
+
         self.token = utils.get_from_config("dbl")
         self.dblpy = dbl.Client(self, self.token)
         self.app = wrapper.Wrapper(token=utils.get_from_config("badoszapi"))
@@ -75,7 +78,15 @@ class Bot(commands.AutoShardedBot):
                 exc = '{}: {}'.format(type(cc_error).__name__, cc_error)
                 print('Nie udało sie załadować {}\n{}.'.format(extension, exc))
                 traceback.print_exc()
-                
+
+    async def caching_settings(self):
+        await self.wait_until_ready()
+        guilds = await self.pg_con.fetch("SELECT * FROM guild_settings")
+        for guild in guilds:
+            discord_guild = self.get_guild(guild['guild_id'])
+            if discord_guild:
+                cache.GuildSettingsCache().set(discord_guild, guild)
+
     #async def get_context(self, message, *, cls=None):
         #return await super().get_context(message, cls=Context)
 

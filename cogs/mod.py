@@ -9,8 +9,9 @@ import discord
 from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 
-from cogs.classes.converters import EasyOneDayTime, ModerationReason, TrueFalseConverter, TrueFalseError
+from cogs.classes.converters import EasyOneDayTime, ModerationReason, TrueFalseConverter, TrueFalseError, BannedMember
 from cogs.classes.plugin import Plugin
+from cogs.classes import cache
 from cogs.music import add_react
 from cogs.utils import settings
 from cogs.utils import utils
@@ -96,12 +97,6 @@ class Settings(Plugin):
 
     def __init__(self, bot):
         self.bot = bot
-        self.bansays_pl = ["**{}** został wysłany na wakacje.",
-                           "Młotek sprawiedliwości uderzył tym razem w **{}**.",
-                           "**{}** rozpłynął się w powietrzu."]
-        self.bansays_en = ["**{}** was sent on holiday.",
-                           "Justice hammer struck this time in **{}**.",
-                           "**{}** melted in the air."]
         self.msgs = {}
         self.youtube_key = utils.get_from_config('yt_key')
         self.update_subs.start()
@@ -648,6 +643,10 @@ class Settings(Plugin):
     @set_.command()
     @check_permissions(manage_guild=True)
     async def logs(self, ctx, channel: discord.TextChannel = None):
+        option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+        if not option:
+            await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", ctx.guild.id)
+
         if not channel:
             await ctx.send(_(ctx.lang, "Podaj kanał na którym będą wysyłane wszystkie logi."))
 
@@ -668,6 +667,12 @@ class Settings(Plugin):
 
         await self.bot.pg_con.execute("UPDATE guild_settings SET logs = $1 WHERE guild_id = $2",
                                       channel.id, ctx.guild.id)
+
+        cache_get = cache.GuildSettingsCache().get(ctx.guild.id)
+        if not cache_get:
+            z = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+            cache.GuildSettingsCache().update(ctx.guild, "database", z)
+
         return await ctx.send(":ok_hand:")
 
     @set_.command(aliases=['lang'])
@@ -999,9 +1004,16 @@ class Settings(Plugin):
             except discord.Forbidden:
                 pass
 
+
 class Mod(Plugin):
     def __init__(self, bot):
         self.bot = bot
+        self.bansays_pl = ["**{}** został wysłany na wakacje.",
+                           "Młotek sprawiedliwości uderzył tym razem w **{}**.",
+                           "**{}** rozpłynął się w powietrzu."]
+        self.bansays_en = ["**{}** was sent on holiday.",
+                           "Justice hammer struck this time in **{}**.",
+                           "**{}** melted in the air."]
 
     @commands.command(hidden=True)
     @commands.is_owner()
@@ -1013,7 +1025,7 @@ class Mod(Plugin):
     @check_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     async def ban(self, ctx, member: typing.Union[discord.Member, discord.User], *,
-                  reason: ModerationReason = "Brak powodu"):
+                  reason: ModerationReason = None):
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
             return await add_react(ctx.message, False)
@@ -1031,9 +1043,20 @@ class Mod(Plugin):
             await ctx.send(random.choice(self.bansays_pl).format(member))
         if lang == "ENG":
             await ctx.send(random.choice(self.bansays_en).format(member))
-        await member.send(_(ctx.lang, "Zostałeś zbanowany na `{}`.\nZa `{}`.").format(ctx.guild.name, reason))
         await member.ban(reason=reason)
-        return await add_react(ctx.message, True)
+        await member.send(_(ctx.lang, "Zostałeś zbanowany na `{}`.\nZa `{}`.").format(ctx.guild.name, reason))
+        await add_react(ctx.message, True)
+        self.bot.dispatch('mod_command_use', ctx)
+
+    @commands.command()
+    @check_permissions(ban_members=True)
+    async def unban(self, ctx, member: BannedMember, *, reason: ModerationReason = None):
+        await ctx.guild.unban(member.user, reason=reason)
+        if member.reason:
+            await ctx.send(_(ctx.lang, "Odbanowano {}, który poprzednio został zbanowany za {}.").format(member.user, member.reason))
+        else:
+            await ctx.send(_(ctx.lang, "Odbanowano {}.").format(member.user))
+        self.bot.dispatch('mod_command_use', ctx)
 
     @commands.command(aliases=['k'])
     @commands.bot_has_permissions(kick_members=True)
@@ -1057,9 +1080,10 @@ class Mod(Plugin):
             await ctx.send(random.choice(self.bansays_pl).format(member))
         if lang == "ENG":
             await ctx.send(random.choice(self.bansays_en).format(member))
-        await member.send(_(ctx.lang, "Zostałeś wyrzucony z `{}`.\nZa `{}`.").format(ctx.guild.name, reason))
         await member.kick(reason=reason)
-        return await add_react(ctx.message, True)
+        await member.send(_(ctx.lang, "Zostałeś wyrzucony z `{}`.\nZa `{}`.").format(ctx.guild.name, reason))
+        await add_react(ctx.message, True)
+        self.bot.dispatch('mod_command_use', ctx)
 
     @commands.command()
     @commands.bot_has_permissions(kick_members=True)
@@ -1083,6 +1107,7 @@ class Mod(Plugin):
             if any(r.name == 'Muted' for r in ctx.author.roles):
                 await member.remove_roles(role)
                 return await ctx.send(_(ctx.lang, "{} został odciszony.").format(member.mention))
+        self.bot.dispatch('mod_command_use', ctx)
 
     @commands.command()
     @commands.bot_has_permissions(kick_members=True)
@@ -1100,6 +1125,7 @@ class Mod(Plugin):
         else:
             await ctx.send(_(ctx.lang, "**{}** nie jest wyciszony.").format(member))
             return await add_react(ctx.message, False)
+        self.bot.dispatch('mod_command_use', ctx)
 
     @commands.command(name="clear", aliases=["purge"])
     @commands.bot_has_permissions(manage_messages=True)
@@ -1126,6 +1152,8 @@ class Mod(Plugin):
             await ctx.channel.purge(limit=liczba)
         await ctx.send(_(ctx.lang, "Wyczyszczono **{}** wiadomości z {}.").format(
             liczba - 1 if liczba is not None else _(ctx.lang, "wszystkie"), ctx.channel.mention), delete_after=10)
+
+        self.bot.dispatch('mod_command_use', ctx)
 
     async def get_warns(self, user_id, guild_id, ite=False):
         warns = await self.bot.pg_con.fetch(
@@ -1228,7 +1256,7 @@ class Mod(Plugin):
             await self.add_first_warn(member.id, ctx.guild.id, ctx.author.id, reason)
         else:
             await self.add_warn(m, ctx.author.id, reason, ctx)
-        return await ctx.send(_(ctx.lang, "{}, dostał ostrzeżenie za `{}`.").format(member.mention, reason))
+        await ctx.send(_(ctx.lang, "{}, dostał ostrzeżenie za `{}`.").format(member.mention, reason))
 
     @warn.command()
     @check_permissions(kick_members=True)

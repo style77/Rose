@@ -334,21 +334,18 @@ class ModerationReason(commands.Converter):
     async def convert(self, ctx, argument):
         return f"[{ctx.author}]: {argument}"[:512]
 
-class BannedUser(commands.Converter):
+
+class BannedMember(commands.Converter):
     async def convert(self, ctx, argument):
-        bans = await ctx.guild.bans()
-        user = discord.utils.find(lambda b: b.user.name == argument, bans)
-        if not user and argument.count("#") > 0:
-            *name, discrim = argument.split("#")
-            name = "#".join(name)
-            user = discord.utils.get(
-                bans, user__name=name, user__discriminator=discrim)
-        elif not user and argument.isdigit():
-            user = discord.utils.find(
-                lambda b: b.user.id == int(argument), bans)
-        if not user:
-            raise commands.BadArgument("Could not find that user.")
-        return user.user
+        ban_list = await ctx.guild.bans()
+        try:
+            member_id = int(argument, base=10)
+            entity = discord.utils.find(lambda u: u.user.id == member_id, ban_list)
+        except ValueError:
+            entity = discord.utils.find(lambda u: str(u.user) == argument, ban_list)
+        if entity is None:
+            raise commands.UserInputError()
+        return entity
 
 
 class SafeConverter(commands.Converter):
@@ -356,6 +353,7 @@ class SafeConverter(commands.Converter):
         argument = discord.utils.escape_markdown(argument)
         argument = discord.utils.escape_mentions(argument)
         return argument
+
 
 def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
     now = source or datetime.datetime.utcnow()
