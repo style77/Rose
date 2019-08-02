@@ -27,11 +27,11 @@ class Logs(plugin.Plugin):
         ch = await self.get_logs_channel(m.guild.id)
 
         e = discord.Embed(description=_(await get_language(self.bot, m.guild.id),
-                                  "**Wiadomość wysłana przez {} w {} została usunięta.**\n").format(m.author.mention, m.channel.mention, m.content),
+                                  "**Wiadomość wysłana przez {} w {} została usunięta.**\n{}").format(m.author.mention, m.channel.mention, m.content),
                           color=0xb8352c,
                           timestamp=m.created_at)
         e.set_author(name=m.author, icon_url=m.author.avatar_url)
-        e.set_footer(text="")
+        e.set_footer(text=f"ID: {m.author.id}")
 
         if ch:
             await ch.send(embed=e)
