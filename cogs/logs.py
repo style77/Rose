@@ -4,7 +4,6 @@ from datetime import datetime
 from discord.ext import commands, tasks
 from cogs.classes import plugin, cache
 
-
 class Logs(plugin.Plugin):
     def __init__(self, bot):
         self.bot = bot
@@ -27,7 +26,8 @@ class Logs(plugin.Plugin):
         ch = await self.get_logs_channel(m.guild.id)
 
         e = discord.Embed(description=_(await get_language(self.bot, m.guild.id),
-                                  "**Wiadomość wysłana przez {} w {} została usunięta.**\n{}").format(m.author.mention, m.channel.mention, m.content),
+                                        "**Wiadomość wysłana przez {} w {} została usunięta.**\n{}").format(
+            m.author.mention, m.channel.mention, m.content),
                           color=0xb8352c,
                           timestamp=m.created_at)
         e.set_author(name=m.author, icon_url=m.author.avatar_url)
@@ -50,7 +50,7 @@ class Logs(plugin.Plugin):
         ch = await self.get_logs_channel(m[0].guild.id)
 
         e = discord.Embed(description=_(await get_language(self.bot, m[0].guild.id),
-                                        "{} wiadomości usuniętych w {}").format(len(m)-1, m[0].channel.mention),
+                                        "**{} wiadomości usuniętych w {}.**").format(len(m) - 1, m[0].channel.mention),
                           color=0x6e100a,
                           timestamp=m[0].created_at)
         e.set_author(name=m[0].guild, icon_url=m[0].guild.icon_url)
@@ -78,10 +78,11 @@ class Logs(plugin.Plugin):
         ch = await self.get_logs_channel(member.guild.id)
 
         e = discord.Embed(description=_(await get_language(self.bot, member.guild.id),
-                                        "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`").format(member.mention,
+                                        "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`.").format(member.mention,
                                                                                                    member,
                                                                                                    member.guild.name,
-                                                                                                str(member.created_at)),
+                                                                                                   str(
+                                                                                                       member.created_at)),
                           color=discord.Color.green(),
                           timestamp=member.joined_at)
 
@@ -94,9 +95,8 @@ class Logs(plugin.Plugin):
     async def on_member_remove(self, member):
         ch = await self.get_logs_channel(member.guild.id)
 
-        e = discord.Embed(title=_(await get_language(self.bot, member.guild.id), "Użytkownik wyszedł z serwera"),
-                          description=_(await get_language(self.bot, member.guild.id),
-                                        "{} opuścił serwer.").format(member.mention),
+        e = discord.Embed(description=_(await get_language(self.bot, member.guild.id),
+                                        "{} ({}) opuścił serwer.\nDołączył: `{}`.").format(member.mention, member, member.joined_at),
                           color=0x6e100a,
                           timestamp=member.joined_at)
 
