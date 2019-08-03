@@ -704,7 +704,7 @@ class Settings(Plugin):
                 if not channel:
                     return await ctx.send(_(ctx.lang, "Nie znaleziono tego kanału."))
 
-        await self.bot.pg_con.execute("UPDATE guild_settings SET streams_notifications = $1 WHERE guild_id = $2",
+        await self.bot.pg_con.execute("UPDATE guild_settings SET stream_notification = $1 WHERE guild_id = $2",
                                       channel.id, ctx.guild.id)
 
         await self.update_cache(ctx.guild)

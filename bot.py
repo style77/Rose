@@ -58,7 +58,8 @@ class Bot(commands.AutoShardedBot):
             'cogs.reminder',
             'cogs.nsfw',
             'cogs.music',
-            'cogs.logs'
+            'cogs.logs',
+            'cogs.streams'
         ]
         self.loop.run_until_complete(self.create_db_pool())
         
