@@ -364,5 +364,12 @@
     "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`.": "{} ({}) joined `{}`.\nAccount created at: `{}`.",
     "Usuwa powiadomienia o transmisjach.": "Delete notifications about live streams.",
     "Ten stream nie jest ustawiony.": "This stream is not set.",
-    "Żadne powiadomienia o transmisjach na żywo nie są ustawione na tym serwerze.": "There are not any streams notifications set on this server."
+    "Żadne powiadomienia o transmisjach na żywo nie są ustawione na tym serwerze.": "There are not any streams notifications set on this server.",
+    "Wiadomość została zeedytowana w {}\n[JUMP TO]({})": "Message edited in {}\n[JUMP TO]({})",
+    "{} został zbanowany przez {} z powodu `{}`.": "{} has been banned by {} with reason `{}`.",
+    "{} został odbanowany przez {} z powodu `{}`.": "{} has been unbanned by {} with reason `{}`.",
+    "Rola {} utworzona przez {}.": "Role {} created by {}.",
+    "Rola {} utworzona.": "Role {} created.",
+    "Rola {} usunięta przez {}.": "Role {} delete by {}.",
+    "Rola {} usunięta.": "Role {} deleted.",
 }

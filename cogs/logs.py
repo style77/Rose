@@ -28,8 +28,8 @@ class Logs(plugin.Plugin):
         e = discord.Embed(description=_(await get_language(self.bot, m.guild.id),
                                         "**Wiadomość wysłana przez {} w {} została usunięta.**\n{}").format(
             m.author.mention, m.channel.mention, m.content),
-                          color=0xb8352c,
-                          timestamp=m.created_at)
+            color=0xb8352c,
+            timestamp=m.created_at)
         e.set_author(name=m.author, icon_url=m.author.avatar_url)
         e.set_footer(text=f"ID: {m.author.id}")
 
@@ -59,6 +59,23 @@ class Logs(plugin.Plugin):
             await ch.send(embed=e)
 
     @commands.Cog.listener()
+    async def on_message_edit(self, before, after):
+        ch = await self.get_logs_channel(after.guild.id)
+
+        e = discord.Embed(
+            description=_(await get_language(self.bot, after.guild.id),
+                          "Wiadomość została zeedytowana w {}\n[JUMP TO]({})").format(after.channel.mention,
+                                                                                      after.jump_url),
+            color=0xfabc11, timestamp=after.edited_at)
+        e.add_field(name=_(await get_language(self.bot, after.guild.id), "Przed"), value=before.content)
+        e.add_field(name=_(await get_language(self.bot, after.guild.id), "Po"), value=after.content)
+        e.set_author(name=after.author, icon_url=after.author.avatar_url)
+        e.set_footer(text="ID: {}".format(after.author.id))
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
     async def on_mod_command_use(self, ctx):
         ch = await self.get_logs_channel(ctx.guild.id)
 
@@ -79,10 +96,10 @@ class Logs(plugin.Plugin):
 
         e = discord.Embed(description=_(await get_language(self.bot, member.guild.id),
                                         "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`.").format(member.mention,
-                                                                                                   member,
-                                                                                                   member.guild.name,
-                                                                                                   str(
-                                                                                                       member.created_at)),
+                                                                                                    member,
+                                                                                                    member.guild.name,
+                                                                                                    str(
+                                                                                                        member.created_at)),
                           color=discord.Color.green(),
                           timestamp=member.joined_at)
 
@@ -96,7 +113,8 @@ class Logs(plugin.Plugin):
         ch = await self.get_logs_channel(member.guild.id)
 
         e = discord.Embed(description=_(await get_language(self.bot, member.guild.id),
-                                        "{} ({}) opuścił serwer.\nDołączył: `{}`.").format(member.mention, member, member.joined_at),
+                                        "{} ({}) opuścił serwer.\nDołączył: `{}`.").format(member.mention, member,
+                                                                                           member.joined_at),
                           color=0x6e100a,
                           timestamp=member.joined_at)
 
@@ -109,13 +127,26 @@ class Logs(plugin.Plugin):
     async def on_member_ban(self, guild, user):
         ch = await self.get_logs_channel(guild.id)
 
-        e = discord.Embed(title=_(await get_language(self.bot, guild.id), "Ban"),
-                          description=_(await get_language(self.bot, guild.id),
-                                        "{} został zbanowany.").format(user.mention),
-                          color=0x6e100a,
+        try:
+            async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
+                if entry.target == user:
+                    moderator = entry.user
+                    reason = entry.reason if entry.reason else _(await get_language(self.bot, guild.id), 'Brak Powodu')
+
+            text = _(await get_language(self.bot, guild.id),
+                     "{} został zbanowany przez {} z powodu `{}`.").format(user.mention,
+                                                                           moderator.mention,
+                                                                           reason)
+        except discord.Forbidden:
+            text = _(await get_language(self.bot, guild.id),
+                     "{} został zbanowany.").format(user.mention)
+
+        e = discord.Embed(description=text,
+                          color=0x22488a,
                           timestamp=user.created_at)
 
         e.set_author(name=user, icon_url=user.avatar_url)
+        e.set_footer(text="ID: {}".format(user.id))
 
         if ch:
             await ch.send(embed=e)
@@ -124,13 +155,26 @@ class Logs(plugin.Plugin):
     async def on_member_unban(self, guild, user):
         ch = await self.get_logs_channel(guild.id)
 
-        e = discord.Embed(title=_(await get_language(self.bot, guild.id), "Unban"),
-                          description=_(await get_language(self.bot, guild.id),
-                                        "{} został odbanowany.").format(user.mention),
-                          color=0x6e100a,
+        try:
+            async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
+                if entry.target == user:
+                    moderator = entry.user
+                    reason = entry.reason if entry.reason else _(await get_language(self.bot, guild.id), 'Brak Powodu')
+
+            text = _(await get_language(self.bot, guild.id),
+                     "{} został odbanowany przez {} z powodu `{}`.").format(user.mention,
+                                                                            moderator.mention,
+                                                                            reason)
+        except discord.Forbidden:
+            text = _(await get_language(self.bot, guild.id),
+                     "{} został odbanowany.").format(user.mention)
+
+        e = discord.Embed(description=text,
+                          color=0x22488a,
                           timestamp=user.created_at)
 
         e.set_author(name=user, icon_url=user.avatar_url)
+        e.set_footer(text="ID: {}".format(user.id))
 
         if ch:
             await ch.send(embed=e)
@@ -143,13 +187,24 @@ class Logs(plugin.Plugin):
     async def on_guild_role_create(self, role):
         ch = await self.get_logs_channel(role.guild.id)
 
-        e = discord.Embed(title=_(await get_language(self.bot, role.guild.id), "Rola stworzona"),
-                          description=_(await get_language(self.bot, role.guild.id),
-                                        "Na serwer została dodana rola {}.").format(role.mention),
-                          color=0x6e100a,
+        try:
+            async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_create):
+                if entry.target == role:
+                    moderator = entry.user
+
+            text = _(await get_language(self.bot, role.guild.id),
+                     "Rola {} utworzona przez {}.").format(role.mention, moderator.mention)
+
+        except discord.Forbidden:
+            text = _(await get_language(self.bot, role.guild.id),
+                     "Rola {} utworzona.").format(role.mention)
+
+        e = discord.Embed(description=text,
+                          color=0xe69645,
                           timestamp=role.created_at)
 
         e.set_author(name=role.guild, icon_url=role.guild.icon_url)
+        e.set_footer(text="ID: {}".format(role.id))
 
         if ch:
             await ch.send(embed=e)
@@ -158,13 +213,24 @@ class Logs(plugin.Plugin):
     async def on_guild_role_delete(self, role):
         ch = await self.get_logs_channel(role.guild.id)
 
-        e = discord.Embed(title=_(await get_language(self.bot, role.guild.id), "Rola usunięta"),
-                          description=_(await get_language(self.bot, role.guild.id),
-                                        "Z serwera została usunięta rola {}.").format(role.name),
-                          color=0x6e100a,
+        try:
+            async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_create):
+                if entry.target == role:
+                    moderator = entry.user
+
+            text = _(await get_language(self.bot, role.guild.id),
+                     "Rola {} usunięta przez {}.").format(role.mention, moderator.mention)
+
+        except discord.Forbidden:
+            text = _(await get_language(self.bot, role.guild.id),
+                     "Rola {} usunięta.").format(role.mention)
+
+        e = discord.Embed(description=text,
+                          color=0xe69645,
                           timestamp=role.created_at)
 
         e.set_author(name=role.guild, icon_url=role.guild.icon_url)
+        e.set_footer(text="ID: {}".format(role.id))
 
         if ch:
             await ch.send(embed=e)
@@ -187,8 +253,7 @@ class Logs(plugin.Plugin):
         if not emote:
             return
 
-        e = discord.Embed(title=_(await get_language(self.bot, guild.id), "Nowa emotka"),
-                          description=_(await get_language(self.bot, guild.id),
+        e = discord.Embed(description=_(await get_language(self.bot, guild.id),
                                         "Na serwer została dodana emotka {}.").format(str(emote)),
                           color=0x6e100a,
                           timestamp=emote.created_at)
