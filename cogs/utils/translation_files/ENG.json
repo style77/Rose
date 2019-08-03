@@ -363,5 +363,6 @@
     "Konto stworzone: `{}`": "Account created: `{}`",
     "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`.": "{} ({}) joined `{}`.\nAccount created at: `{}`.",
     "Usuwa powiadomienia o transmisjach.": "Delete notifications about live streams.",
-    "Ten stream nie jest ustawiony.": "This stream is not set"
+    "Ten stream nie jest ustawiony.": "This stream is not set.",
+    "Żadne powiadomienia o transmisjach na żywo nie są ustawione na tym serwerze.": "There are not any streams notifications set on this server."
 }

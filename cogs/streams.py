@@ -37,8 +37,8 @@ class Stream(object):
             return
         self.embed = discord.Embed(description=_(self.lang, "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo \
                                                              z {}").format(self.user['display_name'],
-                                                                           self.data['game'],
-                                                                           self.user['display_name']),
+                                                                           self.user['display_name'],
+                                                                           self.user['game']),
                                    color=0x6441a5)
         self.embed.set_image(url=self.data['preview']['large'])
         self.embed.set_author(name=self.user['display_name'], icon_url=self.data['channel']['logo'])
@@ -72,17 +72,35 @@ class Streams(commands.Cog):
                                               headers=auth)
                     stream_ttv = await stream_ttv.json()
 
-                notif_channel = GuildSettingsCache().get(stream['guild_id'])['database']['stream_notification']
-                language = GuildSettingsCache().get(stream['guild_id'])['database']['lang']
+                    notif_channel = GuildSettingsCache().get(stream['guild_id'])['database']['stream_notification']
+                    language = GuildSettingsCache().get(stream['guild_id'])['database']['lang']
 
-                if stream_ttv['stream'] is not None:
-                    s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
-                               guild_id=stream['guild_id'], lang=language)
-                    if str(_id['users'][0]['_id']) not in online_streams.data[stream['guild_id']]:
-                        online_streams.add(stream['guild_id'], str(_id['users'][0]["_id"]))
-                        await s.send_notif()
+                    if stream_ttv['stream'] is not None:
+                        s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
+                                   guild_id=stream['guild_id'], lang=language)
+
+                        try:
+                            guild_streams = online_streams.data[stream['guild_id']]
+                        except KeyError:
+                            online_streams.add(stream['guild_id'], str(_id['users'][0]["_id"]))
+                            guild_streams = online_streams.data[stream['guild_id']]
+
+                        if str(_id['users'][0]['_id']) not in guild_streams:
+                            online_streams.add(stream['guild_id'], str(_id['users'][0]["_id"]))
+                            await s.send_notif()
+                    else:
+                        try:
+                            if str(_id['users'][0]['_id']) in online_streams.data[stream['guild_id']]:
+                                online_streams.remove(stream['guild_id'], str(_id['users'][0]["_id"]))
+                        except KeyError:
+                            pass
+
         except Exception as e:
             traceback.print_exc()
+
+    @twitch_checker.before_loop
+    async def twitch_checker_before(self):
+        await self.bot.wait_until_ready()
 
     @commands.group(invoke_without_command=True)
     async def stream(self, ctx):
@@ -122,6 +140,15 @@ class Streams(commands.Cog):
             return await ctx.send(_(ctx.lang, "Ten stream nie jest ustawiony."))
         await self.bot.pg_con.execute("DELTE FROM twitch_notifications WHERE stream = $1 AND guild_id = $2", streamer, ctx.guild.id)
         await ctx.send(":ok_hand:")
+
+    @stream.command()
+    async def list(self, ctx):
+        streams = await self.bot.pg_con.fetchrow("SELECT * FROM twitch_notifications WHERE guild_id = $1",
+                                               ctx.guild.id)
+        if not streams:
+            return await ctx.send(_(ctx.lang, "Żadne powiadomienia o transmisjach na żywo nie są ustawione na tym serwerze."))
+
+        return await ctx.send(f"`{', '.join([s['stream'] for s in streams])}`")
 
 def setup(bot):
     bot.add_cog(Streams(bot))

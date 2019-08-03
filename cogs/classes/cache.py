@@ -29,15 +29,19 @@ class PrefixesCache(CacheService):
         super().set(guild.id, {"prefix": prefix})
 
 
-class OnlineStreamsSaver(CacheService):
+class OnlineStreamsSaver(object):
     """Its psuedo cacher which is just saving streamers to list"""
+    data = {}
+
+    def set(self, first, items: dict):
+        self.data[first] = items
 
     def add(self, guild_id, stream_id):
-        if guild_id not in self.data:
-            super().set(guild_id, {"stream_id": stream_id})
+        if stream_id not in self.data:
+            self.set(guild_id, {"stream_id": stream_id})
 
     def remove(self, guild_id, stream_id):
         """called when stream goes offline"""
         if guild_id in self.data:
-            self.data[guild_id].pop(stream_id)
+            self.data[guild_id].pop("stream_id")
 
