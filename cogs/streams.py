@@ -101,6 +101,7 @@ class Streams(commands.Cog):
         await self.bot.wait_until_ready()
 
     @commands.group(invoke_without_command=True)
+    @commands.has_permissions(manage_guild=True)
     async def stream(self, ctx):
         z = []
         for cmd in self.bot.get_command("stream").commands:
@@ -108,6 +109,7 @@ class Streams(commands.Cog):
         await ctx.send(_(ctx.lang, "Komendy w tej grupie:\n```\n{}```").format('\n'.join(z)))
 
     @stream.command()
+    @commands.has_permissions(manage_guild=True)
     async def add(self, ctx, streamer: str=None):
         """Narazie wspiera tylko twitchowych twórców."""
         if not streamer:
@@ -131,6 +133,7 @@ class Streams(commands.Cog):
         await ctx.send(":ok_hand:")
 
     @stream.command()
+    @commands.has_permissions(manage_guild=True)
     async def remove(self, ctx, streamer: str=None):
         """Usuwa powiadomienia o transmisjach."""
         fetch = await self.bot.pg_con.fetchrow("SELECT * FROM twitch_notifications WHERE stream = $1 AND guild_id = $2", streamer, ctx.guild.id)
