@@ -80,18 +80,16 @@ class Streams(commands.Cog):
                                    guild_id=stream['guild_id'], lang=language)
 
                         try:
-                            guild_streams = online_streams.data[stream['guild_id']]
+                            if int(_id['users'][0]['_id']) not in online_streams.data[stream['guild_id']]['streams_id']:
+                                online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
+                                await s.send_notif()
                         except KeyError:
-                            online_streams.add(stream['guild_id'], str(_id['users'][0]["_id"]))
-                            guild_streams = online_streams.data[stream['guild_id']]
-
-                        if str(_id['users'][0]['_id']) not in guild_streams:
-                            online_streams.add(stream['guild_id'], str(_id['users'][0]["_id"]))
+                            online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
                             await s.send_notif()
                     else:
                         try:
-                            if str(_id['users'][0]['_id']) in online_streams.data[stream['guild_id']]:
-                                online_streams.remove(stream['guild_id'], str(_id['users'][0]["_id"]))
+                            if int(_id['users'][0]['_id']) in online_streams.data[stream['guild_id']]['streams_id']:
+                                online_streams.remove(stream['guild_id'], int(_id['users'][0]["_id"]))
                         except KeyError:
                             pass
 
@@ -143,7 +141,7 @@ class Streams(commands.Cog):
 
     @stream.command()
     async def list(self, ctx):
-        streams = await self.bot.pg_con.fetchrow("SELECT * FROM twitch_notifications WHERE guild_id = $1",
+        streams = await self.bot.pg_con.fetch("SELECT * FROM twitch_notifications WHERE guild_id = $1",
                                                ctx.guild.id)
         if not streams:
             return await ctx.send(_(ctx.lang, "Żadne powiadomienia o transmisjach na żywo nie są ustawione na tym serwerze."))

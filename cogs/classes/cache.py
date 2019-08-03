@@ -37,8 +37,10 @@ class OnlineStreamsSaver(object):
         self.data[first] = items
 
     def add(self, guild_id, stream_id):
-        if stream_id not in self.data:
-            self.set(guild_id, {"stream_id": stream_id})
+        if guild_id not in self.data:
+            self.set(guild_id, {"streams_id": [stream_id]})
+        else:
+            self.data[guild_id]['streams_id'].append(stream_id)
 
     def remove(self, guild_id, stream_id):
         """called when stream goes offline"""
