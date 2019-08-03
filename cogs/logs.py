@@ -66,7 +66,7 @@ class Logs(plugin.Plugin):
             description=_(await get_language(self.bot, after.guild.id),
                           "Wiadomość została zeedytowana w {}\n[JUMP TO]({})").format(after.channel.mention,
                                                                                       after.jump_url),
-            color=0xfabc11, timestamp=after.edited_at)
+            color=0xfabc11, timestamp=before.edited_at)
         e.add_field(name=_(await get_language(self.bot, after.guild.id), "Przed"), value=before.content)
         e.add_field(name=_(await get_language(self.bot, after.guild.id), "Po"), value=after.content)
         e.set_author(name=after.author, icon_url=after.author.avatar_url)

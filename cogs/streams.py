@@ -68,9 +68,13 @@ class Streams(commands.Cog):
                     _id = await cs.get(f"https://api.twitch.tv/kraken/users?login={stream['stream']}", headers=auth)
                     _id = await _id.json()
 
-                    stream_ttv = await cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
-                                              headers=auth)
-                    stream_ttv = await stream_ttv.json()
+                    try:
+
+                        stream_ttv = await cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
+                                                  headers=auth)
+                        stream_ttv = await stream_ttv.json()
+                    except IndexError:
+                        pass
 
                     notif_channel = GuildSettingsCache().get(stream['guild_id'])['database']['stream_notification']
                     language = GuildSettingsCache().get(stream['guild_id'])['database']['lang']
