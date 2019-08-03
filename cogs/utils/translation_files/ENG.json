@@ -361,5 +361,7 @@
     "Nie zapomnij, że zawsze podajemy koncówke z linku.": "Dont forget that we always provide end from link.",
     "Narazie wspiera tylko twitchowych twórców.": "Supports only twitch streamers for now.",
     "Konto stworzone: `{}`": "Account created: `{}`",
-    "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`.": "{} ({}) joined `{}`.\nAccount created at: `{}`."
+    "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`.": "{} ({}) joined `{}`.\nAccount created at: `{}`.",
+    "Usuwa powiadomienia o transmisjach.": "Delete notifications about live streams.",
+    "Ten stream nie jest ustawiony.": "This stream is not set"
 }

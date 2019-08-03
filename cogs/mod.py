@@ -1068,12 +1068,13 @@ class Mod(Plugin):
         if member.id == ctx.author.id:
             await ctx.send(_(ctx.lang, "Nie możesz zbanować sam siebie."))
             return await add_react(ctx.message, False)
-        if member.top_role >= ctx.author.top_role:
-            await ctx.send(_(ctx.lang, "Nie możesz zbanować osoby której najwyższa ranga jest nad twoją."))
-            return await add_react(ctx.message, False)
-        if member.top_role >= ctx.guild.me.top_role:
-            await ctx.send(_(ctx.lang, "Nie możesz zbanować osoby której najwyższa ranga jest nad moją."))
-            return await add_react(ctx.message, False)
+        if isinstance(member, discord.Member):
+            if member.top_role >= ctx.author.top_role:
+                await ctx.send(_(ctx.lang, "Nie możesz zbanować osoby której najwyższa ranga jest nad twoją."))
+                return await add_react(ctx.message, False)
+            if member.top_role >= ctx.guild.me.top_role:
+                await ctx.send(_(ctx.lang, "Nie możesz zbanować osoby której najwyższa ranga jest nad moją."))
+                return await add_react(ctx.message, False)
         lang = ctx.lang
         if lang == "PL":
             await ctx.send(random.choice(self.bansays_pl).format(member))
