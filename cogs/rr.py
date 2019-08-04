@@ -16,6 +16,7 @@ class RR(Plugin):
             return await member.remove_roles(role)
 
     @commands.group(invoke_without_command=True)
+    @commands.has_permissions(manage_guild=True)
     async def rr(self, ctx):
         """Reaction role."""
         z = []

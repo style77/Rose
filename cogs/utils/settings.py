@@ -29,15 +29,15 @@ def replace_with_args(text, member):
     if "<USER>" in text:
         text = text.replace("<USER>", member.name)
     if "<USER_DISCRIM>" in text:
-        text = text.replace("<USER_DISCRIM>", member.discriminator)
+        text = text.replace("<USER_DISCRIM>", str(member.discriminator))
     if "<@USER>" in text:
         text = text.replace("<@USER>", member.mention)
     if "<GUILD>" in text:
         text = text.replace("<GUILD>", member.guild.name)
     if "<GUILD_COUNT>" in text:
-        text = text.replace("<GUILD_COUNT>", len(member.guild.members)-1)
+        text = text.replace("<GUILD_COUNT>", str(len(member.guild.members)-1))
     if "<GUILD_COUNT+>" in text:
-        text = text.replace("<GUILD_COUNT+>", len(member.guild.members))
+        text = text.replace("<GUILD_COUNT+>", str(len(member.guild.members)))
     if "<GUILD_OWNER>" in text:
         text = text.replace("<GUILD_OWNER>", member.guild.owner)
     return text

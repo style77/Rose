@@ -62,11 +62,18 @@ class Logs(plugin.Plugin):
     async def on_message_edit(self, before, after):
         ch = await self.get_logs_channel(after.guild.id)
 
+        if before.content == after.content:
+            return
+        if before.author.bot:
+            return
+        if not before.content or not after.content:
+            return
+
         e = discord.Embed(
             description=_(await get_language(self.bot, after.guild.id),
                           "Wiadomość została zeedytowana w {}\n[JUMP TO]({})").format(after.channel.mention,
                                                                                       after.jump_url),
-            color=0xfabc11, timestamp=before.edited_at)
+            color=0xfabc11, timestamp=before.created_at)
         e.add_field(name=_(await get_language(self.bot, after.guild.id), "Przed"), value=before.content)
         e.add_field(name=_(await get_language(self.bot, after.guild.id), "Po"), value=after.content)
         e.set_author(name=after.author, icon_url=after.author.avatar_url)
@@ -214,19 +221,21 @@ class Logs(plugin.Plugin):
         ch = await self.get_logs_channel(role.guild.id)
 
         try:
-            async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_create):
-                if entry.target == role:
+            async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_delete):
+                print(entry)
+                if entry.target.id == role.id:
+                    print('d')
                     moderator = entry.user
 
             text = _(await get_language(self.bot, role.guild.id),
-                     "Rola {} usunięta przez {}.").format(role.mention, moderator.mention)
+                     "Rola {} usunięta przez {}.").format(f'**{role}**', moderator.mention)
 
         except discord.Forbidden:
             text = _(await get_language(self.bot, role.guild.id),
-                     "Rola {} usunięta.").format(role.mention)
+                     "Rola {} usunięta.").format(f'**{role}**')
 
         e = discord.Embed(description=text,
-                          color=0xe69645,
+                          color=0xa86623,
                           timestamp=role.created_at)
 
         e.set_author(name=role.guild, icon_url=role.guild.icon_url)

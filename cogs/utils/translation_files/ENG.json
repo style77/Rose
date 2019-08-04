@@ -371,5 +371,7 @@
     "Rola {} utworzona przez {}.": "Role {} created by {}.",
     "Rola {} utworzona.": "Role {} created.",
     "Rola {} usunięta przez {}.": "Role {} delete by {}.",
-    "Rola {} usunięta.": "Role {} deleted."
+    "Rola {} usunięta.": "Role {} deleted.",
+    "Przed": "Before",
+    "Po": "After"
 }

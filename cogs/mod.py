@@ -676,7 +676,8 @@ class Settings(Plugin):
 
         await self.update_cache(ctx.guild)
 
-        return await ctx.send(":ok_hand:")
+        await ctx.send(":ok_hand:")
+        return await add_react(ctx.message, True)
 
     @set_.command()
     @check_permissions(manage_guild=True)
@@ -709,7 +710,8 @@ class Settings(Plugin):
 
         await self.update_cache(ctx.guild)
 
-        return await ctx.send(":ok_hand:")
+        await ctx.send(":ok_hand:")
+        return await add_react(ctx.message, True)
 
     @set_.command(aliases=['lang'])
     @check_permissions(manage_guild=True)
@@ -725,7 +727,8 @@ class Settings(Plugin):
 
         await self.bot.pg_con.execute("UPDATE guild_settings SET lang = $1 WHERE guild_id = $2",
                                       language.upper(), ctx.guild.id)
-        return await ctx.send(":ok_hand:")
+        await ctx.send(":ok_hand:")
+        return await add_react(ctx.message, True)
 
     @set_.command()
     @check_permissions(manage_guild=True)
@@ -734,7 +737,8 @@ class Settings(Plugin):
                                              ctx.guild.id)
         await self.bot.pg_con.execute("UPDATE guild_settings SET warns_kick = $1 WHERE guild_id = $2",
                                       number, ctx.guild.id)
-        return await ctx.send(":ok_hand:")
+        await ctx.send(":ok_hand:")
+        return await add_react(ctx.message, True)
 
     @set_.group(invoke_without_command=True)
     @check_permissions(manage_guild=True)
@@ -781,7 +785,8 @@ class Settings(Plugin):
         option[0]['blocked_commands'].append(command.lower())
         await self.bot.pg_con.execute("UPDATE guild_settings SET blocked_commands = $1 WHERE guild_id = $2",
                                       option[0]['blocked_commands'], ctx.guild.id)
-        return await ctx.send(":ok_hand:")
+        await ctx.send(":ok_hand:")
+        return await add_react(ctx.message, True)
 
     @blocked_commands.command(name="remove")
     @check_permissions(manage_guild=True)
@@ -802,7 +807,8 @@ class Settings(Plugin):
         option[0]['blocked_commands'].remove(command.lower())
         await self.bot.pg_con.execute("UPDATE guild_settings SET blocked_commands = $1 WHERE guild_id = $2",
                                       option[0]['blocked_commands'], ctx.guild.id)
-        return await ctx.send(":ok_hand:")
+        await ctx.send(":ok_hand:")
+        return await add_react(ctx.message, True)
 
     @set_.command(aliases=['auto_role'])
     @check_permissions(manage_guild=True)
@@ -816,7 +822,8 @@ class Settings(Plugin):
             role = role.id
         await self.bot.pg_con.execute("UPDATE guild_settings SET auto_role = $1 WHERE guild_id = $2", role,
                                       ctx.guild.id)
-        return await ctx.send(":ok_hand:")
+        await ctx.send(":ok_hand:")
+        return await add_react(ctx.message, True)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -872,6 +879,7 @@ class Settings(Plugin):
         await self.bot.pg_con.execute("UPDATE guild_settings SET blacklist_warn = $1 WHERE guild_id = $2", text,
                                       ctx.guild.id)
         await ctx.send(':ok_hand:')
+        return await add_react(ctx.message, True)
 
     @blacklist.command()
     @check_permissions(manage_guild=True)
@@ -908,9 +916,11 @@ class Settings(Plugin):
         if str(number).isdigit():
             await self.bot.pg_con.execute("UPDATE guild_settings SET stars_count = $1 WHERE guild_id = $2", int(number),
                                           ctx.guild.id)
-            return await ctx.send(":ok_hand:")
+            await ctx.send(":ok_hand:")
+            return await add_react(ctx.message, True)
         else:
-            return await ctx.send(_(ctx.lang, "To nie jest prawidłowa liczba."))
+            await ctx.send(_(ctx.lang, "To nie jest prawidłowa liczba."))
+            return await add_react(ctx.message, False)
 
     @set_.group(invoke_without_command=True)
     @check_permissions(manage_guild=True)
@@ -921,6 +931,7 @@ class Settings(Plugin):
         await self.bot.pg_con.execute("UPDATE guild_settings SET global_emojis = $1 WHERE guild_id = $2", answer,
                                       ctx.guild.id)
         await ctx.send(_(ctx.lang, 'Ustawiono `global_emojis` na `{}`.').format(answer))
+        return await add_react(ctx.message, True)
 
     @set_.command()
     @check_permissions(manage_guild=True)
@@ -951,6 +962,7 @@ class Settings(Plugin):
         await self.bot.pg_con.execute("UPDATE guild_settings SET invite_blocker = $1 WHERE guild_id = $2", answer,
                                       ctx.guild.id)
         await ctx.send(_(ctx.lang, "Ustawiono `invite_blocker` na `{}`.").format(answer))
+        return await add_react(ctx.message, True)
 
     @set_.command()
     @check_permissions(manage_guild=True)
@@ -961,6 +973,7 @@ class Settings(Plugin):
         await self.bot.pg_con.execute("UPDATE guild_settings SET emoji_censor = $1 WHERE guild_id = $2", answer,
                                       ctx.guild.id)
         await ctx.send(_(ctx.lang, "Ustawiono `emoji_censor` na `{}`.").format(answer))
+        return await add_react(ctx.message, True)
 
     @set_.command()
     @check_permissions(manage_guild=True)
@@ -971,6 +984,7 @@ class Settings(Plugin):
         await self.bot.pg_con.execute("UPDATE guild_settings SET anti_raid = $1 WHERE guild_id = $2", answer,
                                       ctx.guild.id)
         await ctx.send(_(ctx.lang, "Ustawiono `anti_raid` na `{}`.").format(answer))
+        return await add_react(ctx.message, True)
 
     @set_.command()
     @check_permissions(manage_guild=True)

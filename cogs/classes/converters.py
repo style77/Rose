@@ -40,7 +40,7 @@ class ShortTime:
 
     @classmethod
     async def convert(cls, ctx, argument):
-        lang = await ctx.lang
+        lang = await get_language(ctx.bot, ctx.guild.id)
         if lang == "PL":
             now = ctx.message.created_at + timedelta(hours=2)
         else:
@@ -66,7 +66,7 @@ class HumanTime:
 
     @classmethod
     async def convert(cls, ctx, argument):
-        lang = await ctx.lang
+        lang = await get_language(ctx.bot, ctx.guild.id)
         if lang == "PL":
             now = ctx.message.created_at + timedelta(hours=2)
         else:
@@ -124,7 +124,7 @@ class UserFriendlyTime(commands.Converter):
         try:
             calendar = HumanTime.calendar
             regex = compiled
-            lang = await ctx.lang
+            lang = await get_language(ctx.bot, ctx.guild.id)
             if lang == "PL":
                 now = ctx.message.created_at + timedelta(hours=2)
             else:

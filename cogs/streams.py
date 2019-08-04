@@ -94,7 +94,7 @@ class Streams(commands.Cog):
                         try:
                             if int(_id['users'][0]['_id']) in online_streams.data[stream['guild_id']]['streams_id']:
                                 online_streams.remove(stream['guild_id'], int(_id['users'][0]["_id"]))
-                        except KeyError:
+                        except (IndexError, KeyError):
                             pass
 
         except Exception as e:
