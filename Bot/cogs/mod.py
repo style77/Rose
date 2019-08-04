@@ -9,12 +9,12 @@ import discord
 from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 
-from cogs.classes.converters import EasyOneDayTime, ModerationReason, TrueFalseConverter, TrueFalseError, BannedMember
-from cogs.classes.plugin import Plugin
-from cogs.classes import cache
-from cogs.music import add_react
-from cogs.utils import settings
-from cogs.utils import utils
+from Bot.cogs.classes.converters import EasyOneDayTime, ModerationReason, TrueFalseConverter, TrueFalseError, BannedMember
+from Bot.cogs.classes.plugin import Plugin
+from Bot.cogs.classes import cache
+from Bot.cogs.music import add_react
+from Bot.cogs.utils import settings
+from Bot.cogs.utils import utils
 
 invite_regex = re.compile(r"(?:https?://)?discord(?:app\.com/invite|\.gg)/?[a-zA-Z0-9]+/?")
 link_regex = re.compile(

@@ -1,7 +1,5 @@
 import discord
 from discord.ext import commands
-import textwrap
-from cogs import utils
 
 class Help(commands.Cog):
     def __init__(self, bot):

@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
 
-from cogs.classes.plugin import Plugin
-from cogs.utils import settings
+from Bot.cogs.classes.plugin import Plugin
+from Bot.cogs.utils import settings
 
 
 #Its heartboard but some variables are named "star" why? Because i've got idea to make heartboard when i finished starboard and i didnt want to broke code again, so i just changed visual things :).

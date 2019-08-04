@@ -1,11 +1,4 @@
-import discord
 from discord.ext import commands
-from cogs import utils
-import typing
-from typing import Union
-import datetime
-import re
-from cogs.utils.translations import _, get_lang
 
 """
 They are not working for now, because i have to find a way to confirm if emote is not nsfw/gore.

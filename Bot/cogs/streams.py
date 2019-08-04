@@ -4,8 +4,8 @@ import traceback
 import discord
 import aiohttp
 
-from cogs.utils import utils
-from cogs.classes.cache import OnlineStreamsSaver, GuildSettingsCache
+from Bot.cogs.utils import utils
+from Bot.cogs.classes.cache import OnlineStreamsSaver, GuildSettingsCache
 from discord.ext import commands, tasks
 
 auth = {"Client-ID": utils.get_from_config("twitch_client_id"),

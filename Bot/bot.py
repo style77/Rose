@@ -10,11 +10,9 @@ import wavelink
 import wrapper
 from discord.ext import commands
 
-from cogs.eh import MemberInBlacklist
-from cogs.utils import utils
-from cogs.classes import cache
-
-from cogs.utils import translations
+from .cogs.eh import MemberInBlacklist
+from .cogs.utils import utils
+from .cogs.classes import cache
 
 os.environ["JISHAKU_HIDE"] = "1"
 os.environ["JISHAKU_NO_UNDERSCORE"] = "1"

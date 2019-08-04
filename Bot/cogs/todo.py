@@ -3,7 +3,7 @@ import asyncio
 from discord.ext import commands
 
 #from cogs.utils.checks import has_todos
-from cogs.utils.paginator import Pages
+from Bot.cogs.utils.paginator import Pages
 
 class Todo(commands.Cog):
     def __init__(self, bot):
@@ -36,7 +36,7 @@ class Todo(commands.Cog):
         await ctx.invoke(self.bot.get_command("todo show"))
 
     @todo.command(aliases=['+'])
-    async def add(self, ctx, *, desc=None):
+    async def add(self, ctx, *, desc):
         """Dodaje todo."""
         if len(desc) > 210:
             return await ctx.send(_(ctx.lang, "Opis może mieć maksymalnie 210 znaków."))
@@ -52,7 +52,7 @@ class Todo(commands.Cog):
         return await ctx.send(_(ctx.lang, "Dodano todo {}.").format(desc))
 
     @todo.command(aliases=['delete', 'r', 'del', '-', 'done'])
-    async def remove(self, ctx, _id: int=None):
+    async def remove(self, ctx, _id: int):
         """Usuwa dane todo."""
 
         x = await self.get_todo(ctx.author.id, _id)
@@ -87,7 +87,7 @@ class Todo(commands.Cog):
         await pages.paginate(index_allowed=False)
     
     @todo.command(aliases=['e'])
-    async def edit(self, ctx, *, desc: str=None):
+    async def edit(self, ctx, *, desc: str):
         desc = desc.split(" - ")
         id_ = int(desc[0])
         try:

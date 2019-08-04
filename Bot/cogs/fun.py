@@ -13,15 +13,11 @@ import urbandict
 import urllib.request
 import speedtest
 import io
-import typing
 import asyncio
 import unicodedata
-import wrapper
-import math
 import textwrap
 
-from cogs.utils import utils
-from io import BytesIO
+from Bot.cogs.utils import utils
 from googletrans import Translator
 from pyfiglet import Figlet
 from datetime import timedelta, datetime
@@ -29,10 +25,6 @@ from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
-from PIL import Image
-from functools import partial
-from typing import Union
-from cogs.classes.converters import urlConverter
 
 def simple_get(url):
     try:

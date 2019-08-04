@@ -1,7 +1,4 @@
-import discord
-
 from discord.ext import commands
-from cogs.utils import settings
 
 class Levels(commands.Cog):
     def __init__(self, bot):

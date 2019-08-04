@@ -1,22 +1,19 @@
 import discord
 from discord.ext import commands
-from PIL import Image, ImageOps, ImageDraw, ImageFilter, ImageEnhance, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 from math import cos, sin, radians, ceil
-import re
 import textwrap
 from io import BytesIO
 from functools import partial
-import colorsys
 import random
 from typing import Union
 import typing
 import numpy as np
 import aiohttp
-import datetime
 import io
 
-from cogs.classes.converters import urlConverter
-from cogs.utils import utils
+from Bot.cogs.classes.converters import urlConverter
+from Bot.cogs.utils import utils
 
 status = {'online': (67, 181, 129),
           'idle': (250, 166, 26),

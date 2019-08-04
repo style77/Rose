@@ -1,17 +1,14 @@
 import random
 import asyncio
-import json
 from io import BytesIO
 from functools import partial
 from typing import Union
 import typing
-import datetime
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import discord
 from discord.ext.commands.cooldowns import BucketType
 from discord.ext import commands, tasks
-import cogs.utils as utils
 from enum import Enum
 
 
