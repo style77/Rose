@@ -146,8 +146,7 @@ class Additional(commands.Cog):
     async def on_message_delete(self, message):
         if message.author.bot:
             return
-            
-        self.snipe[message.guild.id] = {}
+
         self.snipe[message.guild.id] = {}
         self.snipe[message.guild.id]['content'] = message.content
         self.snipe[message.guild.id]['author'] = message.author
@@ -156,7 +155,7 @@ class Additional(commands.Cog):
     @commands.command(name="snipe")
     async def snipe_(self, ctx):
         """Sprawdź ostatnią usuniętą wiadomość."""
-        if not ctx.guild.id in self.snipe:
+        if ctx.guild.id not in self.snipe:
             return await ctx.send(_(ctx.lang, "Nie udało mi się zarejstrować żadnej usuniętej wiadomości."))
         e = discord.Embed(
             description=self.snipe[ctx.guild.id]['content'], timestamp=self.snipe[ctx.guild.id]['timestamp'])

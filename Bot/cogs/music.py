@@ -305,7 +305,11 @@ class Music(commands.Cog):
         if not tracks:
             SPOTIFY_RE = re.compile(r"(?:^|\W)spotify.com/track(?:$|\W)")
             if SPOTIFY_RE.findall(query):
-                e = ctx.message.embeds[0].to_dict()
+                if ctx.message.embed:
+                    e = ctx.message.embeds[0].to_dict()
+                else:
+                    return await ctx.send(_(ctx.lang,
+                                            "Embed niestety nie zdążył się załadować, proszę sprobować ponownie."))
                 tracks = await self.bot.wavelink.get_tracks(f"ytsearch:{e['description']}")
 
         if not tracks:

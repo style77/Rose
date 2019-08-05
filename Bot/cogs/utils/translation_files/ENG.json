@@ -373,5 +373,6 @@
     "Rola {} usunięta przez {}.": "Role {} delete by {}.",
     "Rola {} usunięta.": "Role {} deleted.",
     "Przed": "Before",
-    "Po": "After"
+    "Po": "After",
+    "Embed niestety nie zdążył się załadować, proszę sprobować ponownie.": "Embed could not load, please try again."
 }
