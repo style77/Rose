@@ -17,7 +17,7 @@ import asyncio
 import unicodedata
 import textwrap
 
-from Bot.cogs.utils import utils
+from .utils import utils
 from googletrans import Translator
 from pyfiglet import Figlet
 from datetime import timedelta, datetime

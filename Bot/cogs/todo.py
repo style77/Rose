@@ -2,8 +2,8 @@ import asyncio
 
 from discord.ext import commands
 
-#from cogs.utils.checks import has_todos
-from Bot.cogs.utils.paginator import Pages
+#from .utils.checks import has_todos
+from .utils.paginator import Pages
 
 class Todo(commands.Cog):
     def __init__(self, bot):

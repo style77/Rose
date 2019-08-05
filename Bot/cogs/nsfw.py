@@ -7,7 +7,7 @@ import discord
 import nekos
 from discord.ext import commands
 
-from Bot.cogs.classes.plugin import Plugin
+from .classes.plugin import Plugin
 
 class Nsfw(Plugin):
     def __init__(self, bot):

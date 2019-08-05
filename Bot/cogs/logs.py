@@ -1,7 +1,7 @@
 import discord
 
 from discord.ext import commands
-from Bot.cogs.classes import cache, plugin
+from .classes import cache, plugin
 
 class Logs(plugin.Plugin):
     def __init__(self, bot):

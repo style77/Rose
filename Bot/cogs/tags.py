@@ -7,8 +7,8 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from Bot.cogs import utils
-from Bot.cogs.classes.plugin import Plugin
+from . import utils
+from .classes.plugin import Plugin
 
 class TagNotFound(commands.CommandError):
     def __init__(self, tag):

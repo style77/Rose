@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
 
-from Bot.cogs.classes.converters import EmojiConverter
-from Bot.cogs.classes.plugin import Plugin
+from .classes.converters import EmojiConverter
+from .classes.plugin import Plugin
 
 class RR(Plugin):
     def __init__(self, bot):

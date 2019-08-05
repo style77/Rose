@@ -1,4 +1,4 @@
-from Bot.cogs.classes.converters import PrettyTime, UserFriendlyTime, human_timedelta
+from .classes.converters import PrettyTime, UserFriendlyTime, human_timedelta
 from discord.ext import commands, tasks
 
 import discord

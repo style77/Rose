@@ -15,14 +15,14 @@ import re
 import random
 import pyqrcode
 
-from Bot.cogs.utils import utils
+from .utils import utils
 from contextlib import closing
 from functools import partial
 from bs4 import BeautifulSoup
 from requests import get
 from requests.exceptions import RequestException
 from datetime import datetime
-from Bot.cogs.classes.converters import EmojiConverter, SafeConverter
+from .classes.converters import EmojiConverter, SafeConverter
 
 link_regex = re.compile(
     r"((http(s)?(\:\/\/))+(www\.)?([\w\-\.\/])*(\.[a-zA-Z]{2,3}\/?))[^\s\b\n|]*[^.,;:\?\!\@\^\$ -]")

@@ -4,8 +4,8 @@ import traceback
 import discord
 import aiohttp
 
-from Bot.cogs.utils import utils
-from Bot.cogs.classes.cache import OnlineStreamsSaver, GuildSettingsCache
+from .utils import utils
+from .classes.cache import OnlineStreamsSaver, GuildSettingsCache
 from discord.ext import commands, tasks
 
 auth = {"Client-ID": utils.get_from_config("twitch_client_id"),
@@ -87,7 +87,7 @@ class Streams(commands.Cog):
                             if int(_id['users'][0]['_id']) not in online_streams.data[stream['guild_id']]['streams_id']:
                                 online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
                                 await s.send_notif()
-                        except KeyError:
+                        except (KeyError, IndexError):
                             online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
                             await s.send_notif()
                     else:
@@ -143,7 +143,7 @@ class Streams(commands.Cog):
         fetch = await self.bot.pg_con.fetchrow("SELECT * FROM twitch_notifications WHERE stream = $1 AND guild_id = $2", streamer, ctx.guild.id)
         if not fetch:
             return await ctx.send(_(ctx.lang, "Ten stream nie jest ustawiony."))
-        await self.bot.pg_con.execute("DELTE FROM twitch_notifications WHERE stream = $1 AND guild_id = $2", streamer, ctx.guild.id)
+        await self.bot.pg_con.execute("DELETE FROM twitch_notifications WHERE stream = $1 AND guild_id = $2", streamer, ctx.guild.id)
         await ctx.send(":ok_hand:")
 
     @stream.command()

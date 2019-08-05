@@ -12,8 +12,8 @@ import numpy as np
 import aiohttp
 import io
 
-from Bot.cogs.classes.converters import urlConverter
-from Bot.cogs.utils import utils
+from .classes.converters import urlConverter
+from .utils import utils
 
 status = {'online': (67, 181, 129),
           'idle': (250, 166, 26),
