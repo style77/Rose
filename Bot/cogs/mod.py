@@ -101,10 +101,8 @@ class Settings(Plugin):
         self.update_subs.start()
 
     async def update_cache(self, guild):
-        cache_get = cache.GuildSettingsCache().get(guild.id)
-        if not cache_get:
-            z = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", guild.id)
-            cache.GuildSettingsCache().update(guild, "database", z)
+        z = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", guild.id)
+        cache.GuildSettingsCache().update(guild, "database", z)
 
     async def cog_check(self, ctx):
         if ctx.guild is None:
@@ -652,26 +650,13 @@ class Settings(Plugin):
         if not option:
             await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", ctx.guild.id)
 
-        if not channel:
-            await ctx.send(_(ctx.lang, "Podaj kanał na którym będą wysyłane wszystkie logi."))
+        if str(channel) == 'none':
+            channel = None
 
-            def check(m):
-                return m.author == ctx.author and m.channel == ctx.channel
-
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=60)
-            except asyncio.TimeoutError:
-                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
-
-            if msg.content.lower() == 'none':
-                channel = None
-            else:
-                channel = await commands.TextChannelConverter().convert(ctx, msg.content.lower())
-                if not channel:
-                    return await ctx.send(_(ctx.lang, "Nie znaleziono tego kanału."))
+        channel = channel.id if channel is not None else channel
 
         await self.bot.pg_con.execute("UPDATE guild_settings SET logs = $1 WHERE guild_id = $2",
-                                      channel.id, ctx.guild.id)
+                                      channel, ctx.guild.id)
 
         await self.update_cache(ctx.guild)
 
@@ -680,32 +665,18 @@ class Settings(Plugin):
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def streams(self, ctx, channel: discord.TextChannel = None):
+    async def streams(self, ctx, channel: discord.TextChannel):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if not option:
             await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", ctx.guild.id)
 
-        if not channel:
-            await ctx.send(_(ctx.lang,
-                             "Podaj kanał na którym będą wysyłane wszystkie powiadomienia o transmisjach na żywo."))
+        if str(channel) == 'none':
+            channel = None
 
-            def check(m):
-                return m.author == ctx.author and m.channel == ctx.channel
-
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=60)
-            except asyncio.TimeoutError:
-                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
-
-            if msg.content.lower() == 'none':
-                channel = None
-            else:
-                channel = await commands.TextChannelConverter().convert(ctx, msg.content.lower())
-                if not channel:
-                    return await ctx.send(_(ctx.lang, "Nie znaleziono tego kanału."))
+        channel = channel.id if channel is not None else channel
 
         await self.bot.pg_con.execute("UPDATE guild_settings SET stream_notification = $1 WHERE guild_id = $2",
-                                      channel.id, ctx.guild.id)
+                                      channel, ctx.guild.id)
 
         await self.update_cache(ctx.guild)
 
@@ -1285,7 +1256,7 @@ class Mod(Plugin):
 
     @commands.group(invoke_without_command=True, aliases=['w'])
     @check_permissions(kick_members=True)
-    async def warn(self, ctx, member: discord.Member = None, *, reason: ModerationReason = 'Brak powodu'):
+    async def warn(self, ctx, member: discord.Member, *, reason: str = 'Brak powodu'):
         """Daje ostrzeżenie."""
         if ctx.lang == "ENG" and reason == "Brak powodu":
             reason = "No reason"
@@ -1293,7 +1264,7 @@ class Mod(Plugin):
 
     @warn.command()
     @check_permissions(kick_members=True)
-    async def add(self, ctx, member: discord.Member = None, *, reason: ModerationReason = 'Brak powodu'):
+    async def add(self, ctx, member: discord.Member, *, reason: str = 'Brak powodu'):
         """Daje ostrzeżenie."""
         if ctx.lang == "ENG" and reason == "Brak powodu":
             reason = "No reason"
@@ -1310,7 +1281,7 @@ class Mod(Plugin):
 
     @warn.command()
     @check_permissions(kick_members=True)
-    async def remove(self, ctx, member: discord.Member = None, number: int = None):
+    async def remove(self, ctx, member: discord.Member, number: int):
         """Usuwa ostrzeżenie po id."""
         if member.id == self.bot.user.id:
             return await ctx.send(random.choice(["O.o", "o.O"]))
@@ -1318,11 +1289,11 @@ class Mod(Plugin):
         if not m:
             return await ctx.send(_(ctx.lang, "{} nie posiada żadnych warnów.").format(member))
         await self.remove_warn(ctx.author.id, ctx.guild.id, number)
-        return await ctx.send(_(ctx.lang, "{} usunął ostrzeżenie {}.").format(ctx.author.mention, member.mention))
+        return await ctx.send(_(ctx.lang, "{} usunął ostrzeżenie {} o numerze id {}.").format(ctx.author.mention, member.mention, number))
 
     @warn.command(aliases=['purge'])
     @check_permissions(kick_members=True)
-    async def clear(self, ctx, member: discord.Member = None):
+    async def clear(self, ctx, member: discord.Member):
         """Usuwa wszystkie ostrzeżenia."""
         if member.id == self.bot.user.id:
             return await ctx.send(random.choice(["O.o", "o.O"]))
@@ -1334,7 +1305,7 @@ class Mod(Plugin):
 
     @commands.command()
     @check_permissions(kick_members=True)
-    async def warns(self, ctx, member: typing.Union[discord.User, discord.Member] = None):
+    async def warns(self, ctx, member: typing.Union[discord.User, discord.Member]):
         """Pokazuje wszystkie ostrzeżenia."""
         member = member or ctx.author
         warns = await self.get_warns(member.id, ctx.guild.id, True)

@@ -15,14 +15,15 @@ import random
 import itertools
 
 async def add_react(message, type_: bool):
-    emoji = '<:checkmark:601123463859535885>' if type_ == True else '<:wrongmark:601124568387551232>'
+    emoji = '<:checkmark:601123463859535885>' if type_ is True else '<:wrongmark:601124568387551232>'
+    if '<:checkmark:601123463859535885>' in message.reactions or '<:wrongmark:601124568387551232>' in message.reactions:
+        return
     try:
         await message.add_reaction(emoji)
     except discord.HTTPException:
         return
 
 RURL = re.compile(r"https?:\/\/(?:www\.)?.+")
-
 
 class Track(wavelink.Track):
     __slots__ = ('requester', 'channel', 'message', 'looped')
@@ -49,7 +50,7 @@ class Player(wavelink.Player):
         self.volume = 80
         self.dj = None
         self.eq = 'Flat'
-        
+
         self.repeat = None
         self.text_channel = None
 
@@ -79,10 +80,10 @@ class Player(wavelink.Player):
             self.inactive = False
 
             self.paused = False
-            
+
             if self.repeat:
                 track = self.repeat
-            
+
             elif self.current and len(self.entries) == 0:
                 track = None
                 await self.text_channel.send(_(await get_language(self.bot, self.guild_id), "Kolejka skończyła się."))
@@ -96,7 +97,8 @@ class Player(wavelink.Player):
                 await self.play(track)
 
                 if not self.repeat:
-                    await self.text_channel.send(_(await get_language(self.bot, self.guild_id), "Gram teraz `{}`.").format(self.current.title))
+                    await self.text_channel.send(
+                        _(await get_language(self.bot, self.guild_id), "Gram teraz `{}`.").format(self.current.title))
                     self.pauses.clear()
                     self.resumes.clear()
                     self.stops.clear()
@@ -122,12 +124,12 @@ class Music(commands.Cog):
 
         for n in nodes.values():
             node = await self.bot.wavelink.initiate_node(host=n['host'],
-                                                     port=n['port'],
-                                                     rest_uri=n['rest_url'],
-                                                     password=n['password'],
-                                                     identifier=n['identifier'],
-                                                     region=n['region'],
-                                                     secure=False)
+                                                         port=n['port'],
+                                                         rest_uri=n['rest_url'],
+                                                         password=n['password'],
+                                                         identifier=n['identifier'],
+                                                         region=n['region'],
+                                                         secure=False)
 
             node.set_hook(self.event_hook)
 
@@ -185,7 +187,7 @@ class Music(commands.Cog):
         permissions = ch.permissions_for(ctx.author)
 
         missing = [perm for perm, value in perms.items(
-                    ) if getattr(permissions, perm, None) != value]
+        ) if getattr(permissions, perm, None) != value]
 
         if not missing:
             return True
@@ -222,7 +224,10 @@ class Music(commands.Cog):
             await add_react(ctx.message, True)
         else:
             await ctx.send(_(ctx.lang, "{}, zagłosował na `{}` piosenki.\n\
-                Potrzebne jeszcze **{}** głosów, aby przegłosować.").format(ctx.author.mention, command, self.required(player, ctx.invoked_with) - len(attr)))
+                Potrzebne jeszcze **{}** głosów, aby przegłosować.").format(ctx.author.mention, command,
+                                                                            self.required(player,
+                                                                                          ctx.invoked_with) - len(
+                                                                                attr)))
 
     async def connect_handler(self, ctx, msg):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
@@ -305,7 +310,7 @@ class Music(commands.Cog):
         if not tracks:
             SPOTIFY_RE = re.compile(r"(?:^|\W)spotify.com/track(?:$|\W)")
             if SPOTIFY_RE.findall(query):
-                if ctx.message.embed:
+                if ctx.message.embeds:
                     e = ctx.message.embeds[0].to_dict()
                 else:
                     return await ctx.send(_(ctx.lang,
@@ -316,7 +321,7 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie znaleziono takiej piosenki."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -324,7 +329,8 @@ class Music(commands.Cog):
             for t in tracks.tracks:
                 await player.queue.put(Track(t.id, t.info, ctx=ctx))
 
-            await ctx.send(_(ctx.lang, "Dodano playliste `{}` z `{}` piosenkami do kolejki.").format(tracks.data["playlistInfo"]["name"], len(tracks.tracks)))
+            await ctx.send(_(ctx.lang, "Dodano playliste `{}` z `{}` piosenkami do kolejki.").format(
+                tracks.data["playlistInfo"]["name"], len(tracks.tracks)))
         else:
             track = tracks[0]
             await ctx.send(_(ctx.lang, "Dodano `{}` do kolejki.").format(track.title))
@@ -345,7 +351,7 @@ class Music(commands.Cog):
         if not player:
             return
 
-        if not player.is_connected or not ctx.guild.me.voice:
+        if not player.is_connected or not ctx.guild.me.voice or not ctx.author.voice:
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
@@ -353,8 +359,8 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nic nie gra."))
             return await add_react(ctx.message, False)
 
-
-        await ctx.send(_(ctx.lang, "Teraz gra: `{}`." + f" {'🔂' if player.repeat else ''}").format(player.current.title))
+        await ctx.send(
+            _(ctx.lang, "Teraz gra: `{}`." + f" {'🔂' if player.repeat else ''}").format(player.current.title))
 
     @commands.command(name='pause')
     async def pause_(self, ctx):
@@ -366,7 +372,7 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -392,12 +398,12 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
         if not player.paused:
-             await ctx.invoke(self.pause_)
+            await ctx.invoke(self.pause_)
 
         if await self.has_perms(ctx, manage_guild=True):
             await ctx.send(_(ctx.lang, "{} wznowił piosenke jako administrator albo DJ.").format(ctx.author.mention))
@@ -422,7 +428,7 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -446,12 +452,13 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
         if eq.upper() not in player.equalizers:
-            await ctx.send(_(ctx.lang, "`{}` nie jest prawidłowym equalizerem!\nSpróbuj `Flat, Boost, Metal, Piano`.").format(eq))
+            await ctx.send(
+                _(ctx.lang, "`{}` nie jest prawidłowym equalizerem!\nSpróbuj `Flat, Boost, Metal, Piano`.").format(eq))
             return await add_react(ctx.message, False)
 
         await player.set_preq(eq)
@@ -461,14 +468,14 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['vol'])
     @commands.cooldown(1, 2, commands.BucketType.guild)
-    async def volume(self, ctx, *, value: int=None):
+    async def volume(self, ctx, *, value: int = None):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
         if not player.is_connected or not ctx.guild.me.voice:
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -493,7 +500,7 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -518,7 +525,7 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -527,7 +534,8 @@ class Music(commands.Cog):
             return await add_react(ctx.message, False)
 
         if await self.has_perms(ctx, manage_guild=True):
-            await ctx.send(_(ctx.lang, "{} pomieszał piosenki w playliście jako administrator albo DJ.").format(ctx.author.mention))
+            await ctx.send(_(ctx.lang, "{} pomieszał piosenki w playliście jako administrator albo DJ.").format(
+                ctx.author.mention))
             await add_react(ctx.message, True)
             return await self.do_shuffle(ctx)
 
@@ -547,7 +555,7 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel or not ctx.author.voice:
+        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 

@@ -486,6 +486,7 @@ class Fun(commands.Cog):
         userembed.add_field(name=_(ctx.lang, "Kolor rangi"), value=user.color)
         userembed.add_field(name=_(ctx.lang, "Tag"), value=f'`{user.discriminator}`')
         userembed.add_field(name=_(ctx.lang, "Najwyższa ranga"), value=str(user.top_role))
+        userembed.add_field(name=_(ctx.lang, "Rangi"), value='`' + ',' .join([r.name for r in user.roles]) + '`')
         userembed.set_footer(text=f'ID: {user.id}')
         await ctx.send(embed=userembed)
 

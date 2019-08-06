@@ -172,7 +172,7 @@
     "Nie możesz dać ostrzeżenia administratorowi.": "You can not give a warning to the administrator.",
     "{}, dostał ostrzeżenie za `{}`.": "{}, got a warning for `{}`.",
     "{} nie posiada żadnych warnów.": "{} does not have any warnings.",
-    "{} usunął ostrzeżenie {}.": "{} removed the {} warning.",
+    "{} usunął ostrzeżenie {} o numerze id {}.": "{} removed the {} warning with id {}.",
     "{}, nie ma żadnych warnów.": "{}, does not have any warnings.",
     "Ten czas jest błędny. Porady dotyczące czasu są w dokumentacji `{}docs`.": "This time is not correct. Tips about the time are in documentation `{}docs`.",
     "Dodano przypomnienie za {}.": "Added reminder in {}.\nIf your time is not correct, then dont forget that bot is using UTC time.",
@@ -374,5 +374,6 @@
     "Rola {} usunięta.": "Role {} deleted.",
     "Przed": "Before",
     "Po": "After",
-    "Embed niestety nie zdążył się załadować, proszę sprobować ponownie.": "Embed could not load, please try again."
+    "Embed niestety nie zdążył się załadować, proszę sprobować ponownie.": "Embed could not load, please try again.",
+    "Rangi": "Roles"
 }

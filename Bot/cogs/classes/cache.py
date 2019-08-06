@@ -11,7 +11,10 @@ class CacheService(object):
             return None
 
     def update(self, first, key, value):
-        self.data[first][key] = value
+        if first not in self.data:
+            self.set(first, {key: value})
+        else:
+            self.data[first][key] = value
 
 
 class GuildSettingsCache(CacheService):
