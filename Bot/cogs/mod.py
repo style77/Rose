@@ -85,7 +85,10 @@ class Plugins(commands.Cog):
         if not cog or module.lower() in cant_off_modules:
             return await ctx.send(_(ctx.lang, "Nie ma takiego modułu, bądź nie jest on możliwy do wyłączenia."))
 
-        await cog.turn_off(ctx.bot.pg_con, ctx.guild.id)
+        try:
+            await cog.turn_off(ctx.bot.pg_con, ctx.guild.id)
+        except Exception as e:
+            return await ctx.send(_(ctx.lang, "Nie możesz wyłączyć tego modułu."))
         return await ctx.send(":ok_hand:")
 
 class Settings(Plugin):

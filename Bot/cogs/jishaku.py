@@ -52,7 +52,7 @@ class Jishaku(cog.Jishaku):
         super().__init__(bot)
         self.start_time = datetime.utcnow()
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def eval(self, ctx, *, code):
         await ctx.invoke(self.bot.get_command('jishaku py'), argument=code)

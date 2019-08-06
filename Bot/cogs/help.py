@@ -22,7 +22,21 @@ class NewHelpCommand(commands.HelpCommand):
         self.zws = '\u200b'
 
     async def get_blocked_commands(self, guild_id):
-        return await self.context.bot.pg_con.fetchval("SELECT blocked_commands FROM guild_settings WHERE guild_id = $1", guild_id)
+        f = await self.context.bot.pg_con.fetch("SELECT blocked_commands FROM guild_settings WHERE guild_id = $1",
+                                               guild_id)
+
+        plugins_off = await self.context.bot.pg_con.fetch("SELECT plugins_off FROM guild_settings WHERE guild_id = $1",
+                                               guild_id)
+
+        blocked_commands = []
+        blocked_commands.append(f[0])
+        #
+        # if len(plugins_off[0]) > 0:
+        #     for plugin in plugins_off[0]:
+        #         cog = self.context.bot.get_cog(plugin)
+        #         blocked_commands.append([command.name for command in cog.commands])
+
+        return blocked_commands
 
     async def send_command_help(self, command):
         if command.name in await self.get_blocked_commands(self.context.guild.id):
@@ -71,9 +85,8 @@ class NewHelpCommand(commands.HelpCommand):
         e.set_author(name=cog.qualified_name,
                      icon_url=self.context.bot.user.avatar_url)
         
-        #filtered = await self.filter_commands(cog.get_commands(), sort=True)
-        #if filtered:
-        if True is True:
+        filtered = await self.filter_commands(cog.get_commands(), sort=True)
+        if filtered:
             for command in cog.get_commands():
                 
                 params = []
