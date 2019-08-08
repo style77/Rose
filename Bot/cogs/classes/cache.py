@@ -18,6 +18,7 @@ class CacheService(object):
 
 
 class GuildSettingsCache(CacheService):
+    data = {}
 
     def set(self, guild, database_fetch):
         super().set(guild.id, {"guild": guild, "database": database_fetch})
@@ -27,13 +28,13 @@ class GuildSettingsCache(CacheService):
 
 
 class PrefixesCache(CacheService):
+    data = {}
 
     def set(self, guild, prefix):
         super().set(guild.id, {"prefix": prefix})
 
 
-class OnlineStreamsSaver(object):
-    """Its psuedo cacher which is just saving streamers to list"""
+class OnlineStreamsSaver(CacheService):
     data = {}
 
     def set(self, first, items: dict):
