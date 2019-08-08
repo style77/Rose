@@ -4,7 +4,11 @@ import typing
 import speech_recognition as sr
 import asyncio
 
-class voice(commands.Cog):
+"""Currently its not possible to do this. 
+    Im sorry."""
+
+
+class Voice(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -22,4 +26,4 @@ class voice(commands.Cog):
             print(r.recognize_google(audio, language='pl'))
 
 def setup(bot):
-    bot.add_cog(voice(bot))
+    bot.add_cog(Voice(bot))
