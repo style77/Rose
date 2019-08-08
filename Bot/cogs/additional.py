@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands, tasks, flags
+from discord.ext import commands, tasks
 
 import inspect
 import os
@@ -78,13 +78,16 @@ class SphinxObjectFileReader:
                 buf = buf[pos + 1:]
                 pos = buf.find(b'\n')
 
+
 class Additional(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.token = utils.get_from_config("dbl")
         self.dblpy = dbl.Client(self.bot, self.token)
-        self.bot.loop.create_task(self.update_stats())
-        self.on_member_state_update.start()
+        if not self.bot.development:
+            self.bot.loop.create_task(self.update_stats())
+        if not self.bot.development:
+            self.on_member_state_update.start()
         self.bot.session = aiohttp.ClientSession(loop=bot.loop)
         self.cd_mapping = commands.CooldownMapping.from_cooldown(
             1, 8, commands.BucketType.member)
@@ -321,7 +324,7 @@ class Additional(commands.Cog):
         lines, firstlineno = inspect.getsourcelines(src)
         if not obj.callback.__module__.startswith('discord'):
             location = os.path.relpath(src.co_filename).replace('\\', '/')
-            final_url = f'<{source_url}/tree/master/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>'
+            final_url = f'<{source_url}/blob/master/Bot/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>'
         else:
             location = obj.callback.__module__.replace('.', '/') + '.py'
             source_url = 'https://github.com/Rapptz/discord.py'
@@ -582,8 +585,7 @@ class Additional(commands.Cog):
         """Dokumentacja bota."""
         await ctx.send("<https://style77.github.io>")
 
-    @commands.command(cls=flags.FlagCommand)
-    # flag: flags.FlagParser(lang=str) = flags.EmptyFlags
+    @commands.command()
     async def tts(self, ctx, *, text: commands.clean_content="gay"):
         """Zwraca plik głosowy z twoją wiadomością."""
         async with ctx.typing():

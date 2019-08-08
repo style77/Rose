@@ -648,7 +648,7 @@ class Settings(Plugin):
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def logs(self, ctx, channel: discord.TextChannel = None):
+    async def logs(self, ctx, channel: typing.Union[discord.TextChannel, str]):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if not option:
             await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", ctx.guild.id)
@@ -668,7 +668,7 @@ class Settings(Plugin):
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def streams(self, ctx, channel: discord.TextChannel):
+    async def streams(self, ctx, channel: typing.Union[discord.TextChannel, str]):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if not option:
             await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", ctx.guild.id)

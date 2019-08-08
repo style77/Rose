@@ -49,7 +49,7 @@ def uptime():
     return int(time.time() - p.create_time())
 
 class Fun(commands.Cog):
-    def __init__(self,bot):
+    def __init__(self, bot):
         self.bot = bot
         self.translator = Translator()
         self.cleverbot = ac.Cleverbot(utils.get_from_config("cleverbot_api"))
@@ -57,7 +57,7 @@ class Fun(commands.Cog):
         self.session = aiohttp.ClientSession(loop=bot.loop)
 
     @commands.command(aliases=['fw', 'fullwidth', 'ａｅｓｔｈｅｔｉｃ'])
-    async def aesthetic(self, ctx, *, msg: str="iam gay"):
+    async def aesthetic(self, ctx, *, msg: str = "iam gay"):
         """ａｅｓｔｈｅｔｉｃ"""
         fullwidth_offset = 65248
         await ctx.send("".join(map(
@@ -76,7 +76,7 @@ class Fun(commands.Cog):
         await ctx.send(url)
 
     @commands.command()
-    async def meme(self, ctx, number: int=None):
+    async def meme(self, ctx, number: int = None):
         async with aiohttp.ClientSession() as session:
             if not number:
                 async with session.get("http://style7.pythonanywhere.com/api/v1.0/random_meme") as resp:
@@ -134,8 +134,8 @@ class Fun(commands.Cog):
             s.download()
             s.upload()
             res = s.results.dict()
-            down = round(res["download"]/1024/1024)
-            up = round(res["upload"]/1024)
+            down = round(res["download"] / 1024 / 1024)
+            up = round(res["upload"] / 1024)
             ping = round(res["ping"])
             await ctx.send(f"```wyniki:\ndownload: {down}mb/s\nupload: {up}mb/s\nping: {ping}```")
 
@@ -154,7 +154,7 @@ class Fun(commands.Cog):
         response = urllib.request.urlopen(url)
         html = response.read()
         soup = BeautifulSoup(html, 'html.parser')
-        vid = soup.find(attrs={'class':'yt-uix-tile-link'})
+        vid = soup.find(attrs={'class': 'yt-uix-tile-link'})
         await ctx.send('https://www.youtube.com' + vid['href'])
 
     @commands.command()
@@ -166,7 +166,7 @@ class Fun(commands.Cog):
         p = []
         for _ in text:
             i += 1
-            if i%2:
+            if i % 2:
                 p.append(_.upper())
             else:
                 p.append(_.lower())
@@ -182,7 +182,7 @@ class Fun(commands.Cog):
         html = BeautifulSoup(raw_html, 'html.parser')
         qt = html.find('span', attrs={'class': 'wpis-tresc'})
         qtrating = html.find('div', attrs={'class': 'wpis-box rating'})
-        text = qt.text.replace(qtrating.text,"")
+        text = qt.text.replace(qtrating.text, "")
 
         discrim = html.find('span', attrs={"class": "fn"})
         tag = discrim.text
@@ -191,7 +191,7 @@ class Fun(commands.Cog):
         comp = f"ilosc_ocen-{bash}"
         pkt = html.find('span', attrs={"id": comp})
         punkty = pkt.text
-        points = punkty.replace("Głosy: ","")
+        points = punkty.replace("Głosy: ", "")
 
         p = commands.Paginator()
 
@@ -214,16 +214,16 @@ class Fun(commands.Cog):
         qt = html.find('p', attrs={'class': 'qt'})
         text = qt.text
 
-        discrim = html.find('a', attrs={"title":"Permanent link to this quote."})
+        discrim = html.find('a', attrs={"title": "Permanent link to this quote."})
         tag = discrim.text
         bash = tag.replace("#", "?")
 
-        z=f"```{text}\n\n> bash.org/{bash}```"
+        z = f"```{text}\n\n> bash.org/{bash}```"
         await ctx.send(z)
 
     @commands.command()
     @commands.is_nsfw()
-    async def define(self, ctx,*,text=None):
+    async def define(self, ctx, *, text=None):
         """Definicja wyrazu z urbandictionary.com"""
         try:
             z = urbandict.define(text)
@@ -240,46 +240,50 @@ class Fun(commands.Cog):
         ascii = custom.renderText(text)
         await ctx.send(f"```{ascii}```")
 
+    # noinspection PyUnboundLocalVariable
     @commands.command()
     async def bombs(self, ctx, liczba: int):
         if liczba > 111:
             return await ctx.send(_(ctx.lang, "Liczba nie może być większa niż 111."))
         p = []
-        for _ in range(liczba):
-            x=random.randint(1,100)
+        for _s in range(liczba):
+            x = random.randint(1, 100)
             if x <= 20:
-                z="||:bomb:||"
+                z = "||:bomb:||"
             else:
                 if x >= 21 and x <= 60:
-                    z="||0\N{combining enclosing keycap}||"
+                    z = "||0\N{combining enclosing keycap}||"
                 elif x >= 61 and x <= 80:
-                    z="||1\N{combining enclosing keycap}||"
+                    z = "||1\N{combining enclosing keycap}||"
                 elif x >= 81 and x <= 100:
-                    z="||2\N{combining enclosing keycap}||"
+                    z = "||2\N{combining enclosing keycap}||"
             p.append(z)
-        await ctx.send("".join(p[:15])+"\n"+"".join(p[16:31])+"\n"+"".join(p[32:47])+"\n"+"".join(p[48:63])+"\n"+"".join(p[64:79])+"\n"+"".join(p[80:95])+"\n"+"".join(p[96:111]))
+        await ctx.send("".join(p[:15]) + "\n" + "".join(p[16:31]) + "\n" + "".join(p[32:47]) + "\n" + "".join(
+            p[48:63]) + "\n" + "".join(p[64:79]) + "\n" + "".join(p[80:95]) + "\n" + "".join(p[96:111]))
 
     @commands.command()
     async def charinfo(self, ctx, *, characters: str):
         """Pokazuje informacje o emotce, bądź literze."""
 
         lang = ctx.lang
+
         def to_string(c):
             digit = f'{ord(c):x}'
             name = unicodedata.name(c, _(lang, "Nie znalazłem nic takiego."))
             return f'`\\U{digit:>08}`: {name} - {c} \N{EM DASH} <http://www.fileformat.info/info/unicode/char/{digit}>'
+
         msg = '\n'.join(map(to_string, characters))
-        #p = commands.Paginator(prefix='', suffix='')
-        #for line in msg:
-            #p.add_line(line)
-        #for page in p.pages:
+        # p = commands.Paginator(prefix='', suffix='')
+        # for line in msg:
+        # p.add_line(line)
+        # for page in p.pages:
         await ctx.send(msg)
 
     @commands.command()
     async def who(self, ctx):
         try:
-            member=random.choice(list(m.author for m in self.bot._connection._messages if m.guild == ctx.guild))
-            e=discord.Embed(title=_(ctx.lang, "Kto to?"),color=3553598)
+            member = random.choice(list(m.author for m in self.bot._connection._messages if m.guild == ctx.guild))
+            e = discord.Embed(title=_(ctx.lang, "Kto to?"), color=3553598)
             e.set_image(url=member.avatar_url)
             await ctx.send(embed=e)
 
@@ -287,7 +291,8 @@ class Fun(commands.Cog):
                 return m.channel == ctx.channel and m.content == member.name or m.content.lower() == member.name.lower() or m.content == member.mention
 
             r = await self.bot.wait_for('message', check=check, timeout=15)
-            await ctx.send(_(ctx.lang, "{mention} tak to był {member}.").format(mention=r.author.mention, member=member))
+            await ctx.send(
+                _(ctx.lang, "{mention} tak to był {member}.").format(mention=r.author.mention, member=member))
 
         except asyncio.TimeoutError:
             await ctx.send(_(ctx.lang, "Niestety nikt nie zgadł na czas."))
@@ -296,40 +301,37 @@ class Fun(commands.Cog):
     @commands.is_nsfw()
     async def ss(self, ctx, page="https://google.com/"):
         if not page.startswith("https://"):
-            page=f"https://{page}"
+            page = f"https://{page}"
         if not page.endswith("/"):
-            page=f"{page}/"
-        e=discord.Embed(title=page,color=3553598,timestamp=ctx.message.created_at)
-        e.set_image(url=f"https://api.apiflash.com/v1/urltoimage?access_key=eac65fa1e35b44bfb79c9bb570aa650f&url={page}")
-        e.set_footer(text=ctx.author.name,icon_url=ctx.author.avatar_url)
+            page = f"{page}/"
+        e = discord.Embed(title=page, color=3553598, timestamp=ctx.message.created_at)
+        e.set_image(
+            url=f"https://api.apiflash.com/v1/urltoimage?access_key=eac65fa1e35b44bfb79c9bb570aa650f&url={page}")
+        e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
         await ctx.send(embed=e)
-
-    @ss.error
-    async def ss_handler(self,ctx,error):
-        if isinstance(error, commands.CheckFailure):
-            await ctx.send(_(ctx.lang, "Ten kanał nie jest nsfw."))
 
     @commands.command(name="cleverbot", aliases=["cb"])
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def cleverbot_(self, ctx, *, query: str):
+        lang = ctx.lang
+        query = self.translator.translate(query, dest="en" if lang == "ENG" else "pl")
         try:
-            r = await self.cleverbot.ask(query, ctx.author.id)
+            async with ctx.typing():
+                r = await self.cleverbot.ask(query.text, ctx.author.id)
         except ac.InvalidKey:
-            return await ctx.send(_(ctx.lang, "Wystąpił problem z którym musicie zgłosić się do właściciela bota.\nError: InvalidKey"))
+            return await ctx.send(
+                _(ctx.lang, "Wystąpił problem z którym musicie zgłosić się do właściciela bota.\nError: InvalidKey"))
         except ac.APIDown:
             return await ctx.send(_(ctx.lang, "Musze czasami spać."))
         else:
-            lang = ctx.lang
-            if lang == "ENG":
-                lang = "EN"
-            trans = self.translator.translate(r.text, dest=lang.lower())
+            trans = self.translator.translate(r.text, dest="en" if lang == "ENG" else "pl")
             await ctx.send(f"{trans.text}")
 
-        def __unload(self):
-            self.bot.loop.create_task(self.cleverbot.close())
+    def cog_unload(self):
+        self.bot.loop.create_task(self.cleverbot.close())
 
     @commands.Cog.listener()
-    async def on_command_completion(self,ctx):
+    async def on_command_completion(self, ctx):
         await self.bot.pg_con.execute("UPDATE bot_count SET commands = commands + 1")
 
         if not ctx.guild:
@@ -337,7 +339,8 @@ class Fun(commands.Cog):
         count = await self.bot.pg_con.fetch("SELECT * FROM count WHERE guild_id = $1", str(ctx.guild.id))
         if not count:
             return await self.bot.pg_con.execute("INSERT INTO count (guild_id) VALUES ($1)", str(ctx.guild.id))
-        await self.bot.pg_con.execute("UPDATE count SET commands = $1 WHERE guild_id = $2", count[0]['commands']+1, str(ctx.guild.id))
+        await self.bot.pg_con.execute("UPDATE count SET commands = $1 WHERE guild_id = $2", count[0]['commands'] + 1,
+                                      str(ctx.guild.id))
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -352,7 +355,8 @@ class Fun(commands.Cog):
         count = await self.bot.pg_con.fetch("SELECT * FROM count WHERE guild_id = $1", str(message.guild.id))
         if not count:
             return await self.bot.pg_con.execute("INSERT INTO count (guild_id) VALUES ($1)", str(message.guild.id))
-        await self.bot.pg_con.execute("UPDATE count SET messages = $1 WHERE guild_id = $2", count[0]['messages']+1, str(message.guild.id))
+        await self.bot.pg_con.execute("UPDATE count SET messages = $1 WHERE guild_id = $2", count[0]['messages'] + 1,
+                                      str(message.guild.id))
 
         if message.guild.id == 538366293921759233:
             odzywki = {
@@ -376,15 +380,15 @@ class Fun(commands.Cog):
                 x = odzywki[message.content]
                 await message.channel.send(x)
             if message.content.lower() == "ok":
-                reacts = ["🇩","🇮","🇪"]
+                reacts = ["🇩", "🇮", "🇪"]
                 for reaction in reacts:
                     await message.add_reaction(reaction)
-            if message.content.lower() in ["twoj stary","twój stary","twuj stary"]:
-                reacts = ["➕","1\N{combining enclosing keycap}"]
+            if message.content.lower() in ["twoj stary", "twój stary", "twuj stary"]:
+                reacts = ["➕", "1\N{combining enclosing keycap}"]
                 for reaction in reacts:
                     await message.add_reaction(reaction)
-            if message.content.lower() in ["koham cie","kocham cię","kocham cie","koham cię"]:
-                reacts = ["🇯","🅰","🇨","🅱","🇹","🇪","🇿"]
+            if message.content.lower() in ["koham cie", "kocham cię", "kocham cie", "koham cię"]:
+                reacts = ["🇯", "🅰", "🇨", "🅱", "🇹", "🇪", "🇿"]
                 for reaction in reacts:
                     await message.add_reaction(reaction)
 
@@ -417,16 +421,20 @@ class Fun(commands.Cog):
         server_ = await self.bot.pg_con.fetch("SELECT * FROM count WHERE guild_id = $1", str(ctx.guild.id))
         member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
         if member:
-            desc = _(ctx.lang, "**{}** wysłanych wiadomości ogółem\n**{}** wysłanych wiadomości na tym serwerze\n**{}** użytych komend ogółem\n**{}** użytych komend na tym serwerze.\n**{}** ogólnie wysłanych wiadomości przez ciebie.").format(global_[0]['messages'],
-                                                    server_[0]['messages'],
-                                                    global_[0]['commands'],
-                                                    server_[0]['commands'],
-                                                    member[0]['all_messages'])
+            desc = _(ctx.lang,
+                     "**{}** wysłanych wiadomości ogółem\n**{}** wysłanych wiadomości na tym serwerze\n**{}** użytych komend ogółem\n**{}** użytych komend na tym serwerze.\n**{}** ogólnie wysłanych wiadomości przez ciebie.").format(
+                global_[0]['messages'],
+                server_[0]['messages'],
+                global_[0]['commands'],
+                server_[0]['commands'],
+                member[0]['all_messages'])
         else:
-            desc = _(ctx.lang, "**{}** wysłanych wiadomości ogółem\n**{}** wysłanych wiadomości na tym serwerze\n**{}** użytych komend ogółem\n**{}** użytych komend na tym serwerze.").format(global_[0]['messages'],
-                                                        server_[0]['messages'],
-                                                        global_[0]['commands'],
-                                                        server_[0]['commands'])
+            desc = _(ctx.lang,
+                     "**{}** wysłanych wiadomości ogółem\n**{}** wysłanych wiadomości na tym serwerze\n**{}** użytych komend ogółem\n**{}** użytych komend na tym serwerze.").format(
+                global_[0]['messages'],
+                server_[0]['messages'],
+                global_[0]['commands'],
+                server_[0]['commands'])
         e = discord.Embed(title=_(ctx.lang, "Od czasu mojego włączenia zarejestrowałem"),
                           description=desc, color=3553598)
         await ctx.send(embed=e)
@@ -440,15 +448,16 @@ class Fun(commands.Cog):
         """Nic ważnego."""
         if ctx.guild.id == 527150156324536321:
             global_ = await self.bot.pg_con.fetch("SELECT * FROM bot_count")
-            return await ctx.send(_(ctx.lang, "Kuba dostał już **{}** banów od Bartka.").format(global_[0]['kuba_bans']))
+            return await ctx.send(
+                _(ctx.lang, "Kuba dostał już **{}** banów od Bartka.").format(global_[0]['kuba_bans']))
 
     @commands.command(hidden=True)
     async def ping(self, ctx):
         """Do testowania, czy bot odpowiada."""
-        await ctx.send(_(ctx.lang, "Mój ping to: {}.").format(round(self.bot.latency*1000)))
+        await ctx.send(_(ctx.lang, "Mój ping to: {}.").format(round(self.bot.latency * 1000)))
 
     @commands.command(aliases=["avy", "awatar"])
-    async def avatar(self, ctx, member: discord.Member=None):
+    async def avatar(self, ctx, member: discord.Member = None):
         """Zwraca awatar, twój bądź osoby oznaczonej."""
         member = member or ctx.author
 
@@ -470,9 +479,9 @@ class Fun(commands.Cog):
 
         userembed = discord.Embed(
             description=user.name +
-                ("<:bottag:597838054237011968>" if user.bot else ''),
-            color = user.color,
-            timestamp = ctx.message.created_at)
+                        ("<:bottag:597838054237011968>" if user.bot else ''),
+            color=user.color,
+            timestamp=ctx.message.created_at)
         userembed.set_author(
             name=user.display_name, icon_url=user.avatar_url)
         userembed.set_thumbnail(url=user.avatar_url)
@@ -486,7 +495,7 @@ class Fun(commands.Cog):
         userembed.add_field(name=_(ctx.lang, "Kolor rangi"), value=user.color)
         userembed.add_field(name=_(ctx.lang, "Tag"), value=f'`{user.discriminator}`')
         userembed.add_field(name=_(ctx.lang, "Najwyższa ranga"), value=str(user.top_role))
-        userembed.add_field(name=_(ctx.lang, "Rangi"), value='`' + ',' .join([r.name for r in user.roles]) + '`')
+        userembed.add_field(name=_(ctx.lang, "Rangi"), value='`' + ','.join([r.name for r in user.roles]) + '`')
         userembed.set_footer(text=f'ID: {user.id}')
         await ctx.send(embed=userembed)
 
@@ -496,7 +505,9 @@ class Fun(commands.Cog):
         if ctx.guild.id != 538366293921759233:
             return
         async with aiohttp.ClientSession() as session:
-            webhook = discord.Webhook.from_url('data:application/octet-stream;base64,eyJuYW1lIjogImNlYnVsYWN6ZWsiLCAiY2hhbm5lbF9pZCI6ICI1Mzg0MjQxMjIyMDQ3NDk4MzYiLCAidG9rZW4iOiAiN0xSLXAwbGo3T0RYTE02aHFUM2VuaERSUVp3RXY5eWpQR0JUT29IdGROQmkxUnVXRW1UaDJ4ZWpTeUdTRDRnZEw3WHoiLCAiYXZhdGFyIjogbnVsbCwgImd1aWxkX2lkIjogIjUzODM2NjI5MzkyMTc1OTIzMyIsICJpZCI6ICI1Mzg0MjU1Njc2OTE4MDA1OTEifQ==', adapter=discord.AsyncWebhookAdapter(session))
+            webhook = discord.Webhook.from_url(
+                'data:application/octet-stream;base64,eyJuYW1lIjogImNlYnVsYWN6ZWsiLCAiY2hhbm5lbF9pZCI6ICI1Mzg0MjQxMjIyMDQ3NDk4MzYiLCAidG9rZW4iOiAiN0xSLXAwbGo3T0RYTE02aHFUM2VuaERSUVp3RXY5eWpQR0JUT29IdGROQmkxUnVXRW1UaDJ4ZWpTeUdTRDRnZEw3WHoiLCAiYXZhdGFyIjogbnVsbCwgImd1aWxkX2lkIjogIjUzODM2NjI5MzkyMTc1OTIzMyIsICJpZCI6ICI1Mzg0MjU1Njc2OTE4MDA1OTEifQ==',
+                adapter=discord.AsyncWebhookAdapter(session))
             e = discord.Embed(description=f"**{data}**", color=3553598, timestamp=ctx.message.created_at)
             if ctx.message.attachments:
                 e.set_image(url=ctx.message.attachments[0].url)
@@ -504,7 +515,7 @@ class Fun(commands.Cog):
                 await webhook.send(embed=e, username=ctx.author.name, avatar_url=ctx.author.avatar_url_as(format='png'))
 
     @commands.command(aliases=["amionmobile?", "jestemnatelefonie?", "jestemnatel?", "jestemnatel"])
-    async def amionmobile(self, ctx, member: discord.Member=None):
+    async def amionmobile(self, ctx, member: discord.Member = None):
         """Sprawdza czy jesteś na urządzeniu mobilnym."""
         member = member or ctx.author
         if member.is_on_mobile():
@@ -512,27 +523,31 @@ class Fun(commands.Cog):
         else:
             await ctx.send(_(ctx.lang, "Nie."))
 
-    #@commands.command()
-    #async def translate(self, ctx, lg="pl", *, text=None):
-        #"""Tłumaczy podany tekst."""
-        #trans = self.translator.translate(text, dest=lg)
-        #flaga1 = trans.src
-        #flaga2 = lg
-        #if (trans.src or lg) == "en":
-            #flaga1 = "gb"
-        #e = discord.Embed(title=_(ctx.lang, "Tłumaczenie z :flag_{flaga1}: na :flag_{flaga2}:").format(flaga1=flaga1, flaga2=flaga2), description=trans.text, color=3553598)
-        #await ctx.send(embed=e)
+    # @commands.command()
+    # async def translate(self, ctx, lg="pl", *, text=None):
+    # """Tłumaczy podany tekst."""
+    # trans = self.translator.translate(text, dest=lg)
+    # flaga1 = trans.src
+    # flaga2 = lg
+    # if (trans.src or lg) == "en":
+    # flaga1 = "gb"
+    # e = discord.Embed(title=_(ctx.lang, "Tłumaczenie z :flag_{flaga1}: na :flag_{flaga2}:").format(flaga1=flaga1, flaga2=flaga2), description=trans.text, color=3553598)
+    # await ctx.send(embed=e)
 
     @commands.command()
-    async def spotify(self, ctx, member: discord.Member=None):
+    async def spotify(self, ctx, member: discord.Member = None):
         member = member or ctx.author
 
         if member.activity is not None and member.activity.type is discord.ActivityType.listening:
-            z = (datetime.utcnow()-member.activity.start).seconds
+            z = (datetime.utcnow() - member.activity.start).seconds
             dur = member.activity.duration.seconds
             czas = str(timedelta(seconds=z))
             czasdur = str(timedelta(seconds=dur))
-            e = discord.Embed(title=f"{member}", description=_(ctx.lang, "{mention} słucha **{title}** od **{artist}** na **{album}**\n\n**{czas}/{czasdur}**").format(mention=member.mention, title=member.activity.title, artist=member.activity.artist, album=member.activity.album, czas=czas, czasdur=czasdur), color=member.activity.color, timestamp=ctx.message.created_at)
+            e = discord.Embed(title=f"{member}", description=_(ctx.lang,
+                                                               "{mention} słucha **{title}** od **{artist}** na **{album}**\n\n**{czas}/{czasdur}**").format(
+                mention=member.mention, title=member.activity.title, artist=member.activity.artist,
+                album=member.activity.album, czas=czas, czasdur=czasdur), color=member.activity.color,
+                              timestamp=ctx.message.created_at)
             e.set_thumbnail(url=member.activity.album_cover_url)
             e.set_footer(icon_url=ctx.author.avatar_url)
             await ctx.send(embed=e)
@@ -557,7 +572,8 @@ class Fun(commands.Cog):
                 if message.attachments:
                     content = message.attachments[0].url
                 n += 1
-                tw.write(f"#{n} {cor} {message.channel.name} * {message.author}  -  {content}  / {str(message.created_at)}\n")
+                tw.write(
+                    f"#{n} {cor} {message.channel.name} * {message.author}  -  {content}  / {str(message.created_at)}\n")
 
         tw.flush()
         buf.seek(0)

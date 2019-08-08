@@ -1,7 +1,11 @@
+import base64
+import urllib
+
 import discord
 from discord.ext import commands, tasks
 
 import wavelink
+import aiohttp
 
 import re
 import typing
@@ -14,6 +18,8 @@ import math
 import random
 import itertools
 
+from cogs.utils import utils
+
 async def add_react(message, type_: bool):
     emoji = '<:checkmark:601123463859535885>' if type_ is True else '<:wrongmark:601124568387551232>'
     if '<:checkmark:601123463859535885>' in message.reactions or '<:wrongmark:601124568387551232>' in message.reactions:
@@ -24,6 +30,52 @@ async def add_react(message, type_: bool):
         return
 
 RURL = re.compile(r"https?:\/\/(?:www\.)?.+")
+SPOTIFY_URI_playlists = re.compile(r"^(https:\/\/open.spotify.com\/user\/spotify\/playlist\/|spotify:user:spotify:playlist:)([a-zA-Z0-9]+)(.*)$")
+SPOTIFY_URI_tracks = re.compile(r"^(https:\/\/open.spotify.com\/track\/|spotify:track:)([a-zA-Z0-9]+)(.*)$")
+
+
+class Spotify:
+
+    @staticmethod
+    async def _get_token():
+        spotify_id = utils.get_from_config("spotify_id")
+        spotify_secret = utils.get_from_config("spotify_secret")
+
+        bstr = bytes('{}:{}'.format(spotify_id, spotify_secret), 'utf-8')
+        b64_auth_str = base64.b64encode(bstr).decode('utf-8')
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': f"Basic {b64_auth_str}"}
+
+        data = {
+            'grant_type': 'authorization_code'
+        }
+
+        async with aiohttp.ClientSession() as cs:
+            async with cs.post('https://accounts.spotify.com/api/token', headers=headers, data=data) as r:
+                res = await r.json()
+                print(res)
+
+        token = res['access_token']
+        return token
+
+    async def get_from_url(self, url):
+        find = SPOTIFY_URI_tracks.findall(url)
+        if not find:
+            raise commands.BadArgument("This is not correct url.")
+
+        track_id = find[0][1]
+
+        url = f"https://api.spotify.com/v1/tracks/{track_id}"
+
+        token = await self._get_token()
+
+        headers = {'Authorization': f'Bearer {token}'}
+
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(url, headers=headers) as r:
+                print(await r.json())
+
 
 class Track(wavelink.Track):
     __slots__ = ('requester', 'channel', 'message', 'looped')
@@ -115,9 +167,9 @@ class Music(commands.Cog):
         self.leave_channels.start()
 
     async def initiate_nodes(self):
-        nodes = {'MAIN': {'host': '0.0.0.0',
+        nodes = {'MAIN': {'host': '127.0.0.1',
                           'port': 1334,
-                          'rest_url': 'http://0.0.0.0:1334',
+                          'rest_url': 'http://127.0.0.1:1334',
                           'password': "youshallnotpass",
                           'identifier': 'style',
                           'region': 'eu_central'}}
@@ -239,9 +291,10 @@ class Music(commands.Cog):
         try:
             return await ctx.guild.me.move_to(ctx.author.voice.channel)
         except Exception:
-            return await player.connect(ctx.author.voice.channel.id)
-        else:
-            return False
+            try:
+                return await player.connect(ctx.author.voice.channel.id)
+            except Exception:
+                return False
 
     @commands.command(aliases=['join'])
     async def connect(self, ctx):
@@ -258,7 +311,7 @@ class Music(commands.Cog):
         except discord.HTTPException:
             pass
 
-        if x == False:
+        if not x:
             await msg.edit(content=_(ctx.lang, "Wystąpił błąd podczas łączenia."))
             return await add_react(ctx.message, False)
 
@@ -293,6 +346,7 @@ class Music(commands.Cog):
         await ctx.trigger_typing()
 
         query = query.strip('<>')
+        tracks = None
 
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
@@ -302,20 +356,15 @@ class Music(commands.Cog):
         if not player.dj:
             player.dj = ctx.author
 
-        if not RURL.match(query):
+        if SPOTIFY_URI_tracks.match(query) or SPOTIFY_URI_playlists.match(query):
+            query = await Spotify().get_from_url(query)
+            # tracks = await self.bot.wavelink.get_tracks(f"ytsearch:{e['description']}")
+
+        elif not RURL.match(query):
             query = f'ytsearch:{query}'
+            tracks = await self.bot.wavelink.get_tracks(query)
 
-        tracks = await self.bot.wavelink.get_tracks(query)
-
-        if not tracks:
-            SPOTIFY_RE = re.compile(r"(?:^|\W)spotify.com/track(?:$|\W)")
-            if SPOTIFY_RE.findall(query):
-                if ctx.message.embeds:
-                    e = ctx.message.embeds[0].to_dict()
-                else:
-                    return await ctx.send(_(ctx.lang,
-                                            "Embed niestety nie zdążył się załadować, proszę sprobować ponownie."))
-                tracks = await self.bot.wavelink.get_tracks(f"ytsearch:{e['description']}")
+        tracks = await self.bot.wavelink.get_tracks(query) if tracks is None else tracks
 
         if not tracks:
             await ctx.send(_(ctx.lang, "Nie znaleziono takiej piosenki."))

@@ -27,7 +27,7 @@ class CatIsDead(commands.CommandError):
 class MemberDoesNotHaveCat(commands.CommandError):
     pass
 
-class DefaultCat():
+class DefaultCat(object):
     def __init__(self, bot, cat):
         self.bot = bot
         self.cat = cat
@@ -47,6 +47,7 @@ class DefaultCat():
         return user
 
 
+# noinspection PyCallingNonCallable
 class Cat(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -86,9 +87,11 @@ class Cat(commands.Cog):
         cat = await self.bot.pg_con.fetchrow("SELECT * FROM cats WHERE owner_id = $1", member.id)
         if not cat:
             return
+
         cat = DefaultCat(self.bot, cat)
+
         if cat.food <= 0:
-            await self.bot.pg_con.execute("UPDATE cats SET is_dead = True WHERE owner_id = $1", member.id)
+            await self.bot.pg_con.execute("UPDATE cats SET is_dead = True, is_sleeping = False WHERE owner_id = $1", member.id)
             return True
 
         if cat.stamina <= 0:
@@ -96,7 +99,7 @@ class Cat(commands.Cog):
             return True
 
         if cat.health <= 0:
-            await self.bot.pg_con.execute("UPDATE cats SET is_dead = True WHERE owner_id = $1", member.id)
+            await self.bot.pg_con.execute("UPDATE cats SET is_dead = True, is_sleeping = False WHERE owner_id = $1", member.id)
             return True
 
         if cat.is_dead:
@@ -128,23 +131,23 @@ class Cat(commands.Cog):
     async def losing_sta_b4(self):
         await self.bot.wait_until_ready()
 
-    def progress_bar(self, draw, y: int, color: tuple, progress: int) -> BytesIO:
+    @staticmethod
+    def progress_bar(draw, y: int, color: tuple, progress: int):
         draw.rectangle(((41, y), (42+(round(progress*3.34)), y+27)), fill=color)
 
-    def write(self, image, text, cords: tuple, font, color: tuple = (0, 0, 0)):
+    @staticmethod
+    def write(image, text, cords: tuple, font, color: tuple = (0, 0, 0)):
         image.text(cords, text, fill=color, font=font)
 
     async def get_avatar(self, ctx, user: Union[discord.User, discord.Member]) -> bytes:
         avatar_url = user.avatar_url_as(format="png")
 
-        self.user = user
-        self.ctx = ctx
         async with self.session.get(str(avatar_url)) as response:
             avatar_bytes = await response.read()
 
         return avatar_bytes
 
-    def processing(self, avatar_bytes: bytes, color: tuple, cat, image_path) -> BytesIO:
+    def processing(self, avatar_bytes: bytes, color: tuple, cat, image_path, ctx) -> BytesIO:
         with Image.open(BytesIO(avatar_bytes)) as im:
             pic = r"images/profile.png"
             size = 80, 80
@@ -201,17 +204,21 @@ class Cat(commands.Cog):
                         str(cat.premium),
                         (500, 211),
                         font=ImageFont.truetype(r"images/fonts/medium.otf", 30))
+
                     self.write(
                         d,
                         '{:,d}'.format(int(cat.money)),
                         (470, 254),
                         font=ImageFont.truetype(r"images/fonts/medium.otf", 30))
+
                     self.write(
                         d,
                         str(cat.level),
                         (460, 304),
                         font=ImageFont.truetype(r"images/fonts/medium.otf", 30))
-                    guild_name = self.ctx.guild.name
+
+                    guild_name = ctx.guild.name
+
                     if len(guild_name) > 18:
                         guild_name = guild_name[:18]+"..."
                     self.write(d, guild_name, (10, 765), font=ImageFont.truetype(r"images/fonts/medium.otf", 15))

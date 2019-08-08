@@ -86,6 +86,10 @@ class CommandErrorHandler(commands.Cog):
             await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Twój kot nie żyje."))
             return await add_react(ctx.message, False)
 
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send(error)
+            return await add_react(ctx.message, False)
+
         elif isinstance(error, commands.UserInputError):
             await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Użycie `{prefix}{cmd_name} {args}`").format(prefix=ctx.prefix, cmd_name=ctx.command.name, args=' '.join(list(ctx.command.clean_params))))
             return await add_react(ctx.message, False)

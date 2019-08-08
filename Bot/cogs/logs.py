@@ -22,6 +22,9 @@ class Logs(plugin.Plugin):
         if m.author == self.bot.user:
             return
 
+        if not m.guild:
+            return
+
         ch = await self.get_logs_channel(m.guild.id)
 
         e = discord.Embed(description=_(await get_language(self.bot, m.guild.id),
@@ -45,6 +48,8 @@ class Logs(plugin.Plugin):
 
         # P.S. 2 I have changed this and now its not getting author, instead mod_command_use is invoked and there i can
         # get author so its perfect
+        if not m.guild:
+            return
 
         ch = await self.get_logs_channel(m[0].guild.id)
 
@@ -59,6 +64,8 @@ class Logs(plugin.Plugin):
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
+        if not after.guild:
+            return
         ch = await self.get_logs_channel(after.guild.id)
 
         if before.content == after.content:
@@ -83,6 +90,9 @@ class Logs(plugin.Plugin):
 
     @commands.Cog.listener()
     async def on_mod_command_use(self, ctx):
+        if not ctx.guild:
+            return
+
         ch = await self.get_logs_channel(ctx.guild.id)
 
         e = discord.Embed(description=_(await get_language(self.bot, ctx.guild.id),
@@ -139,10 +149,14 @@ class Logs(plugin.Plugin):
                     moderator = entry.user
                     reason = entry.reason if entry.reason else _(await get_language(self.bot, guild.id), 'Brak Powodu')
 
-            text = _(await get_language(self.bot, guild.id),
-                     "{} został zbanowany przez {} z powodu `{}`.").format(user.mention,
+            try:
+                text = _(await get_language(self.bot, guild.id),
+                        "{} został zbanowany przez {} z powodu `{}`.").format(user.mention,
                                                                            moderator.mention,
                                                                            reason)
+            except UnboundLocalError:
+                text = _(await get_language(self.bot, guild.id),
+                         "{} został zbanowany.").format(user.mention)
         except discord.Forbidden:
             text = _(await get_language(self.bot, guild.id),
                      "{} został zbanowany.").format(user.mention)
@@ -167,13 +181,17 @@ class Logs(plugin.Plugin):
                     moderator = entry.user
                     reason = entry.reason if entry.reason else _(await get_language(self.bot, guild.id), 'Brak Powodu')
 
-            text = _(await get_language(self.bot, guild.id),
-                     "{} został odbanowany przez {} z powodu `{}`.").format(user.mention,
+            try:
+                text = _(await get_language(self.bot, guild.id),
+                        "{} został odbanowany przez {} z powodu `{}`.").format(user,
                                                                             moderator.mention,
                                                                             reason)
+            except UnboundLocalError:
+                text = _(await get_language(self.bot, guild.id),
+                         "{} został odbanowany.").format(user)
         except discord.Forbidden:
             text = _(await get_language(self.bot, guild.id),
-                     "{} został odbanowany.").format(user.mention)
+                     "{} został odbanowany.").format(user)
 
         e = discord.Embed(description=text,
                           color=0x22488a,
@@ -198,9 +216,12 @@ class Logs(plugin.Plugin):
                 if entry.target == role:
                     moderator = entry.user
 
-            text = _(await get_language(self.bot, role.guild.id),
-                     "Rola {} utworzona przez {}.").format(role.mention, moderator.mention)
-
+            try:
+                text = _(await get_language(self.bot, role.guild.id),
+                        "Rola {} utworzona przez {}.").format(role.mention, moderator.mention)
+            except UnboundLocalError:
+                text = _(await get_language(self.bot, role.guild.id),
+                         "Rola {} utworzona.").format(role.mention)
         except discord.Forbidden:
             text = _(await get_language(self.bot, role.guild.id),
                      "Rola {} utworzona.").format(role.mention)
@@ -221,13 +242,15 @@ class Logs(plugin.Plugin):
 
         try:
             async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_delete):
-                print(entry)
                 if entry.target.id == role.id:
-                    print('d')
                     moderator = entry.user
 
-            text = _(await get_language(self.bot, role.guild.id),
-                     "Rola {} usunięta przez {}.").format(f'**{role}**', moderator.mention)
+            try:
+                text = _(await get_language(self.bot, role.guild.id),
+                         "Rola {} usunięta przez {}.").format(f'**{role}**', moderator.mention)
+            except UnboundLocalError:
+                text = _(await get_language(self.bot, role.guild.id),
+                         "Rola {} usunięta.").format(f'**{role}**')
 
         except discord.Forbidden:
             text = _(await get_language(self.bot, role.guild.id),
