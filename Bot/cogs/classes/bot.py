@@ -25,6 +25,7 @@ class Bot(commands.AutoShardedBot):
         super(Bot, self).__init__(**OPTS)
 
         self.development = utils.get_from_config('development')
+        self.color = utils.get_from_config('development')
 
         self.EXT = [
             'cogs.stars',
