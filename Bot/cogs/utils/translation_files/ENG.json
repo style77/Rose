@@ -235,7 +235,7 @@
     "Komendy w tej grupie:\n```\n{}```": "Commands in this group:\n```\n{}```",
     "{author}, wysyłanie linków jest tutaj zabronione.": "{author}, sending links is not allowed here.",
     "{} wyczyscił ostrzeżenia {}.": "{} cleared {} warns.",
-    "{}, nie posiada konta premium.": "{], does not have premium account.",
+    "{}, nie posiada konta premium.": "{}, does not have premium account.",
     "{}, nie posiadasz konta premium.": "You dont have premium account {}.",
     "Ten kanał już jest używany jako licznik subskrybcji.": "This channel is already used as subscribers count.",
     "Takie reaction role nie istnieje. Sprawdź poprawność wszystkich argumentów.": "This reaction role does not exist. Check the validity of all arguments.",
