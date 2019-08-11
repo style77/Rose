@@ -119,14 +119,14 @@ class Reminder(commands.Cog):
             #if lang == "ENG":
                 #r = r + " ago"
 
-        channel = self.bot.get_channel(timer['channel'])
+        channel = self.bot.get_channel(int(timer['channel']))
         if channel is None:
-            author = self.bot.get_user(timer['user_id'])
-            try:
-                channel = await author.create_dm()
-            except discord.HTTPException:
-                return
-        
+            author = self.bot.get_user(int(timer['user_id']))
+            if author is not None:
+                try:
+                    channel = await author.create_dm()
+                except (discord.HTTPException):
+                    return
 
         now = timer['now']
         r = human_timedelta(now, source=timer['date'])

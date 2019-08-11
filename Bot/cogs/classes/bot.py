@@ -25,7 +25,7 @@ class Bot(commands.AutoShardedBot):
         super(Bot, self).__init__(**OPTS)
 
         self.development = utils.get_from_config('development')
-        self.color = utils.get_from_config('development')
+        self.color = 0x8f0fba
 
         self.EXT = [
             'cogs.stars',
@@ -109,7 +109,7 @@ class Bot(commands.AutoShardedBot):
                 for _ in self.walk_commands():
                     i += 1
                 v = await self.dblpy.get_bot_info()
-                v = v['monthly_points']
+                v = v['points']
 
                 row = await self.pg_con.fetchrow("SELECT * FROM members WHERE id = $1", self.user.id)
 

@@ -1,10 +1,19 @@
-# SIEMA KURWA NIENAWIDZE MYSELF
 import json
+import secrets
 
-def get(thing):
-    with open(r"config.json") as json_file:
-        f = json.load(json_file)
-    return f[thing]
+from flask import Flask
 
-CLIENT_ID =
-CLIENT_SECRET =
+# from . import models
+from Web.classes.handler import ErrorsHandler
+from Web.classes.main import App
+
+app = Flask("Rose")
+app.secret_key = secrets.token_urlsafe(16)
+app.eh = ErrorsHandler(app)
+
+app.main = App(app)
+
+app.get_text = app.main.get_text
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', debug=True)

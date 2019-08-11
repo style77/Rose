@@ -76,7 +76,7 @@ class Stars(Plugin):
     async def heartboard(self, ctx, *, channel: discord.TextChannel=None):
         starboard = await settings.get_starboard(ctx, ctx.guild.id)
         try:
-            if starboard:
+            if starboard and not channel:
                 starboard = starboard
                 s = ctx.guild.get_channel(starboard)
                 return await ctx.send(_(ctx.lang, "Ten serwer już posiada heartboarda - {}.").format(s.mention))
@@ -168,7 +168,11 @@ class Stars(Plugin):
 
     @commands.command()
     async def show(self, ctx, id):
-        star = await self.bot.pg_con.fetch("SELECT * FROM stars WHERE guild_id = $1 AND message_id = $2 or bot_message_id = $2", int(ctx.guild.id), int(id))
+        try:
+            id = int(id)
+        except ValueError:
+            return await ctx.send(_(ctx.lang, "Podaj poprawne id."))
+        star = await self.bot.pg_con.fetch("SELECT * FROM stars WHERE guild_id = $1 AND message_id = $2 OR bot_message_id = $2", ctx.guild.id, id)
         if star:
             channel = self.bot.get_channel(star[0]['channel_id'])
             msg = await channel.fetch_message(star[0]['message_id'])
@@ -184,7 +188,7 @@ class Stars(Plugin):
             embed.set_footer(text=author.name, icon_url=author.avatar_url)
             await ctx.send(embed=embed)
         elif not star:
-            return await ctx.send(_(ctx.lang, "Nie znalazłem podanej wiadomości."))
+            return await ctx.send(_(ctx.lang, "Nie znaleziono podanej wiadomości."))
 
 def setup(bot):
     bot.add_cog(Stars(bot))

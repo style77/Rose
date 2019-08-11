@@ -279,7 +279,7 @@ class Settings(Plugin):
     async def on_message(self, m):
         ctx = await self.bot.get_context(m)
         pre = await utils.get_pre(self.bot, m)
-        if m.content.lower() in ["<@538369596621848577>", "<@!538369596621848577>"]:
+        if m.content.lower() in [f"<@{self.bot.user.id}>", f"<@!{self.bot.user.id}>"]:
             if not m.guild:
                 return m.author.send(
                     "Nie musisz używać prefixu w prywatnych wiadomościach.\nYou don't have to use prefix in dms")
@@ -1311,6 +1311,8 @@ class Mod(Plugin):
     async def warns(self, ctx, member: typing.Union[discord.User, discord.Member]):
         """Pokazuje wszystkie ostrzeżenia."""
         member = member or ctx.author
+        if not ctx.author.guild_permissions.kick_members and member != ctx.author:
+            return await ctx.send(_(ctx.lang, "Nie możesz sprawdzić warnów kogoś innego.").format(member))
         warns = await self.get_warns(member.id, ctx.guild.id, True)
         if not warns:
             return await ctx.send(_(ctx.lang, "{}, nie ma żadnych warnów.").format(member))

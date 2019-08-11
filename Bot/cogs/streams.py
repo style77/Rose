@@ -65,37 +65,38 @@ class Streams(commands.Cog):
             async with aiohttp.ClientSession() as cs:
                 streams_fetch = await self.bot.pg_con.fetch("SELECT * FROM twitch_notifications")
                 for stream in streams_fetch:
-                    _id = await cs.get(f"https://api.twitch.tv/kraken/users?login={stream['stream']}", headers=auth)
-                    _id = await _id.json()
-
-                    try:
-
-                        stream_ttv = await cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
-                                                  headers=auth)
-                        stream_ttv = await stream_ttv.json()
-                    except IndexError:
-                        pass
-
-                    notif_channel = GuildSettingsCache().get(stream['guild_id'])['database']['stream_notification']
-                    language = GuildSettingsCache().get(stream['guild_id'])['database']['lang']
-
-                    if stream_ttv['stream'] is not None:
-                        s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
-                                   guild_id=stream['guild_id'], lang=language)
+                    if stream:
+                        _id = await cs.get(f"https://api.twitch.tv/kraken/users?login={stream['stream']}", headers=auth)
+                        _id = await _id.json()
 
                         try:
-                            if int(_id['users'][0]['_id']) not in online_streams.data[stream['guild_id']]['streams_id']:
-                                online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
-                                await s.send_notif()
-                        except (KeyError, IndexError):
-                            online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
-                            await s.send_notif()
-                    else:
-                        try:
-                            if int(_id['users'][0]['_id']) in online_streams.data[stream['guild_id']]['streams_id']:
-                                online_streams.remove(stream['guild_id'], int(_id['users'][0]["_id"]))
+
+                            stream_ttv = await cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
+                                                      headers=auth)
+                            stream_ttv = await stream_ttv.json()
                         except (IndexError, KeyError):
                             pass
+
+                        notif_channel = GuildSettingsCache().get(stream['guild_id'])['database']['stream_notification']
+                        language = GuildSettingsCache().get(stream['guild_id'])['database']['lang']
+
+                        if stream_ttv['stream'] is not None:
+                            s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
+                                       guild_id=stream['guild_id'], lang=language)
+
+                            try:
+                                if int(_id['users'][0]['_id']) not in online_streams.data[stream['guild_id']]['streams_id']:
+                                    online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
+                                    await s.send_notif()
+                            except (KeyError, IndexError):
+                                online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
+                                await s.send_notif()
+                        else:
+                            try:
+                                if int(_id['users'][0]['_id']) in online_streams.data[stream['guild_id']]['streams_id']:
+                                    online_streams.remove(stream['guild_id'], int(_id['users'][0]["_id"]))
+                            except (IndexError, KeyError):
+                                pass
 
         except Exception as e:
             traceback.print_exc()

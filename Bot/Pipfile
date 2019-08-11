@@ -14,7 +14,6 @@ master = {git = "git://github.com/Style77/discordBadoszApiWrapper.git"}
 dateparser = "*"
 humanize = "*"
 psutil = "*"
-pil = "*"
 pillow = "*"
 jishaku = "*"
 

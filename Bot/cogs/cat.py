@@ -297,7 +297,7 @@ class Cat(commands.Cog):
                 member_colour = (0, 0, 0)
             avatar_bytes = await self.get_avatar(ctx, member)
             fn = partial(self.processing, avatar_bytes,
-                         member_colour, cat, image_path)
+                         member_colour, cat, image_path, ctx)
             final_buffer = await self.bot.loop.run_in_executor(None, fn)
             file = discord.File(filename=f"{cat.name}.png", fp=final_buffer)
             await ctx.send(file=file)

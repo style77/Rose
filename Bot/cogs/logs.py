@@ -48,7 +48,7 @@ class Logs(plugin.Plugin):
 
         # P.S. 2 I have changed this and now its not getting author, instead mod_command_use is invoked and there i can
         # get author so its perfect
-        if not m.guild:
+        if not m[0].guild:
             return
 
         ch = await self.get_logs_channel(m[0].guild.id)

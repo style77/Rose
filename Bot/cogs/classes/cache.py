@@ -21,7 +21,12 @@ class GuildSettingsCache(CacheService):
     data = {}
 
     def set(self, guild, database_fetch):
-        super().set(guild.id, {"guild": guild, "database": database_fetch})
+        try:
+            z = guild.id
+        except Exception as e:
+            print(e)
+            z = guild
+        super().set(z, {"guild": guild, "database": database_fetch})
 
     def update(self, guild, key, value):
         super().update(guild.id, key, value)
