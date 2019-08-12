@@ -1,0 +1,7 @@
+{% extends "layout.html" %}
+
+{% block content %}
+{% for guild in user.managed_guilds %}
+    <a href="#">{{ guild.name }}</a>
+{% endfor %}
+{% endblock %}

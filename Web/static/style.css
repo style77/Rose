@@ -1,0 +1,17 @@
+@media screen and (max-width: 950px) {
+    #footer {
+        display: none;
+    }
+}
+
+* {
+   font-size: 18px;
+   line-height: 1.428;
+}
+
+@media (max-width: @screen-sm) {
+    * {
+       font-size: 22px;
+       line-height: 1.428;
+    }
+}
