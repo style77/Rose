@@ -125,7 +125,7 @@ class Reminder(commands.Cog):
             if author is not None:
                 try:
                     channel = await author.create_dm()
-                except (discord.HTTPException):
+                except discord.HTTPException:
                     return
 
         now = timer['now']
@@ -142,7 +142,8 @@ class Reminder(commands.Cog):
         except:
             msg = msg
 
-        await channel.send(msg)
+        if channel:
+            await channel.send(msg)
         await self.remove_reminder(timer)
 
 def setup(bot):

@@ -314,10 +314,13 @@ class Fun(commands.Cog):
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def cleverbot_(self, ctx, *, query: str):
         lang = ctx.lang
-        query = self.translator.translate(query, dest="en" if lang == "ENG" else "pl")
+        trans_query = self.translator.translate(query, dest="en" if lang == "ENG" else "pl")
+        trans_query = trans_query.text
+        if len(trans_query) > 3:
+            query = trans_query
         try:
             async with ctx.typing():
-                r = await self.cleverbot.ask(query.text, ctx.author.id)
+                r = await self.cleverbot.ask(query, ctx.author.id)
         except ac.InvalidKey:
             return await ctx.send(
                 _(ctx.lang, "Wystąpił problem z którym musicie zgłosić się do właściciela bota.\nError: InvalidKey"))
@@ -415,6 +418,7 @@ class Fun(commands.Cog):
         await ctx.send(embed=e)
 
     @commands.command(sliases=["staty", "uptime"])
+    @commands.guild_only()
     async def stats(self, ctx):
         """Statystyki bota."""
         global_ = await self.bot.pg_con.fetch("SELECT * FROM bot_count")
@@ -442,14 +446,14 @@ class Fun(commands.Cog):
         e = discord.Embed(description=czas, color=3553598)
         await ctx.send(embed=e)
 
-    @commands.command(hidden=True)
-    @commands.is_owner()
-    async def kuba_bans(self, ctx):
-        """Nic ważnego."""
-        if ctx.guild.id == 527150156324536321:
-            global_ = await self.bot.pg_con.fetch("SELECT * FROM bot_count")
-            return await ctx.send(
-                _(ctx.lang, "Kuba dostał już **{}** banów od Bartka.").format(global_[0]['kuba_bans']))
+    # @commands.command(hidden=True)
+    # @commands.is_owner()
+    # async def kuba_bans(self, ctx):
+    #     """Nic ważnego."""
+    #     if ctx.guild.id == 527150156324536321:
+    #         global_ = await self.bot.pg_con.fetch("SELECT * FROM bot_count")
+    #         return await ctx.send(
+    #             _(ctx.lang, "Kuba dostał już **{}** banów od Bartka.").format(global_[0]['kuba_bans']))
 
     @commands.command(hidden=True)
     async def ping(self, ctx):

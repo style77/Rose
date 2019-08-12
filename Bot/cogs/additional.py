@@ -1,3 +1,5 @@
+import textwrap
+
 import discord
 from discord.ext import commands, tasks
 
@@ -106,7 +108,7 @@ class Additional(commands.Cog):
 
     # ksoft.si
 
-    @commands.command()
+    @commands.command(aliases=['lyrics'])
     async def lyric(self, ctx, *, query):
         """Zwraca tekst danej piosenki."""
         ksoft_token = utils.get_from_config("ksoft_token")
@@ -120,11 +122,20 @@ class Additional(commands.Cog):
         async with aiohttp.ClientSession() as cs:
             async with cs.get(url, headers=headers, params=params) as r:
                 r = await r.json()
-        if len(r['data'][0]['lyrics']) >= 2000:
-            await ctx.send(_(ctx.lang, "Ten tekst jest za długi."))
+
+        lyric_split = textwrap.wrap(r['data'][0]['lyrics'], 2000, replace_whitespace=False)
+        embeds = []
+
         e = discord.Embed(
-            title=f"{r['data'][0]['artist']} - {r['data'][0]['name']}", description=r['data'][0]['lyrics'])
-        await ctx.send(embed=e)
+            title=f"{r['data'][0]['artist']} - {r['data'][0]['name']}", description=lyric_split.pop(0))
+        embeds.append(e)
+
+        for desc in lyric_split:
+            embed = discord.Embed(description=desc)
+            embeds.append(embed)
+
+        for em in embeds:
+            await ctx.send(embed=em)
 
     @commands.command(aliases=['google', 'lmgtfy'])
     async def g(self, ctx, *, query):
@@ -590,7 +601,10 @@ class Additional(commands.Cog):
         """Zwraca plik głosowy z twoją wiadomością."""
         async with ctx.typing():
             fp = io.BytesIO()
-            await aiogtts.aiogTTS().write_to_fp(text, fp, lang=str(ctx.lang).lower())
+            lang = str(ctx.lang).lower()
+            if str(ctx.lang) == "ENG":
+                lang = 'en'
+            await aiogtts.aiogTTS().write_to_fp(text, fp, lang=lang)
             fp.seek(0)
 
         await ctx.send(file=discord.File(fp, filename="tts.mp3"))

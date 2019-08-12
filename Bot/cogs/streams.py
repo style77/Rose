@@ -77,8 +77,17 @@ class Streams(commands.Cog):
                         except (IndexError, KeyError):
                             pass
 
-                        notif_channel = GuildSettingsCache().get(stream['guild_id'])['database']['stream_notification']
-                        language = GuildSettingsCache().get(stream['guild_id'])['database']['lang']
+                        get = GuildSettingsCache().get(stream['guild_id'])
+                        if get:
+                            notif_channel = get['database']['stream_notification']
+                            language = get['database']['lang']
+                        else:
+                            z = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1",
+                                                            stream['guild_id'])
+                            if z:
+                                notif_channel = z[0]['stream_notification']
+                                language = z[0]['lang']
+
 
                         if stream_ttv['stream'] is not None:
                             s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,

@@ -247,7 +247,7 @@
     "Wspólne serwery": "Shared servers",
     "Nie udało mi się zarejstrować żadnej usuniętej wiadomości.": "I could not register any deleted message.",
     "Niczego nie znaleziono.": "Could not find anything.",
-    "Rozpoczeliscie liczydełko!\nNastępną wiadomością musi być liczba o 1 wieksza.": "You have started the counting machine!\nThe next message must be a number by 1 larger.",
+    "eliscie liczydełko!\nNastępną wiadomością musi być liczba o 1 wieksza.": "You have started the counting machine!\nThe next message must be a number by 1 larger.",
     "Ten kanał nie jest nsfw.": "This channel is not nsfw.",
     "Wykonane przez {}.": "Requested by {}.",
     "Bot nie posiada permisji.": "Bot does not have permissions.",
@@ -358,7 +358,7 @@
     "Z serwera została usunięta rola {}.": "Role {} removed.",
     "Nowa emotka": "New emote",
     "Na serwer została dodana emotka {}.": "Emote {} added.",
-    "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo z {}": "[{}](https://twitch.tv/{}) started live stream from {}",
+    "[{}](https://twitch.tv/{}) ął transmisje na żywo z {}": "[{}](https://twitch.tv/{}) started live stream from {}",
     "Nie zapomnij, że zawsze podajemy koncówke z linku.": "Dont forget that we always provide end from link.",
     "Narazie wspiera tylko twitchowych twórców.": "Supports only twitch streamers for now.",
     "Konto stworzone: `{}`": "Account created: `{}`",
@@ -376,5 +376,6 @@
     "Przed": "Before",
     "Po": "After",
     "Embed niestety nie zdążył się załadować, proszę sprobować ponownie.": "Embed could not load, please try again.",
-    "Rangi": "Roles"
+    "Rangi": "Roles",
+    "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo z {}": "[{}](https://twitch.tv/{}) started stream from {}"
 }

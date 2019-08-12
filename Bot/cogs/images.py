@@ -488,7 +488,7 @@ class Images(commands.Cog):
         async with ctx.typing():
             f = await self.bot.app.cuddle
             e = discord.Embed()
-            e.set_image(url=f"attachment://nothing.png")
+            e.set_image(url=f"attachment://nothing.gif")
             e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=await f.get_discord_file(), embed=e)
 

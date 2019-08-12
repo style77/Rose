@@ -102,7 +102,7 @@ class Bot(commands.AutoShardedBot):
             else:
                 liczbaa = await self.pg_con.fetchrow("SELECT * FROM bot_count")
                 newest_guild = liczbaa['newest_guild']
-                newest_guild = f"{newest_guild} thank you for inviting me!"
+                newest_guild = f"{newest_guild} \U0001f440."
                 liczba = liczbaa['messages']
                 liczbac = liczbaa['commands']
                 i = 0
