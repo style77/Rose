@@ -1112,7 +1112,7 @@ class Mod(Plugin):
     @commands.command()
     @commands.bot_has_permissions(kick_members=True)
     @check_permissions(kick_members=True)
-    async def mute(self, ctx, member: discord.Member = None, *, time: EasyOneDayTime = None):
+    async def mute(self, ctx, member: discord.Member, *, time: EasyOneDayTime):
         """Wycisza osobe na zawsze, badź dany czas."""
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
@@ -1125,18 +1125,18 @@ class Mod(Plugin):
             role = await ctx.guild.create_role(name="Muted")
         await member.add_roles(role)
         await ctx.send(_(ctx.lang, "Drodzy państwo {} został wyciszony, wszyscy świętują.").format(member.mention))
-        return await add_react(ctx.message, True)
         if time:
             await asyncio.sleep(time)
             if any(r.name == 'Muted' for r in ctx.author.roles):
                 await member.remove_roles(role)
                 return await ctx.send(_(ctx.lang, "{} został odciszony.").format(member.mention))
         self.bot.dispatch('mod_command_use', ctx)
+        return await add_react(ctx.message, True)
 
     @commands.command()
     @commands.bot_has_permissions(kick_members=True)
     @check_permissions(kick_members=True)
-    async def unmute(self, ctx, member: discord.Member = None):
+    async def unmute(self, ctx, member: discord.Member):
         """Odcisza wyciszoną osobe."""
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
@@ -1154,7 +1154,7 @@ class Mod(Plugin):
     @commands.command(name="clear", aliases=["purge"])
     @commands.bot_has_permissions(manage_messages=True)
     @check_permissions(manage_messages=True)
-    async def clear_(self, ctx, member: typing.Optional[discord.Member] = None, liczba=None):
+    async def clear_(self, ctx, member: typing.Optional[discord.Member], liczba):
         """Usuwa daną ilość wiadomości."""
         if liczba is None:
             raise commands.UserInputError()

@@ -52,8 +52,9 @@ class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.translator = Translator()
-        self.cleverbot = ac.Cleverbot(utils.get_from_config("cleverbot_api"))
-        self.cleverbot.set_context(ac.DictContext(self.cleverbot))
+        if not self.bot.development:
+            self.cleverbot = ac.Cleverbot(utils.get_from_config("cleverbot_api"))
+            self.cleverbot.set_context(ac.DictContext(self.cleverbot))
         self.session = aiohttp.ClientSession(loop=bot.loop)
 
     @commands.command(aliases=['fw', 'fullwidth', 'ａｅｓｔｈｅｔｉｃ'])

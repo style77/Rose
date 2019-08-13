@@ -19,6 +19,7 @@ import random
 import itertools
 
 from cogs.utils import utils
+from cogs.utils import paginator
 
 async def add_react(message, type_: bool):
     emoji = '<:checkmark:601123463859535885>' if type_ is True else '<:wrongmark:601124568387551232>'
@@ -29,32 +30,30 @@ async def add_react(message, type_: bool):
     except discord.HTTPException:
         return
 
-RURL = re.compile(r"https?:\/\/(?:www\.)?.+")
-SPOTIFY_URI_playlists = re.compile(r"^(https:\/\/open.spotify.com\/user\/spotify\/playlist\/|spotify:user:spotify:playlist:)([a-zA-Z0-9]+)(.*)$")
-SPOTIFY_URI_tracks = re.compile(r"^(https:\/\/open.spotify.com\/track\/|spotify:track:)([a-zA-Z0-9]+)(.*)$")
+RURL = re.compile("https?:\/\/(?:www\.)?.+")
+SPOTIFY_URI_playlists = re.compile("^(https:\/\/open.spotify.com\/playlist\/|spotify:user:spotify:playlist:)([a-zA-Z0-9]+)(.*)$")
+SPOTIFY_URI_tracks = re.compile("^(https:\/\/open.spotify.com\/track\/|spotify:track:)([a-zA-Z0-9]+)(.*)$")
 
 
 class Spotify:
 
-    @staticmethod
-    async def _get_token():
+    async def _get_token(self):
         spotify_id = utils.get_from_config("spotify_id")
         spotify_secret = utils.get_from_config("spotify_secret")
 
-        bstr = bytes('{}:{}'.format(spotify_id, spotify_secret), 'utf-8')
-        b64_auth_str = base64.b64encode(bstr).decode('utf-8')
         headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': f"Basic {b64_auth_str}"}
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
 
         data = {
-            'grant_type': 'authorization_code'
+            'grant_type': 'client_credentials',
+            'client_id': spotify_id,
+            'client_secret': spotify_secret
         }
 
         async with aiohttp.ClientSession() as cs:
-            async with cs.post('https://accounts.spotify.com/api/token', headers=headers, data=data) as r:
+            async with cs.post('https://accounts.spotify.com/api/token', headers=headers, params=data) as r:
                 res = await r.json()
-                print(res)
 
         token = res['access_token']
         return token
@@ -74,8 +73,28 @@ class Spotify:
 
         async with aiohttp.ClientSession() as cs:
             async with cs.get(url, headers=headers) as r:
-                print(await r.json())
+                res = await r.json()
 
+        return res
+
+    async def get_playlist_from_url(self, url):
+        find = SPOTIFY_URI_playlists.findall(url)
+        if not find:
+            raise commands.BadArgument("This is not correct url.")
+
+        playlist_id = find[0][1]
+
+        url = f"https://api.spotify.com/v1/playlists/{playlist_id}"
+
+        token = await self._get_token()
+
+        headers = {'Authorization': f'Bearer {token}'}
+
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(url, headers=headers) as r:
+                res = await r.json()
+
+        return res
 
 class Track(wavelink.Track):
     __slots__ = ('requester', 'channel', 'message', 'looped')
@@ -287,12 +306,15 @@ class Music(commands.Cog):
         if ctx.guild.me.voice:
             if ctx.guild.me.voice.channel == ctx.author.voice.channel:
                 await msg.edit(content=_(ctx.lang, "Jestem już z tobą na kanale."))
-                return await add_react(ctx.message, False)
+                await add_react(ctx.message, False)
+                return None
         try:
-            return await ctx.guild.me.move_to(ctx.author.voice.channel)
+            await ctx.guild.me.move_to(ctx.author.voice.channel)
+            return True
         except Exception:
             try:
-                return await player.connect(ctx.author.voice.channel.id)
+                await player.connect(ctx.author.voice.channel.id)
+                return True
             except Exception:
                 return False
 
@@ -311,12 +333,12 @@ class Music(commands.Cog):
         except discord.HTTPException:
             pass
 
-        if not x:
+        if x is False:
             await msg.edit(content=_(ctx.lang, "Wystąpił błąd podczas łączenia."))
             return await add_react(ctx.message, False)
-
-        await msg.edit(content=_(ctx.lang, "Połączono z `{}`.").format(ctx.author.voice.channel.name))
-        return await add_react(ctx.message, True)
+        if x is True:
+            await msg.edit(content=_(ctx.lang, "Połączono z `{}`.").format(ctx.author.voice.channel.name))
+            return await add_react(ctx.message, True)
 
     @commands.command(aliases=['dc', 'stop'])
     async def disconnect(self, ctx):
@@ -356,13 +378,43 @@ class Music(commands.Cog):
         if not player.dj:
             player.dj = ctx.author
 
-        if SPOTIFY_URI_tracks.match(query) or SPOTIFY_URI_playlists.match(query):
-            query = await Spotify().get_from_url(query)
-            # tracks = await self.bot.wavelink.get_tracks(f"ytsearch:{e['description']}")
+        if SPOTIFY_URI_tracks.match(query):
+            res = await Spotify().get_from_url(query)
+            artists = []
+            i = 0
+            for index in res['artists']:
+                artists.append(res['artists'][i]['name'])
+            query = f"{' '.join(artists)} {res['name']}"
+            tracks = await self.bot.wavelink.get_tracks(f"ytsearch:{query}")
 
-        elif not RURL.match(query):
-            query = f'ytsearch:{query}'
-            tracks = await self.bot.wavelink.get_tracks(query)
+        elif SPOTIFY_URI_playlists.match(query):
+            res = await Spotify().get_playlist_from_url(query)
+            tracks = []
+
+            for track in res['tracks']['items']:
+                artists = []
+
+                for artist in track['track']['artists']:
+                    artists.append(artist['name'])
+
+                query = f"{' '.join(artists)} - {track['track']['name']}"
+                track_ = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
+                if track_[0] not in tracks:
+                    print(track_[0])
+                    tracks.append(track_[0])
+
+            for t in tracks:
+                await player.queue.put(Track(t.id, t.info, ctx=ctx))
+
+            if not player.entries:
+                player.current = tracks[0]
+
+            await ctx.send(_(ctx.lang, "Dodano playliste `{}` z `{}` piosenkami do kolejki.").format(
+                res['name'], len(tracks)))
+            return await add_react(ctx.message, True)
+
+        else:
+            tracks = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
 
         tracks = await self.bot.wavelink.get_tracks(query) if tracks is None else tracks
 
@@ -408,8 +460,25 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nic nie gra."))
             return await add_react(ctx.message, False)
 
-        await ctx.send(
-            _(ctx.lang, "Teraz gra: `{}`." + f" {'🔂' if player.repeat else ''}").format(player.current.title))
+        LINE = [*enumerate("─" * 25)]
+
+        lenght = round(player.current.length / 1000)
+        pos = round(player.position / 1000)
+        line = lambda p: ''.join(map(lambda x: x[1] if x[0] != round(p * len(LINE)) else '●', LINE))
+        thing = line(pos / lenght)
+
+        pos = datetime.timedelta(seconds=pos)
+        lenght = datetime.timedelta(seconds=lenght)
+
+        text = f"""
+`{player.current.title}`
+{pos} {thing} {lenght}
+        """
+
+        await ctx.send(text)
+
+        # await ctx.send(
+        #     _(ctx.lang, "Teraz gra: `{}`." + f" {'🔂' if player.repeat else ''}").format(player.current.title))
 
     @commands.command(name='pause')
     async def pause_(self, ctx):
@@ -553,17 +622,21 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        upcoming = list(itertools.islice(player.entries, 0, 10))
-
-        if not upcoming:
+        if not player.entries:
             await ctx.send(_(ctx.lang, "W kolejce nie ma obecnie żadnych utworów."))
             return await add_react(ctx.message, False)
 
-        fmt = '\n'.join(f'**`{str(song)}`**' for song in upcoming)
-        e = discord.Embed(description=fmt)
-        e.set_author(name=_(ctx.lang, "Następne {} utworów").format(len(upcoming)), icon_url=self.bot.user.avatar_url)
+        num = 10
 
-        await ctx.send(embed=e)
+        fmt = '\n'.join(f'**`{str(song)}`**' for song in player.entries)
+
+        p = paginator.Pages(ctx, entries=tuple(track for track in player.entries), per_page=num)
+        p.embed.description = fmt
+        p.embed.set_author(name=_(ctx.lang, "Następne {} utworów").format(num),
+                     icon_url=self.bot.user.avatar_url)
+        await p.paginate(index_allowed=True)
+
+        #await ctx.send(embed=e)
 
     @commands.command(name='shuffle', aliases=['mix'])
     @commands.cooldown(2, 10, commands.BucketType.user)
