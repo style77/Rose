@@ -11,7 +11,34 @@
       <meta charset="UTF-8">
       {% endblock %}
   </head>
-  <body style="margin: 0px; paddin: 0px; background-image: url('static/assets/bg2.jpg'); background-repeat: no-repeat;">
+  <body style="margin: 0px; paddin: 0px; background-color: {%if session.theme == 'dark'%}#2c2f33{% endif %}">
+      <nav class="navbar navbar-expand-lg navbar-{{ session.theme }}">
+        <a class="navbar-brand" href="/">
+        <img src="/static/assets/rose_logo.png" width="30" height="40" class="d-inline-block align-center" alt="">
+        Rose</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="nav navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="https://discordapp.com/oauth2/authorize?client_id=538369596621848577&scope=bot&permissions=8">{{ get_text("Invite") }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://discord.gg/EZ3TsYY">{{ get_text("Support") }}</a>
+                </li>
+                {% if session.logged_in %}
+                    <li class="nav-item">
+                        <a class="nav-link {%if session.current_page == 'dashboard'%}active {% endif %}" href="/dashboard">{{ get_text("Dashboard") }}</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">{{ get_text("Login") }}</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+      </nav>
     {% block content %}{% endblock %}
     {% block footer %}
         <footer class="navbar fixed-bottom" id="footer">

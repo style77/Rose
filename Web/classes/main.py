@@ -73,7 +73,7 @@ class App(ErrorsHandler):
                             client_secret=get("client_secret"))
             user = client.get_user()
             return render_template('dashboard.html', get_text=self.app.get_text, session=session, user=user,
-                                   client=client)
+                                   client=client, get_server_icon=self.get_server_icon, get_acronym=self.get_acronym)
 
         @app.route("/selector", methods=['POST', 'GET'])
         def selector():
@@ -100,6 +100,11 @@ class App(ErrorsHandler):
             x.append(word[0])
         new_name = ''.join(x)
         return new_name
+
+    @staticmethod
+    def get_server_icon(guild):
+        icon_base_url = "https://cdn.discordapp.com/icons/"
+        return f"{icon_base_url}{guild['id']}/{guild['icon']}.jpg"
 
     @staticmethod
     def get_text(text):
