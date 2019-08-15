@@ -75,7 +75,7 @@ class Streams(commands.Cog):
                                                       headers=auth)
                             stream_ttv = await stream_ttv.json()
                         except (IndexError, KeyError):
-                            pass
+                            traceback.print_exc()
 
                         get = GuildSettingsCache().get(stream['guild_id'])
                         if get:
@@ -88,24 +88,24 @@ class Streams(commands.Cog):
                                 notif_channel = z[0]['stream_notification']
                                 language = z[0]['lang']
 
-
                         if stream_ttv['stream'] is not None:
                             s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
                                        guild_id=stream['guild_id'], lang=language)
 
                             try:
-                                if int(_id['users'][0]['_id']) not in online_streams.data[stream['guild_id']]['streams_id']:
-                                    online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
+                                if await online_streams.check(_id['users'][0]['_id'], stream['guild_id']) is False:
+                                    await online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
                                     await s.send_notif()
-                            except (KeyError, IndexError):
-                                online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
+                            except (KeyError, IndexError) as e:
+                                await online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
                                 await s.send_notif()
+                                traceback.print_exc()
                         else:
                             try:
-                                if int(_id['users'][0]['_id']) in online_streams.data[stream['guild_id']]['streams_id']:
-                                    online_streams.remove(stream['guild_id'], int(_id['users'][0]["_id"]))
-                            except (IndexError, KeyError):
-                                pass
+                                if await online_streams.check(_id['users'][0]['_id'], stream['guild_id']):
+                                    await online_streams.remove(stream['guild_id'], int(_id['users'][0]["_id"]))
+                            except (IndexError, KeyError) as e:
+                                traceback.print_exc()
 
         except Exception as e:
             traceback.print_exc()

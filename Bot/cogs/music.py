@@ -344,20 +344,24 @@ class Music(commands.Cog):
     async def disconnect(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
+        # player and member instances check
         if not ctx.author.voice:
-            await ctx.send(_(ctx.lang, "Nie jesteś na żadnym kanale."))
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.guild.me.voice:
+        elif not ctx.guild.me.voice:
             await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
             return await add_react(ctx.message, False)
 
-        if ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
         await player.disconnect()
         await player.stop()
+
+        for track in player.queue:
+            await player.queue.get()
 
         await ctx.send(_(ctx.lang, "Rozłączono."))
         return await add_react(ctx.message, True)
@@ -375,8 +379,13 @@ class Music(commands.Cog):
         if not player.is_connected or not ctx.guild.me.voice:
             await ctx.invoke(self.connect)
 
-        if not player.dj:
-            player.dj = ctx.author
+        if hasattr(player, 'dj'):
+            if not player.dj:
+                player.dj = ctx.author
+        else:
+            owner = ctx.bot.get_user(ctx.bot.owner_id)
+            await owner.send(
+                f"For some reasons player object does not have dj attr, you have to restart bot.")
 
         if SPOTIFY_URI_tracks.match(query):
             res = await Spotify().get_from_url(query)
@@ -400,7 +409,6 @@ class Music(commands.Cog):
                 query = f"{' '.join(artists)} - {track['track']['name']}"
                 track_ = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
                 if track_[0] not in tracks:
-                    print(track_[0])
                     tracks.append(track_[0])
 
             for t in tracks:
@@ -422,7 +430,16 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie znaleziono takiej piosenki."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+            return await add_react(ctx.message, False)
+
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -452,8 +469,16 @@ class Music(commands.Cog):
         if not player:
             return
 
-        if not player.is_connected or not ctx.guild.me.voice or not ctx.author.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+            return await add_react(ctx.message, False)
+
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
         if not player.current:
@@ -471,7 +496,7 @@ class Music(commands.Cog):
         lenght = datetime.timedelta(seconds=lenght)
 
         text = f"""
-`{player.current.title}`
+      `{player.current.title}`
 {pos} {thing} {lenght}
         """
 
@@ -486,11 +511,16 @@ class Music(commands.Cog):
         if not player:
             return
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -512,11 +542,16 @@ class Music(commands.Cog):
     async def resume_(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -542,11 +577,16 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nie ma już żadnych piosenek do przewinięcia."))
             return await add_react(ctx.message, False)
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -566,11 +606,16 @@ class Music(commands.Cog):
     async def set_eq(self, ctx, *, eq: str):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -589,11 +634,16 @@ class Music(commands.Cog):
     async def volume(self, ctx, *, value: int = None):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -614,11 +664,16 @@ class Music(commands.Cog):
     async def queue_(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -643,11 +698,16 @@ class Music(commands.Cog):
     async def shuffle_(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
@@ -673,11 +733,16 @@ class Music(commands.Cog):
     async def repeat_(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na kanale."))
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
-        if not ctx.author.voice or ctx.guild.me.voice.channel != ctx.author.voice.channel:
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
             return await add_react(ctx.message, False)
 
