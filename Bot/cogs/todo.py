@@ -3,6 +3,8 @@ import asyncio
 from discord.ext import commands
 
 #from .utils.checks import has_todos
+from discord.utils import escape_mentions
+
 from .utils.paginator import Pages
 
 class Todo(commands.Cog):
@@ -13,6 +15,7 @@ class Todo(commands.Cog):
         await self.bot.pg_con.execute("DELETE FROM todo WHERE user_id = $1 AND id = $2", db_object['user_id'], db_object['id'])
 
     async def create_todo(self, user_id, _id, desc):
+        desc = escape_mentions(desc)
         await self.bot.pg_con.execute("INSERT INTO todo (user_id, id, description) VALUES ($1, $2, $3)", user_id, _id, desc)
 
     async def clear_todo(self, todos):

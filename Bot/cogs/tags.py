@@ -72,7 +72,7 @@ class Tags(Plugin):
                                       tage[0]['tag_uses'] + 1, ctx.guild.id, tag_name)
 
     @tag.command()
-    async def search(self, ctx, tag: str = None):
+    async def search(self, ctx, tag: str):
         """Wyszukaj tagu."""
         if tag:
             sql = """SELECT tag_name
@@ -93,7 +93,7 @@ class Tags(Plugin):
                 await ctx.send(_(ctx.lang, "Nic nie znalazłem."))
 
     @tag.command(invoke_without_command=True)
-    async def raw(self, ctx, *, tag: str = None):
+    async def raw(self, ctx, *, tag: str):
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
                                            ctx.guild.id, tag.lower())
 
@@ -126,7 +126,7 @@ class Tags(Plugin):
         await pages.paginate(index_allowed=True)
 
     @tag.command(aliases=['add', 'make'])
-    async def create(self, ctx, *, tag: str = None):
+    async def create(self, ctx, *, tag: str):
         """Stwórz tag."""
         if tag.lower() in ["search", "raw", "create", "edit", "add", "remove", "info", "claim", "top", "global"]:
             return await ctx.send(_(ctx.lang, "Nie możesz stworzyć taga o nazwie funkcyjnej."))
@@ -161,7 +161,7 @@ class Tags(Plugin):
             await ctx.send(_(ctx.lang, "**{}** stworzony.").format(tag_name))
 
     @tag.command()
-    async def edit(self, ctx, *, tag_name: str = None):
+    async def edit(self, ctx, *, tag_name: str):
         """Zedytuj tag."""
         z = tag_name.split(" - ")
         tag_name = z[0].lower()
@@ -203,7 +203,7 @@ class Tags(Plugin):
         await ctx.send(_(ctx.lang, "Tag zedytowany."))
 
     @tag.command(aliases=['delete'])
-    async def remove(self, ctx, *, tag: str = None):
+    async def remove(self, ctx, *, tag: str):
         """Usuń tag."""
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
                                            ctx.guild.id, tag)
@@ -218,7 +218,7 @@ class Tags(Plugin):
                 _(ctx.lang, "Ten tag nie należy do ciebie, ani nie masz permisji `manage_guild`, aby go usunać."))
 
     @tag.command(name="info")
-    async def _info(self, ctx, *, tag: str = None):
+    async def _info(self, ctx, *, tag: str):
         """Pokaż informacje o tagu."""
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
                                            ctx.guild.id, tag)
@@ -233,7 +233,7 @@ class Tags(Plugin):
         await ctx.send(embed=e)
 
     @tag.command()
-    async def claim(self, ctx, *, tag: str = None):
+    async def claim(self, ctx, *, tag: str):
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2",
                                            ctx.guild.id, tag)
         if not tage:
@@ -265,7 +265,7 @@ class Tags(Plugin):
         await ctx.send(_(ctx.lang, "```{}\nRanking dla {}```").format(z, ctx.guild.id))
 
     @tag.group(name='global', invoke_without_command=True)
-    async def global_(self, ctx, guild_id: int=None, *, tag: str = None):
+    async def global_(self, ctx, guild_id: int, *, tag: str):
         """Nie dodaje użyć!"""
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2", guild_id,
                                            tag)
@@ -282,7 +282,7 @@ class Tags(Plugin):
         await ctx.send(content, file=file)
 
     @global_.command()
-    async def info(self, ctx, guild_id=None, *, tag: str = None):
+    async def info(self, ctx, guild_id, *, tag: str):
         """Informacje o globalnym tagu."""
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1 AND tag_name = $2", guild_id,
                                            tag)

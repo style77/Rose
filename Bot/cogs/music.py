@@ -122,6 +122,7 @@ class Player(wavelink.Player):
         self.dj = None
         self.eq = 'Flat'
 
+        self._save_queue = False
         self.repeat = None
         self.text_channel = None
 
@@ -182,8 +183,12 @@ class Player(wavelink.Player):
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.bot.loop.create_task(self.initiate_nodes())
+        self.nodes = self.bot.loop.create_task(self.initiate_nodes())
         self.leave_channels.start()
+
+    def cog_unload(self):
+        self.leave_channels.cancel()
+        self.nodes.cancel()
 
     async def initiate_nodes(self):
         nodes = {'MAIN': {'host': '127.0.0.1',
@@ -360,8 +365,9 @@ class Music(commands.Cog):
         await player.disconnect()
         await player.stop()
 
-        for track in player.queue:
-            await player.queue.get()
+        if not player._save_queue:
+            for track in player.queue:
+                await player.queue.get()
 
         await ctx.send(_(ctx.lang, "Rozłączono."))
         return await add_react(ctx.message, True)
@@ -525,7 +531,7 @@ class Music(commands.Cog):
             return await add_react(ctx.message, False)
 
         if player.paused:
-            await ctx.invoke(self.resume_)
+            return await ctx.invoke(self.resume_)
 
         if await self.has_perms(ctx, manage_guild=True):
             await ctx.send(_(ctx.lang, "{} zatrzymał piosenke jako administrator albo DJ.").format(ctx.author.mention))
@@ -556,7 +562,7 @@ class Music(commands.Cog):
             return await add_react(ctx.message, False)
 
         if not player.paused:
-            await ctx.invoke(self.pause_)
+            return await ctx.invoke(self.pause_)
 
         if await self.has_perms(ctx, manage_guild=True):
             await ctx.send(_(ctx.lang, "{} wznowił piosenke jako administrator albo DJ.").format(ctx.author.mention))
@@ -696,6 +702,7 @@ class Music(commands.Cog):
     @commands.command(name='shuffle', aliases=['mix'])
     @commands.cooldown(2, 10, commands.BucketType.user)
     async def shuffle_(self, ctx):
+        """Miesza piosenki w kolejce."""
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
         # player and member instances check
@@ -731,6 +738,7 @@ class Music(commands.Cog):
 
     @commands.command(name='repeat', aliases=['l', 'loop'])
     async def repeat_(self, ctx):
+        """Włącza powtarzanie aktualnej piosenki."""
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
         # player and member instances check
@@ -768,6 +776,32 @@ class Music(commands.Cog):
             player.repeat = player.current
 
         player.update = True
+
+    @commands.command()
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def save_queue(self, ctx):
+        """Zapisuje pozostałe piosenki z playlisty na następne włączenie muzyki."""
+        player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+            return await add_react(ctx.message, False)
+
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+            return await add_react(ctx.message, False)
+
+        c = player._save_queue = not player._save_queue
+
+        if c is True:
+            return await ctx.send(_(ctx.lang, "{} włączył zapisywanie playlisty.").format(ctx.author.mention))
+        else:
+            return await ctx.send(_(ctx.lang, "{} wyłączył zapisywanie playlisty.").format(ctx.author.mention))
 
     @commands.command(hidden=True, aliases=['minfo'])
     @commands.is_owner()

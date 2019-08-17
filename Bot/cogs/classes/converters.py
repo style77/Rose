@@ -322,12 +322,12 @@ class TrueFalseError(commands.CommandError):
 
 class TrueFalseConverter(Converter):
     async def convert(self, ctx, argument):
-        if str(argument).lower() in ['true', '1', 'enable']:
+        if not argument:
+            raise TrueFalseError()
+        elif str(argument).lower() in ['true', '1', 'enable']:
             return True
         elif str(argument).lower() in ['false', '0', 'disable']:
             return False
-        else:
-            raise TrueFalseError()
     
 
 class ModerationReason(commands.Converter):

@@ -25,7 +25,7 @@ class Database:
     @staticmethod
     async def create_tables(db):
         create_table_request_list = [
-            "CREATE TABLE IF NOT EXISTS streams_saver (guild_id BIGINT, streams_id text)",
+            "CREATE TABLE IF NOT EXISTS streams_saver (guild_id BIGINT, streams_id text DEFAULT '')",
         ]
         for create_table_request in create_table_request_list:
             try:
@@ -149,9 +149,10 @@ class OnlineStreamsSaver(CacheService):
         if not fetch:
             await self.cursor.execute(f"INSERT INTO streams_saver (guild_id) VALUES ({guild_id})")
             await self.cursor.commit()
-            return False
 
+        fetch = await self.get_(guild_id)
         list_ = fetch[1].split(',')
+
         if str(streamer) not in list_:
             list_.append(str(streamer))
             streamers = ','.join(list_)

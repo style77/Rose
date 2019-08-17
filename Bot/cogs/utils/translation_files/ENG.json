@@ -40,6 +40,7 @@
     "Nie masz żadnego jedzenia.": "You dont have any food.",
     "Twój kot ma juz maksymalną ilość jedzenia": "Your cat already has the maximum amount of food",
     "Nakarmiłeś kotka.\nTeraz `{name}` ma **{new_food}** jedzenia.": "You fed the kitten.\nNow `{name}` has **{new_food}** food.",
+    "Nakarmiłeś kotka.\nTeraz `{name}` ma **{food}** jedzenia.": "You fed the kitten.\nNow `{name}` has **{food}** food.",
     "Uderzyłeś kota, ty zwyrolu.": "You hit the cat, you lowlife.",
     "Co ty odwaliłeś?! Za mocno!": "What did you do ?! Too strong!",
     "Jeśli twój zwierzak zmarł możesz go odrodzić.": "If your pet died, you can revive him.",
@@ -377,5 +378,6 @@
     "Po": "After",
     "Embed niestety nie zdążył się załadować, proszę sprobować ponownie.": "Embed could not load, please try again.",
     "Rangi": "Roles",
-    "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo z {}": "[{}](https://twitch.tv/{}) started stream from {}"
+    "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo z {}": "[{}](https://twitch.tv/{}) started stream from {}",
+    "Teraz `{name}` ma **{food}** jedzenia.": "Now `{name}` has **{food}** food."
 }

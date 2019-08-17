@@ -35,8 +35,8 @@ class Stream(object):
     def _prepare_embed(self):
         if self.is_live is False:
             return
-        self.embed = discord.Embed(description=_(self.lang, "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo \
-                                                             z {}").format(self.user['display_name'],
+        self.embed = discord.Embed(description=_(self.lang, "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo "
+                                                            "z {}").format(self.user['display_name'],
                                                                            self.user['display_name'],
                                                                            self.user['game']),
                                    color=0x6441a5)
@@ -75,7 +75,7 @@ class Streams(commands.Cog):
                                                       headers=auth)
                             stream_ttv = await stream_ttv.json()
                         except (IndexError, KeyError):
-                            traceback.print_exc()
+                            pass
 
                         get = GuildSettingsCache().get(stream['guild_id'])
                         if get:
@@ -99,13 +99,12 @@ class Streams(commands.Cog):
                             except (KeyError, IndexError) as e:
                                 await online_streams.add(stream['guild_id'], int(_id['users'][0]["_id"]))
                                 await s.send_notif()
-                                traceback.print_exc()
                         else:
                             try:
                                 if await online_streams.check(_id['users'][0]['_id'], stream['guild_id']):
                                     await online_streams.remove(stream['guild_id'], int(_id['users'][0]["_id"]))
                             except (IndexError, KeyError) as e:
-                                traceback.print_exc()
+                                pass
 
         except Exception as e:
             traceback.print_exc()
