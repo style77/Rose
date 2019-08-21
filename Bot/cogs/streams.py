@@ -91,24 +91,25 @@ class Streams(commands.Cog):
                         if stream_ttv['stream'] is not None:
                             s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
                                        guild_id=stream['guild_id'], lang=language)
-                            print('is not none wiec kozak')
+                            # print('is not none wiec kozak')
 
                             try:
                                 if await online_streams.check(_id['users'][0]['_id'], stream['guild_id']) is False:
                                     await online_streams.add(stream['guild_id'], _id['users'][0]["_id"])
                                     await s.send_notif()
-                                    print('wyslano')
+                                    # print('wyslano')
                             except (KeyError, IndexError) as e:
                                 await online_streams.add(stream['guild_id'], _id['users'][0]["_id"])
                                 await s.send_notif()
-                                print('wyslano, ale z keyerrorem/indexerrorem')
+                                # print('wyslano, ale z keyerrorem/indexerrorem')
                         else:
-                            print('else ogolnie')
+                            # print('else ogolnie')
                             try:
                                 await online_streams.remove(stream['guild_id'], _id['users'][0]["_id"])
-                                print('usuwanie')
+                                # print('usuwanie')
                             except (IndexError, KeyError) as e:
-                                print('index err/key w else')
+                                pass
+                                # print('index err/key w else')
 
         except Exception as e:
             traceback.print_exc()

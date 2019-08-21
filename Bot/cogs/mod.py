@@ -819,10 +819,42 @@ class Settings(Plugin):
             if channel in ['to_edit', None] and option['welcome_text']:
                 channel = member.guild.system_channel
             text = option['welcome_text']
-            if text == None:
+            if text is None:
                 return
             text = settings.replace_with_args(text, member)
             msg = await channel.send(text)
+            if option['invite_blocker']:
+                match = invite_regex.match(member.name.lower())
+                if match:
+                    await msg.delete()
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        option = await settings.get_guild_settings(self, member.guild.id)
+
+        if option is None:
+            return
+
+        welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", member.guild.id)
+
+        if option['leave_text'] is not None and option['leaver_channel'] is not None:
+
+            channel = member.guild.get_channel(
+                option['leaver_channel'])
+
+            if not option['leave_text']:
+                return
+
+            if channel is None and option['leave_text']:
+                channel = member.guild.system_channel
+            text = option['leave_text']
+
+            if text is None:
+                return
+
+            text = settings.replace_with_args(text, member)
+            msg = await channel.send(text)
+
             if option['invite_blocker']:
                 match = invite_regex.match(member.name.lower())
                 if match:
@@ -992,6 +1024,27 @@ class Settings(Plugin):
 
     @set_.command()
     @check_permissions(manage_guild=True)
+    async def leaver_channel(self, ctx, *, channel: str = None):
+        welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+        if not channel and welcomer:
+            return await ctx.send(ctx.guild.get_channel(welcomer[0]['leaver_channel']).mention)
+        if channel.lower() == 'none':
+            chann = None
+        else:
+            channel = await commands.TextChannelConverter().convert(ctx, channel)
+            chann = channel.id
+        if not channel:
+            chan = await ctx.guild.create_text_channel(name='welcomer')
+            await self.bot.pg_con.execute("UPDATE guild_settings SET leaver_channel = $1 WHERE guild_id = $2",
+                                          chan.id, ctx.guild.id)
+            await ctx.send(':ok_hand:')
+        if channel and welcomer:
+            await self.bot.pg_con.execute("UPDATE guild_settings SET leaver_channel = $1 WHERE guild_id = $2", chann,
+                                          ctx.guild.id)
+            await ctx.send(':ok_hand:')
+
+    @set_.command()
+    @check_permissions(manage_guild=True)
     async def welcome_text(self, ctx, *, text):
         welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
 
@@ -999,6 +1052,18 @@ class Settings(Plugin):
             return await ctx.send(_(ctx.lang, "Najpierw ustaw kanał do powitań."))
 
         await self.bot.pg_con.execute("UPDATE guild_settings SET welcome_text = $1 WHERE guild_id = $2", str(text),
+                                      ctx.guild.id)
+        await ctx.send(':ok_hand:')
+
+    @set_.command()
+    @check_permissions(manage_guild=True)
+    async def leave_text(self, ctx, *, text):
+        welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+
+        if not welcomer[0]['welcomer_channel']:
+            return await ctx.send(_(ctx.lang, "Najpierw ustaw kanał do pożegnań."))
+
+        await self.bot.pg_con.execute("UPDATE guild_settings SET leave_text = $1 WHERE guild_id = $2", str(text),
                                       ctx.guild.id)
         await ctx.send(':ok_hand:')
 
@@ -1205,6 +1270,8 @@ class Mod(Plugin):
 
     async def check(self, user_id, guild_id):
         guild = await settings.get_guild_settings(self, guild_id)
+        if not guild:
+            await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", guild_id)
         if await self.warns_num(user_id, guild_id, char="/") >= guild['warns_kick']:
             return True
         return False

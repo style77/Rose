@@ -6,7 +6,7 @@ from .utils import settings
 
 #Its heartboard but some variables are named "star" why? Because i've got idea to make heartboard when i finished starboard and i didnt want to broke code again, so i just changed visual things :).
 
-class Stars(Plugin):
+class Hearts(Plugin):
     def __init__(self, bot):
         self.bot = bot
         self.emotka = "❤"
@@ -168,10 +168,12 @@ class Stars(Plugin):
 
     @commands.command()
     async def show(self, ctx, id):
+        """Pokazuje szczegółowe informacje o wiadomości z heartboarda."""
         try:
             id = int(id)
         except ValueError:
-            return await ctx.send(_(ctx.lang, "Podaj poprawne id."))
+            return await ctx.send(_(ctx.lang, "Nie znaleziono podanej wiadomości na heartboardzie."))
+
         star = await self.bot.pg_con.fetch("SELECT * FROM stars WHERE guild_id = $1 AND message_id = $2 OR bot_message_id = $2", ctx.guild.id, id)
         if star:
             channel = self.bot.get_channel(star[0]['channel_id'])
@@ -191,4 +193,4 @@ class Stars(Plugin):
             return await ctx.send(_(ctx.lang, "Nie znaleziono podanej wiadomości na heartboardzie."))
 
 def setup(bot):
-    bot.add_cog(Stars(bot))
+    bot.add_cog(Hearts(bot))

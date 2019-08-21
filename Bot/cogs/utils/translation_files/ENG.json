@@ -379,5 +379,6 @@
     "Embed niestety nie zdążył się załadować, proszę sprobować ponownie.": "Embed could not load, please try again.",
     "Rangi": "Roles",
     "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo z {}": "[{}](https://twitch.tv/{}) started stream from {}",
-    "Teraz `{name}` ma **{food}** jedzenia.": "Now `{name}` has **{food}** food."
+    "Teraz `{name}` ma **{food}** jedzenia.": "Now `{name}` has **{food}** food.",
+    "Najpierw ustaw kanał do pożegnań.": "First, set up a leave messages channel."
 }
