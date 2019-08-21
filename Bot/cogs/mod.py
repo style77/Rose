@@ -414,7 +414,7 @@ class Settings(Plugin):
     @commands.command()
     @check_permissions(manage_guild=True)
     async def prefix(self, ctx, *, new_prefix: str = None):
-        pref = await self.bot.pg_con.fetch("SELECT * FROM prefixes WHERE guild_id = $1", ctx.guild.id)
+        pref = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if not new_prefix:
             if pref:
                 prefix = pref[0]['prefix']
@@ -423,12 +423,12 @@ class Settings(Plugin):
             return await ctx.send(_(ctx.lang, "Prefix dla tego serwera to: `{}`.").format(prefix))
         if not pref:
             await self.bot.pg_con.execute(
-                "INSERT INTO prefixes (guild_id, prefix) VALUES ($1, $2)",
+                "INSERT INTO guild_settings (guild_id, prefix) VALUES ($1, $2)",
                 ctx.guild.id, new_prefix)
             await ctx.send(_(ctx.lang, "Nowy prefix to `{new_prefix}`").format(new_prefix=new_prefix))
         elif pref:
             await self.bot.pg_con.execute(
-                "UPDATE prefixes SET prefix = $1 WHERE guild_id = $2",
+                "UPDATE guild_settings SET prefix = $1 WHERE guild_id = $2",
                 new_prefix, ctx.guild.id)
             await ctx.send(_(ctx.lang, "Nowy prefix to `{new_prefix}`").format(new_prefix=new_prefix))
 
@@ -1005,11 +1005,8 @@ class Settings(Plugin):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         guildd = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", guild.id)
-        guild_prefixes = await self.bot.pg_con.fetch("SELECT * FROM prefixes WHERE guild_id = $1", guild.id)
         if guildd:
             await self.bot.pg_con.execute("DELETE FROM guild_settings WHERE guild_id = $1", guild.id)
-        if guild_prefixes:
-            await self.bot.pg_con.execute("DELETE FROM prefixes WHERE guild_id = $1", guild.id)
 
     @commands.Cog.listener()
     async def on_guild_join(self, g):
