@@ -174,7 +174,7 @@ class Settings(Plugin):
 
     @youtube_.command(name="add")
     @check_permissions(manage_guild=True)
-    async def add_(self, ctx, channel: discord.VoiceChannel = None, *, channel_name=None):
+    async def add_(self, ctx, channel: discord.VoiceChannel, *, channel_name):
         member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
         if not member:
             return await ctx.send(_(ctx.lang, "{}, nie posiadasz konta premium.").format(ctx.author.mention))
@@ -884,7 +884,7 @@ class Settings(Plugin):
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def stars_count(self, ctx, number=None):
+    async def stars_count(self, ctx, number):
         option = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
         if str(number).isdigit():
             await self.bot.pg_con.execute("UPDATE guild_settings SET stars_count = $1 WHERE guild_id = $2", int(number),
@@ -992,14 +992,12 @@ class Settings(Plugin):
 
     @set_.command()
     @check_permissions(manage_guild=True)
-    async def welcome_text(self, ctx, *, text=None):
+    async def welcome_text(self, ctx, *, text):
         welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-        if not text and welcomer:
-            return await ctx.send(f"```{welcomer[0]['welcome_text']}```")
+
         if not welcomer[0]['welcomer_channel']:
             return await ctx.send(_(ctx.lang, "Najpierw ustaw kanał do powitań."))
-        if not text:
-            raise commands.UserInputError()
+
         await self.bot.pg_con.execute("UPDATE guild_settings SET welcome_text = $1 WHERE guild_id = $2", str(text),
                                       ctx.guild.id)
         await ctx.send(':ok_hand:')
@@ -1085,7 +1083,7 @@ class Mod(Plugin):
     @commands.command(aliases=['k'])
     @commands.bot_has_permissions(kick_members=True)
     @check_permissions(kick_members=True)
-    async def kick(self, ctx, member: discord.Member = None, *, reason: ModerationReason = "Brak powodu"):
+    async def kick(self, ctx, member: discord.Member, *, reason: ModerationReason = "Brak powodu"):
         """Wyrzuca osobe z serwera."""
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))

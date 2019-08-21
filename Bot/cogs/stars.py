@@ -188,7 +188,7 @@ class Stars(Plugin):
             embed.set_footer(text=author.name, icon_url=author.avatar_url)
             await ctx.send(embed=embed)
         elif not star:
-            return await ctx.send(_(ctx.lang, "Nie znaleziono podanej wiadomości."))
+            return await ctx.send(_(ctx.lang, "Nie znaleziono podanej wiadomości na heartboardzie."))
 
 def setup(bot):
     bot.add_cog(Stars(bot))

@@ -401,6 +401,7 @@ class Cat(commands.Cog):
             return await ctx.send(_(ctx.lang, "Przegrałeś.").format(new_money))
 
     @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def slots(self, ctx, money=None):
         cat = await self.get_cat(ctx.author)
 
@@ -635,6 +636,7 @@ guild: {}```""".format(cat.name,
         await ctx.send(_(ctx.lang, "Nakarmiłeś kotka.\nTeraz `{name}` ma **{food}** jedzenia.").format(name=cat.name, food=cat.food + 15))
 
     @cat.command(aliases=['attack', 'bij_go'])
+    @commands.cooldown(1, 20, commands.BucketType.user)
     async def hit(self, ctx):
         cat = await self.get_cat(ctx.author)
         await ctx.send(_(ctx.lang, "Uderzyłeś kota, ty zwyrolu."))

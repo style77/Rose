@@ -55,6 +55,7 @@ class Reminder(commands.Cog):
         await self.bot.pg_con.execute("INSERT INTO timers (user_id, channel, date, reminder, message_id, now) VALUES ($1, $2, $3, $4, $5, $6)", user_id, channel_id, date, description, message_id, now)
 
     @commands.group(aliases=['reminder'], invoke_without_command=True)
+    @commands.cooldown(1, 25, commands.BucketType.user)
     async def remind(self, ctx, *, date: UserFriendlyTime(commands.clean_content, default='\u2026')):
         lang = ctx.lang
         #if date.dt is False and reminder is not None:

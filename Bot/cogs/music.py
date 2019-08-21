@@ -637,7 +637,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['vol'])
     @commands.cooldown(1, 2, commands.BucketType.guild)
-    async def volume(self, ctx, *, value: int = None):
+    async def volume(self, ctx, *, value: int):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
         # player and member instances check

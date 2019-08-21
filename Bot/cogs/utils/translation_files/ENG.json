@@ -195,7 +195,7 @@
     ":ok_hand:\nPamietaj, jeśli będziesz chciał usunać heartboarda musisz najpierw wymazać go z bazy danych, tzn. użyc komendy `r_heartboard` i dopiero wtedy usunać kanał.": ":ok_hand:\nRemember, if you want to remove the heartboard, you must first erase it from the database, i.e. use the `r_heartboard` command and only then delete the channel.",
     "Coś poszło nie tak. Spróbuj ponownie.": "Something went wrong. Try again.",
     "Autor: **{}**\nwiadomosć: **{}**\nkanał: {}\nliczba serc: **{}**\nlink: **[JUMP TO](https://discordapp.com/channels/{}/{}/{})**": "Author: **{}**\nmessage content: **{}**\nchannel: {}\nhearts count: **{}**\nlink: **[JUMP TO](https://discordapp.com/channels/{}/{}/{})**",
-    "Nie znaleziono podanej wiadomości.": "I did not find the message.",
+    "Nie znaleziono podanej wiadomości na heartboardzie.": "I did not find the message on heartboard.",
     "Dodaje todo.": "Adds todo.",
     "Opis może mieć maksymalnie 210 znaków.": "The description can be up to 210 characters long.",
     "Dodano todo {}.": "Todo {} added.",

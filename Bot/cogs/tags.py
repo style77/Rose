@@ -113,6 +113,7 @@ class Tags(Plugin):
                                       tage[0]['tag_uses'] + 1, ctx.guild.id, tag)
 
     @commands.command()
+    @commands.cooldown(1, 3, commands.BucketType.user)
     async def tags(self, ctx, member: typing.Optional[discord.Member] = None):
         """Zwraca wszystkie tagi z serwera."""
         tage = await self.bot.pg_con.fetch("SELECT * FROM tags WHERE guild_id = $1", ctx.guild.id)
@@ -126,6 +127,7 @@ class Tags(Plugin):
         await pages.paginate(index_allowed=True)
 
     @tag.command(aliases=['add', 'make'])
+    @commands.cooldown(1, 10, commands.BucketType.user)
     async def create(self, ctx, *, tag: str):
         """Stwórz tag."""
         if tag.lower() in ["search", "raw", "create", "edit", "add", "remove", "info", "claim", "top", "global"]:

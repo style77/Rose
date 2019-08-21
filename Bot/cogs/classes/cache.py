@@ -1,3 +1,4 @@
+import traceback
 from sqlite3 import OperationalError
 
 import aiosqlite
@@ -59,10 +60,9 @@ class GuildSettingsCache(CacheService):
     data = {}
 
     def set(self, guild, database_fetch):
-        try:
+        if hasattr(guild, 'id'):
             z = guild.id
-        except Exception as e:
-            print(e)
+        else:
             z = guild
         super().set(z, {"guild": guild, "database": database_fetch})
 
@@ -138,7 +138,7 @@ class OnlineStreamsSaver(CacheService):
         fetch = await fetch.fetchone()
         return fetch
 
-    async def check(self, streamer: int, guild_id):
+    async def check(self, streamer, guild_id, ins=True):
         # sprawdza czy stream jest w bazie
 
         if not self.cursor:
@@ -146,7 +146,7 @@ class OnlineStreamsSaver(CacheService):
 
         fetch = await self.get_(guild_id)
 
-        if not fetch:
+        if not fetch and ins:
             await self.cursor.execute(f"INSERT INTO streams_saver (guild_id) VALUES ({guild_id})")
             await self.cursor.commit()
 

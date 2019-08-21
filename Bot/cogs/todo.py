@@ -52,7 +52,7 @@ class Todo(commands.Cog):
             _id = _id[0]['id']+1
 
         await self.create_todo(ctx.author.id, _id, desc)
-        return await ctx.send(_(ctx.lang, "Dodano todo {}.").format(desc))
+        return await ctx.send(_(ctx.lang, "Dodano todo {}.").format(escape_mentions(desc)))
 
     @todo.command(aliases=['delete', 'r', 'del', '-', 'done'])
     async def remove(self, ctx, _id: int):
