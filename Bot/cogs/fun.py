@@ -140,27 +140,9 @@ class Fun(commands.Cog):
             ping = round(res["ping"])
             await ctx.send(f"```wyniki:\ndownload: {down}mb/s\nupload: {up}mb/s\nping: {ping}```")
 
-    @commands.group(invoke_without_command=True)
-    @commands.is_nsfw()
-    async def search(self, ctx):
-        await ctx.send(_(ctx.lang, '```youtube - szuka filmu z youtube-a\n```'))
-
-    @search.command(aliases=['yt'])
-    @commands.is_nsfw()
-    async def youtube(self, ctx, *, queryy):
-        """Szuka filmu z Youtube."""
-        textToSearch = queryy
-        query = urllib.parse.quote(textToSearch)
-        url = "https://www.youtube.com/results?search_query=" + query
-        response = urllib.request.urlopen(url)
-        html = response.read()
-        soup = BeautifulSoup(html, 'html.parser')
-        vid = soup.find(attrs={'class': 'yt-uix-tile-link'})
-        await ctx.send('https://www.youtube.com' + vid['href'])
-
     @commands.command()
     async def claps(self, ctx, *, text=None):
-        """D👏E👏S👏P👏A👏C👏I👏T👏O"""
+        """D\U0001f44fE\U0001f44fS\U0001f44fP\U0001f44fA\U0001f44fC\U0001f44fI\U0001f44fT\U0001f44fO"""
         if not text:
             raise commands.UserInputError()
         i = 1

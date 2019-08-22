@@ -432,6 +432,9 @@ class Settings(Plugin):
                 new_prefix, ctx.guild.id)
             await ctx.send(_(ctx.lang, "Nowy prefix to `{new_prefix}`").format(new_prefix=new_prefix))
 
+        await add_react(ctx.message, True)
+        self.bot.dispatch('prefix_change', ctx, new_prefix)
+
     @commands.command(hidden=True)
     @commands.is_owner()
     async def invoke(self, ctx, name: str = None):
@@ -441,6 +444,7 @@ class Settings(Plugin):
     @commands.command()
     @check_permissions(manage_guild=True)
     async def settings(self, ctx):
+        """Wszystkie ustawienia serwera."""
         guild = await settings.get_guild_settings(ctx, ctx.guild.id)
         if not guild:
             return await ctx.send(_(ctx.lang, "Nic nie ustawiono na tym serwerze."))
@@ -468,7 +472,8 @@ class Settings(Plugin):
     @commands.command()
     @check_permissions(manage_guild=True)
     async def setup(self, ctx):
-        """Jeśli zdecydujesz się na to, gdy server jest ustawiony, to wszystkie opcje zostaną zresetowane. Po odpisaniu 'tak' nie ma odwrotu."""
+        """Jeśli zdecydujesz się na to, gdy server jest ustawiony, to wszystkie opcje
+            zostaną zresetowane. Po odpisaniu 'tak' nie ma odwrotu."""
         await ctx.send(_(ctx.lang, "Na pewno? Odpisz `tak`."))
 
         def check(m):

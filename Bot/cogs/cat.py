@@ -278,7 +278,7 @@ class Cat(commands.Cog):
         return await ctx.send(_(ctx.lang, "Twój kot będzie nazywać się **{name}**.").format(name=name))
 
     @commands.group(invoke_without_command=True, aliases=['profile'])
-    async def cat(self, ctx, member: discord.Member=None):
+    async def cat(self, ctx, member: discord.Member = None):
         """Pokazuje profil twojego kota."""
         member = member or ctx.author
         cat = await self.get_cat(member)

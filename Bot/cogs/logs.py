@@ -107,6 +107,24 @@ class Logs(plugin.Plugin):
             await ch.send(embed=e)
 
     @commands.Cog.listener()
+    async def on_prefix_change(self, ctx, new_prefix):
+        if not ctx.guild:
+            return
+
+        ch = await self.get_logs_channel(ctx.guild.id)
+
+        e = discord.Embed(description=_(await get_language(self.bot, ctx.guild.id),
+                                        "{} zmienił prefix na `{}`.").format(ctx.author.mention, new_prefix),
+                          color=discord.Color.blurple(),
+                          timestamp=ctx.message.created_at)
+
+        e.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon_url)
+        e.set_footer(text="ID: {}".format(ctx.author.id))
+
+        if ch:
+            await ch.send(embed=e)
+
+    @commands.Cog.listener()
     async def on_member_join(self, member):
         ch = await self.get_logs_channel(member.guild.id)
 

@@ -384,5 +384,6 @@
     "{} włączył zapisywanie playlisty.": "{} has turned on saving queue.",
     "{} wyłączył zapisywanie playlisty.": "{} has turned off saving queue.",
     "{} włączył powtarzanie playlisty.": "{} has turned on queue repeat.",
-    "{} wyłączył powtarzanie playlisty.": "{} has turned off queue repeat."
+    "{} wyłączył powtarzanie playlisty.": "{} has turned off queue repeat.",
+    "{} zmienił prefix na `{}`.": "{} changed prefix to `{}`."
 }
