@@ -1,9 +1,9 @@
-import json
 import secrets
 
 from flask import Flask
 
 # from . import models
+
 from Web.classes.handler import ErrorsHandler
 from Web.classes.main import App
 

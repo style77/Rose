@@ -1,4 +1,4 @@
-@media screen and (max-width: 950px) {
+@media  your server, according to your preferencesscreen and (max-width: 950px) {
     #footer {
         display: none;
     }
@@ -9,9 +9,52 @@
    line-height: 1.428;
 }
 
+a, p {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 @media (max-width: @screen-sm) {
     * {
        font-size: 22px;
        line-height: 1.428;
     }
+}
+
+.plugin {
+    position: relative;
+    margin: 25px;
+    height: 200px;
+    width: 350px;
+    border-radius: 15px;
+}
+
+.plugin a {
+    position: relative;
+    top: 8px;
+    margin-left: 16px;
+}
+
+.plugin p {
+    position: relative;
+    top: 8px;
+    margin-left: 16px;
+}
+
+.dark {
+    background-color: #23272a;
+}
+
+.light {
+    background-color: #d6d6d6;
+}
+
+.custom-control-input:checked~.custom-control-label::before {
+    color: #1a1c1f;
+    border-color: #464a4f;
+    background-color: #464a4f;
 }

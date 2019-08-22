@@ -3,5 +3,18 @@
   "Login": "Zaloguj",
   "Dashboard": "Panel",
   "Support": "Pomoc",
-  "Invite": "Zaproś"
+  "Invite": "Zaproś",
+  "Logout": "Wyloguj",
+  "lead-plugins": "Wiele pluginów, które możesz dostosować do swoich potrzeb.",
+  "Plugins": "Pluginy",
+  "NotLogged": "Musisz być zalogowany, aby zobaczyć tą stronę.",
+  "music-desc": "Moduł muzyczny, który pozwala Ci słuchać muzyki podczas rozmowy z przyjaciółmi, bądź samemu.",
+  "nsfw-desc": "Moduł z zdjęciami dla dorosłych.",
+  "mod-desc": "Moduł pozwalający moderatorom twojego serwera na wyrzucenie, zbanowanie lub ostrzeżenie niegrzecznego użytkownika.",
+  "settings-desc": "Ustawienia pozwalają Ci urozmaicić twój oryginalny serwer.",
+  "hearts-desc": "Te ustawienia pozwalają na skonfigurowanie opcji heartboard-u, który polega na tym, że wysyła na ustawiony kanał wiadomość w formie cytatu mającą wyznaczoną ilością serduszek.",
+  "rr-desc": "Po naciśnięciu wybranej przez Ciebie emotki, użytkownik dostaje wyznaczoną rolę.",
+  "General": "Ogólne ustawienia",
+  "lead-general": "Ogólne ustawienia serwerowe.",
+  "general-desc1": "Ustawienia z lewej strony, pozwalają na ustawienie najbardziej podstawowych rzeczy."
 }

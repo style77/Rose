@@ -801,28 +801,30 @@ class Settings(Plugin):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         option = await settings.get_guild_settings(self, member.guild.id)
+
         if option is None:
             return
+
         role = member.guild.get_role(option['auto_role'])
+
         if role:
             try:
                 await member.add_roles(role)
             except discord.Forbidden:
-                raise commands.BotMissingPermissions(["kick_members"])
+                return
 
-        welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", member.guild.id)
-        if option['welcome_text'] is not None and option['welcomer_channel'] is not None:
+        if option['welcome_text'] and option['welcomer_channel']:
             channel = member.guild.get_channel(
                 option['welcomer_channel'])
-            if not option['welcome_text']:
-                return
-            if channel in ['to_edit', None] and option['welcome_text']:
-                channel = member.guild.system_channel
+
             text = option['welcome_text']
-            if text is None:
+
+            if not text:
                 return
+
             text = settings.replace_with_args(text, member)
             msg = await channel.send(text)
+
             if option['invite_blocker']:
                 match = invite_regex.match(member.name.lower())
                 if match:
@@ -835,18 +837,10 @@ class Settings(Plugin):
         if option is None:
             return
 
-        welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", member.guild.id)
+        if option['leave_text'] and option['leaver_channel']:
 
-        if option['leave_text'] is not None and option['leaver_channel'] is not None:
+            channel = member.guild.get_channel(option['leaver_channel'])
 
-            channel = member.guild.get_channel(
-                option['leaver_channel'])
-
-            if not option['leave_text']:
-                return
-
-            if channel is None and option['leave_text']:
-                channel = member.guild.system_channel
             text = option['leave_text']
 
             if text is None:
@@ -1048,9 +1042,6 @@ class Settings(Plugin):
     async def welcome_text(self, ctx, *, text):
         welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
 
-        if not welcomer[0]['welcomer_channel']:
-            return await ctx.send(_(ctx.lang, "Najpierw ustaw kanał do powitań."))
-
         await self.bot.pg_con.execute("UPDATE guild_settings SET welcome_text = $1 WHERE guild_id = $2", str(text),
                                       ctx.guild.id)
         await ctx.send(':ok_hand:')
@@ -1059,9 +1050,6 @@ class Settings(Plugin):
     @check_permissions(manage_guild=True)
     async def leave_text(self, ctx, *, text):
         welcomer = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
-
-        if not welcomer[0]['welcomer_channel']:
-            return await ctx.send(_(ctx.lang, "Najpierw ustaw kanał do pożegnań."))
 
         await self.bot.pg_con.execute("UPDATE guild_settings SET leave_text = $1 WHERE guild_id = $2", str(text),
                                       ctx.guild.id)

@@ -3,5 +3,17 @@
   "Login": "Login",
   "Dashboard": "Dashboard",
   "Support": "Support",
-  "Invite": "Invite"
+  "Invite": "Invite",
+  "Logout": "Logout",
+  "lead-plugins": "Many plugins that you can turn on or off on your server, according to your preferences",
+  "Plugins": "Plugins",
+  "NotLogged": "You have to log in to see this page.",
+  "music-desc": "Music plugin that allows you to listen to music while talking with friends or alone.",
+  "nsfw-desc": "Plugin with images only for adult people.",
+  "mod-desc": "Moderation is plugin that permit your server moderators to ban, kick or warn impolite members.",
+  "settings-desc": "Settings allow you to customize your server.",
+  "hearts-desc": "Hearts allow you to set heartboard, if you add specific amount of hearts to message then it'll show on set channel.",
+  "rr-desc": "Reaction role is plugin that allows your server member to get role by clicking on reactions.",
+  "General": "General settings",
+  "lead-general": "General server settings."
 }
