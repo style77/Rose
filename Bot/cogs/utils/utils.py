@@ -6,6 +6,7 @@ import builtins
 import inspect
 import ast
 
+from discord.utils import escape_mentions, escape_markdown
 from yaml import load, Loader
 from discord.ext import commands
 
@@ -19,15 +20,14 @@ def get_from_config(thing):
 
 
 async def get_pre(bot, message):
-    if bot.development and message.author.id == bot.owner_id:
-        return "!"
-
     if not message.guild:
         return ""
 
     get_prefix = await bot.pg_con.fetchrow(
         "SELECT * FROM guild_settings WHERE guild_id = $1", message.guild.id)
     if not get_prefix:
+        if bot.development:
+            return "!"
         return "/"
 
     return [f"{get_prefix['prefix']} ", get_prefix['prefix']]
@@ -48,5 +48,9 @@ def check_permissions(*, allow_owner=True, **permissions):
         return commands.check(predicate)(func)
     return inner
 
+def clean_text(text):
+    z = escape_markdown(text)
+    z = escape_mentions(text)
+    return z
 
 builtins.check_permissions = check_permissions

@@ -123,8 +123,11 @@ class Player(wavelink.Player):
         self.eq = 'Flat'
 
         self._save_queue = False
+        self.queue_loop = False
         self.repeat = None
         self.text_channel = None
+
+        self.last_track = None
 
         self.pauses = set()
         self.resumes = set()
@@ -160,9 +163,11 @@ class Player(wavelink.Player):
                 track = None
                 await self.text_channel.send(_(await get_language(self.bot, self.guild_id), "Kolejka skończyła się."))
 
+            elif self.queue_loop:
+                track = await self.queue.get()
+                await self.queue.put(track)
             else:
                 track = await self.queue.get()
-
             self.current = track
 
             if track is not None:
@@ -170,7 +175,8 @@ class Player(wavelink.Player):
 
                 if not self.repeat:
                     await self.text_channel.send(
-                        _(await get_language(self.bot, self.guild_id), "Gram teraz `{}`.").format(self.current.title))
+                        _(await get_language(
+                            self.bot, self.guild_id), "Gram teraz `{}`.").format(utils.clean_text(self.current.title)))
                     self.pauses.clear()
                     self.resumes.clear()
                     self.stops.clear()
@@ -179,6 +185,7 @@ class Player(wavelink.Player):
                     self.repeats.clear()
 
                 await self.next_event.wait()
+
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -366,13 +373,12 @@ class Music(commands.Cog):
         await player.stop()
 
         if not player._save_queue:
-            for track in player.queue:
-                await player.queue.get()
+            player.queue._queue.clear()
 
         await ctx.send(_(ctx.lang, "Rozłączono."))
         return await add_react(ctx.message, True)
 
-    @commands.command(aliases=['p'])
+    @commands.command(aliases=['p', '>'])
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def play(self, ctx, *, query: str):
         await ctx.trigger_typing()
@@ -457,10 +463,11 @@ class Music(commands.Cog):
                 tracks.data["playlistInfo"]["name"], len(tracks.tracks)))
         else:
             track = tracks[0]
-            await ctx.send(_(ctx.lang, "Dodano `{}` do kolejki.").format(track.title))
+            await ctx.send(_(ctx.lang, "Dodano `{}` do kolejki.").format(utils.clean_text(track.title)))
             await player.queue.put(Track(track.id, track.info, ctx=ctx))
             if not player.entries:
                 player.current = track
+                player.last_track = player.entries.index(player.current)
 
         return await add_react(ctx.message, True)
 
@@ -491,18 +498,16 @@ class Music(commands.Cog):
             await ctx.send(_(ctx.lang, "Nic nie gra."))
             return await add_react(ctx.message, False)
 
-        LINE = [*enumerate("─" * 25)]
-
         lenght = round(player.current.length / 1000)
         pos = round(player.position / 1000)
-        line = lambda p: ''.join(map(lambda x: x[1] if x[0] != round(p * len(LINE)) else '●', LINE))
+        line = lambda p: ''.join(map(lambda x: x[1] if x[0] != round(p * len([*enumerate("─" * 25)])) else '●', [*enumerate("─" * 25)]))
         thing = line(pos / lenght)
 
         pos = datetime.timedelta(seconds=pos)
         lenght = datetime.timedelta(seconds=lenght)
 
-        text = f"""
-      `{player.current.title}`
+        text = f"""\n
+      `{utils.clean_text(player.current.title)}`
 {pos} {thing} {lenght}
         """
 
@@ -783,6 +788,9 @@ class Music(commands.Cog):
         """Zapisuje pozostałe piosenki z playlisty na następne włączenie muzyki."""
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
+        if not await self.has_perms(ctx, manage_guild=True):
+            return await ctx.send(_(ctx.lang, "Nie masz odpowiednich uprawnień do zapisania kolejki."))
+
         # player and member instances check
         if not ctx.author.voice:
             await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
@@ -802,6 +810,32 @@ class Music(commands.Cog):
             return await ctx.send(_(ctx.lang, "{} włączył zapisywanie playlisty.").format(ctx.author.mention))
         else:
             return await ctx.send(_(ctx.lang, "{} wyłączył zapisywanie playlisty.").format(ctx.author.mention))
+
+    @commands.command(aliases=['loop_queue'])
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def queue_loop(self, ctx):
+        """Włącza powtarzanie kolejki."""
+        player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+
+        # player and member instances check
+        if not ctx.author.voice:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+            return await add_react(ctx.message, False)
+
+        elif not ctx.guild.me.voice:
+            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+            return await add_react(ctx.message, False)
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+            return await add_react(ctx.message, False)
+
+        c = player.queue_loop = not player.queue_loop
+
+        if c is True:
+            return await ctx.send(_(ctx.lang, "{} włączył powtarzanie playlisty.").format(ctx.author.mention))
+        else:
+            return await ctx.send(_(ctx.lang, "{} wyłączył powtarzanie playlisty.").format(ctx.author.mention))
 
     @commands.command(hidden=True, aliases=['minfo'])
     @commands.is_owner()

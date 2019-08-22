@@ -380,5 +380,9 @@
     "Rangi": "Roles",
     "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo z {}": "[{}](https://twitch.tv/{}) started stream from {}",
     "Teraz `{name}` ma **{food}** jedzenia.": "Now `{name}` has **{food}** food.",
-    "Najpierw ustaw kanał do pożegnań.": "First, set up a leave messages channel."
+    "Nie masz odpowiednich uprawnień do zapisania kolejki.": "You don't have correct permissions to save queue.",
+    "{} włączył zapisywanie playlisty.": "{} has turned on saving queue.",
+    "{} wyłączył zapisywanie playlisty.": "{} has turned off saving queue.",
+    "{} włączył powtarzanie playlisty.": "{} has turned on queue repeat.",
+    "{} wyłączył powtarzanie playlisty.": "{} has turned off queue repeat."
 }
