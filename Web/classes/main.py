@@ -150,7 +150,6 @@ class App(ErrorsHandler):
         def selector():
             if request.method == 'POST':
                 result = request.form.to_dict()
-                print(result)
                 try:
                     session['theme'] = result['theme']
                 except KeyError:

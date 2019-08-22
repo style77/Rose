@@ -17,12 +17,9 @@ class User(object):
             return None
 
     def get_user_managed_servers(self, guilds):
-        return list(
-            filter(
-                lambda g: (g['owner'] is True) or
-                          bool((int(g['permissions']) >> 5) & 1),
-                guilds)
-        )
+        z = list(filter(lambda g: (g['owner'] is True) or bool((int(g['permissions']) >> 5) & 1), guilds))
+        return z
+
 
     @property
     def managed_guilds(self):
