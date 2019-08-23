@@ -83,8 +83,8 @@ class RR(Plugin):
     async def on_raw_reaction_add(self, payload):
         if payload.user_id == self.bot.user.id:
             return
-        message = await self.bot.pg_con.fetch("SELECT * FROM rr WHERE guild_id = $1 AND message_id = $2",
-                                              payload.guild_id, payload.message_id)
+        message = await self.bot.pg_con.fetch("SELECT * FROM rr WHERE guild_id = $1 AND message_id = $2 AND emoji = $3",
+                                              payload.guild_id, payload.message_id, payload.emoji.name)
         if not message:
             return
         member = self.bot.get_guild(payload.guild_id).get_member(payload.user_id)
@@ -92,8 +92,8 @@ class RR(Plugin):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        message = await self.bot.pg_con.fetch("SELECT * FROM rr WHERE guild_id = $1 AND message_id = $2",
-                                              payload.guild_id, payload.message_id)
+        message = await self.bot.pg_con.fetch("SELECT * FROM rr WHERE guild_id = $1 AND message_id = $2 AND emoji = $3",
+                                              payload.guild_id, payload.message_id, payload.emoji.name)
         if not message:
             return
         member = self.bot.get_guild(payload.guild_id).get_member(payload.user_id)
