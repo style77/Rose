@@ -1,4 +1,5 @@
 import asyncio
+import io
 import random
 import re
 import traceback
@@ -164,72 +165,72 @@ class Settings(Plugin):
     async def update_subs_b4(self):
         await self.bot.wait_until_ready()
 
-    @commands.group(name="youtube", invoke_without_command=True, aliases=['yt'])
-    @check_permissions(manage_guild=True)
-    async def youtube_(self, ctx):
-        z = []
-        for cmd in self.bot.get_command("youtube").commands:
-            z.append(f"- {cmd.name}")
-        await ctx.send(_(ctx.lang, "Komendy w tej grupie:\n```\n{}```").format('\n'.join(z)))
-
-    @youtube_.command(name="add")
-    @check_permissions(manage_guild=True)
-    async def add_(self, ctx, channel: discord.VoiceChannel, *, channel_name):
-        member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
-        if not member:
-            return await ctx.send(_(ctx.lang, "{}, nie posiadasz konta premium.").format(ctx.author.mention))
-        if len(member[0]['youtube_stats']) + 1 >= member[0]['stats_limit']:
-            return await ctx.send(_(ctx.lang, "{}, nie możesz już dodawać statystyk.").format(ctx.author.mention))
-        elif channel.id in member[0]['youtube_stats']:
-            return await ctx.send(_(ctx.lang, "Ten kanał już jest używany jako licznik subskrybcji."))
-        await self.bot.pg_con.execute("INSERT INTO youtube_stats(guild_id, channel_id, name) VALUES ($1, $2, $3)",
-                                      ctx.guild.id, channel.id, channel_name)
-        member[0]['youtube_stats'].append(channel.id)
-        await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'],
-                                      ctx.author.id)
-        await ctx.send(_(ctx.lang, ":ok_hand:, pamiętaj jeśli ten kanał nie istnieje to nic tutaj nie zadziała."))
-
-    @youtube_.command(name="edit")
-    @check_permissions(manage_guild=True)
-    async def edit_(self, ctx, channel: discord.VoiceChannel = None, *, channel_name=None):
-        chan = await self.bot.pg_con.fetch("SELECT * FROM youtube_stats WHERE channel_id = $1", channel.id)
-        if not chan:
-            return await ctx.send(_(ctx.lang, "Ten kanał nie posiada statystyk subskrybcji."))
-        await self.bot.pg_con.execute("UPDATE youtube_stats SET name = $1 WHERE channel_id = $2", channel_name,
-                                      channel.id)
-        member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
-        if not member:
-            return await ctx.send(_(ctx.lang, "{}, nie posiadasz konta premium.").format(ctx.author.mention))
-        elif channel.id in member[0]['youtube_stats']:
-            return await ctx.send(_(ctx.lang, "Ten kanał już jest używany jako licznik subskrybcji."))
-        member[0]['youtube_stats'].append(channel.id)
-        await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'],
-                                      ctx.author.id)
-        await ctx.send(":ok_hand:")
-
-    @youtube_.command(name="remove", aliases=['delete'])
-    @check_permissions(manage_guild=True)
-    async def remove_(self, ctx, channel: discord.VoiceChannel = None):
-        chan = await self.bot.pg_con.fetch("SELECT * FROM youtube_stats WHERE channel_id = $1", channel.id)
-        if not chan:
-            return await ctx.send(_(ctx.lang, "Ten kanał nie posiada statystyk subskrybcji."))
-        await self.bot.pg_con.execute("DELETE FROM youtube_stats WHERE channel_id = $1", channel.id)
-        member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
-        if channel.id in member[0]['youtube_stats']:
-            member[0]['youtube_stats'].pop(channel.id)
-            await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2",
-                                          member[0]['youtube_stats'], ctx.author.id)
-        await ctx.send(":ok_hand:")
-        await channel.delete()
-
-    @youtube_.command(hidden=True)
-    @commands.is_owner()
-    async def limit(self, ctx, member: discord.Member = None, number: int = None):
-        member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
-        if not member:
-            return await ctx.send(_(ctx.lang, "{}, nie posiada konta premium.").format(ctx.author))
-        await self.bot.pg_con.execute("UPDATE members SET stats_limit = $1 WHERE id = $2", number, member.id)
-        return await ctx.send(":ok_hand:")
+    # @commands.group(name="youtube", invoke_without_command=True, aliases=['yt'])
+    # @check_permissions(manage_guild=True)
+    # async def youtube_(self, ctx):
+    #     z = []
+    #     for cmd in self.bot.get_command("youtube").commands:
+    #         z.append(f"- {cmd.name}")
+    #     await ctx.send(_(ctx.lang, "Komendy w tej grupie:\n```\n{}```").format('\n'.join(z)))
+    #
+    # @youtube_.command(name="add")
+    # @check_permissions(manage_guild=True)
+    # async def add_(self, ctx, channel: discord.VoiceChannel, *, channel_name):
+    #     member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
+    #     if not member:
+    #         return await ctx.send(_(ctx.lang, "{}, nie posiadasz konta premium.").format(ctx.author.mention))
+    #     if len(member[0]['youtube_stats']) + 1 >= member[0]['stats_limit']:
+    #         return await ctx.send(_(ctx.lang, "{}, nie możesz już dodawać statystyk.").format(ctx.author.mention))
+    #     elif channel.id in member[0]['youtube_stats']:
+    #         return await ctx.send(_(ctx.lang, "Ten kanał już jest używany jako licznik subskrybcji."))
+    #     await self.bot.pg_con.execute("INSERT INTO youtube_stats(guild_id, channel_id, name) VALUES ($1, $2, $3)",
+    #                                   ctx.guild.id, channel.id, channel_name)
+    #     member[0]['youtube_stats'].append(channel.id)
+    #     await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'],
+    #                                   ctx.author.id)
+    #     await ctx.send(_(ctx.lang, ":ok_hand:, pamiętaj jeśli ten kanał nie istnieje to nic tutaj nie zadziała."))
+    #
+    # @youtube_.command(name="edit")
+    # @check_permissions(manage_guild=True)
+    # async def edit_(self, ctx, channel: discord.VoiceChannel = None, *, channel_name=None):
+    #     chan = await self.bot.pg_con.fetch("SELECT * FROM youtube_stats WHERE channel_id = $1", channel.id)
+    #     if not chan:
+    #         return await ctx.send(_(ctx.lang, "Ten kanał nie posiada statystyk subskrybcji."))
+    #     await self.bot.pg_con.execute("UPDATE youtube_stats SET name = $1 WHERE channel_id = $2", channel_name,
+    #                                   channel.id)
+    #     member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
+    #     if not member:
+    #         return await ctx.send(_(ctx.lang, "{}, nie posiadasz konta premium.").format(ctx.author.mention))
+    #     elif channel.id in member[0]['youtube_stats']:
+    #         return await ctx.send(_(ctx.lang, "Ten kanał już jest używany jako licznik subskrybcji."))
+    #     member[0]['youtube_stats'].append(channel.id)
+    #     await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2", member[0]['youtube_stats'],
+    #                                   ctx.author.id)
+    #     await ctx.send(":ok_hand:")
+    #
+    # @youtube_.command(name="remove", aliases=['delete'])
+    # @check_permissions(manage_guild=True)
+    # async def remove_(self, ctx, channel: discord.VoiceChannel = None):
+    #     chan = await self.bot.pg_con.fetch("SELECT * FROM youtube_stats WHERE channel_id = $1", channel.id)
+    #     if not chan:
+    #         return await ctx.send(_(ctx.lang, "Ten kanał nie posiada statystyk subskrybcji."))
+    #     await self.bot.pg_con.execute("DELETE FROM youtube_stats WHERE channel_id = $1", channel.id)
+    #     member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
+    #     if channel.id in member[0]['youtube_stats']:
+    #         member[0]['youtube_stats'].pop(channel.id)
+    #         await self.bot.pg_con.execute("UPDATE members SET youtube_stats = $1 WHERE id = $2",
+    #                                       member[0]['youtube_stats'], ctx.author.id)
+    #     await ctx.send(":ok_hand:")
+    #     await channel.delete()
+    #
+    # @youtube_.command(hidden=True)
+    # @commands.is_owner()
+    # async def limit(self, ctx, member: discord.Member = None, number: int = None):
+    #     member = await self.bot.pg_con.fetch("SELECT * FROM members WHERE id = $1", ctx.author.id)
+    #     if not member:
+    #         return await ctx.send(_(ctx.lang, "{}, nie posiada konta premium.").format(ctx.author))
+    #     await self.bot.pg_con.execute("UPDATE members SET stats_limit = $1 WHERE id = $2", number, member.id)
+    #     return await ctx.send(":ok_hand:")
 
     @commands.group(invoke_without_command=True, hidden=True)
     @commands.is_owner()
@@ -392,7 +393,7 @@ class Settings(Plugin):
                     match = re.findall(link_regex, mc)
                     if match:
                         await m.channel.send(_(ctx.lang, "{author}, wysyłanie linków jest tutaj zabronione.").format(
-                            author=m.author.mention))
+                            author = m.author.mention))
                         ctx.author = self.bot.user
                         await ctx.invoke(self.bot.get_command("warn add"), member=m.author, reason="Anti link")
                         try:
@@ -410,6 +411,38 @@ class Settings(Plugin):
         if mc != safe_words:
             return ' '.join(safe_words)
         return None
+
+    @commands.command()
+    @check_permissions(manage_emojis=True)
+    async def add_emoji(self, ctx, name: str, emoji_url):
+        e = None
+        for emoji in self.bot.emojis:
+            if str(emoji.url) == emoji_url:
+                e = emoji.url
+                break
+
+        if not e:
+            await ctx.send(_(ctx.lang, "Nie znalazłem tej emotki.\nPamiętaj, żeby dodać emotke musi być ona na "
+                                              "serwerze na którym ja też jestem."))
+            return await add_react(ctx.message, False)
+
+        fp = io.BytesIO()
+        await e.url.save(fp)
+
+        await ctx.guild.create_custom_emoji(name=name, image=emoji_url)
+        await ctx.send(":ok_hand:")
+        await add_react(ctx.message, True)
+
+    @commands.command(aliases=['cooldown'])
+    @check_permissions(manage_channels=True)
+    async def slowmode(self, ctx, channel: typing.Optional[discord.TextChannel] = None, number: float=3):
+        channel = channel or ctx.channel
+        try:
+            await channel.edit(slowmode_delay=number)
+            return await add_react(ctx.message, True)
+        except Exception as e:
+            await ctx.send(e)
+            return await add_react(ctx.message, False)
 
     @commands.command()
     @check_permissions(manage_guild=True)

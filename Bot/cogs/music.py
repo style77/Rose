@@ -266,6 +266,10 @@ class Music(commands.Cog):
         if ctx.author.id == player.dj.id:
             return True
 
+        role = discord.utils.get(ctx.guild.roles, name="dj")
+        if role in ctx.author.roles:
+            return True
+
         ch = ctx.channel
         permissions = ch.permissions_for(ctx.author)
 

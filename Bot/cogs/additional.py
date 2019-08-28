@@ -609,5 +609,34 @@ class Additional(commands.Cog):
 
         await ctx.send(file=discord.File(fp, filename="tts.mp3"))
 
+    @commands.command(name="emoji", aliases=["bigemoji", "emojibig"])
+    async def big_emoji(self, ctx, emoji: typing.Union[discord.Emoji, discord.PartialEmoji, str]):
+        """Duża wersja emotki."""
+        if isinstance(emoji, (discord.Emoji, discord.PartialEmoji)):
+            fp = io.BytesIO()
+            await emoji.url.save(fp)
+
+            await ctx.send(file=discord.File(fp, filename=f"{emoji.name}{'.png' if not emoji.animated else '.gif'}"))
+        else:
+            fmt_name = "-".join(f"{ord(c):x}" for c in emoji)
+            r = await ctx.get(f"http://twemoji.maxcdn.com/2/72x72/{fmt_name}.png")
+
+            await ctx.send(file=discord.File(io.BytesIO(r), filename=f"{fmt_name}.png"))
+
+    @commands.command(name="firstmsg", aliases=["firstmessage"])
+    async def first_message(self, ctx, channel: discord.TextChannel = None):
+        """Pierwsza wiadomość z danego kanału."""
+        channel = channel or ctx.channel
+
+        first_message = (await channel.history(limit=1, oldest_first=True).flatten())[0]
+
+        embed = discord.Embed(title=f"#{channel}'s first message", description=first_message.content)
+        embed.set_author(name=str(first_message.author), icon_url=first_message.author.avatar_url)
+        embed.add_field(name="\u200b", value=f"[Jump!]({first_message.jump_url})")
+        embed.set_footer(text=f"Message is from {first_message.created_at}")
+
+        await ctx.send(embed=embed)
+
+
 def setup(bot):
     bot.add_cog(Additional(bot))

@@ -24,8 +24,10 @@ class SlotsEmojis(Enum):
 class CatIsDead(commands.CommandError):
     pass
 
+
 class MemberDoesNotHaveCat(commands.CommandError):
     pass
+
 
 class DefaultCat(object):
     def __init__(self, bot, cat):
@@ -160,7 +162,10 @@ class Cat(commands.Cog):
                 with Image.open(pic) as profile:
                     bg = Image.new('RGBA', (700, 800))
                     if theme:
-                        theme = Image.open(r"images/themes/" + theme + ".png")
+                        end = ".png"
+                        if theme == 'jungle1':
+                            end = '.jpg'
+                        theme = Image.open(r"images/themes/" + theme + end)
                         bg.paste(theme)
 
                     bg.paste(profile, (0, 0), profile)
@@ -217,18 +222,19 @@ class Cat(commands.Cog):
                         (460, 304),
                         font=ImageFont.truetype(r"images/fonts/medium.otf", 30))
 
-                    guild_name = ctx.guild.name
+                    if ctx.guild:
+                        guild_name = ctx.guild.name
+                        if len(guild_name) > 18:
+                            guild_name = guild_name[:18]+"..."
+                        self.write(d, guild_name, (10, 765), font=ImageFont.truetype(r"images/fonts/medium.otf", 15))
 
-                    if len(guild_name) > 18:
-                        guild_name = guild_name[:18]+"..."
-                    self.write(d, guild_name, (10, 765), font=ImageFont.truetype(r"images/fonts/medium.otf", 15))
                     self.progress_bar(d, 441, (52,152,219), cat.stamina)
                     self.write(d, str(cat.stamina), (175, 435), font=ImageFont.truetype(
                         r"images/fonts/medium.otf", 30))
                     self.progress_bar(d, 548, (46,204,113), cat.food)
                     self.write(d, str(cat.food), (175, 542), font=ImageFont.truetype(
                         r"images/fonts/medium.otf", 30))
-                    self.progress_bar(d, 647, (233,30,64), cat.health)
+                    self.progress_bar(d, 647, (233, 30, 64), cat.health)
                     self.write(d, str(cat.health), (175, 641), font=ImageFont.truetype(
                         r"images/fonts/medium.otf", 30))
                     final_buffer = BytesIO()

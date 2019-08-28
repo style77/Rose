@@ -21,7 +21,8 @@ status = {'online': (67, 181, 129),
           'offline': (116, 127, 141)}
 discord_neutral = (188, 188, 188)
 
-class Images(commands.Cog):
+
+class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5, commands.BucketType.user))):
     def __init__(self, bot):
         self.bot = bot
         self.session = aiohttp.ClientSession(loop=bot.loop)

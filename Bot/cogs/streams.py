@@ -88,7 +88,12 @@ class Streams(commands.Cog):
                                 notif_channel = z[0]['stream_notification']
                                 language = z[0]['lang']
 
-                        if stream_ttv['stream'] is not None:
+                        try:
+                            z = stream_ttv['stream']
+                        except KeyError:
+                            z = None
+
+                        if z is not None:
                             s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
                                        guild_id=stream['guild_id'], lang=language)
                             # print('is not none wiec kozak')

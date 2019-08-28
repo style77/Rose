@@ -307,7 +307,7 @@ class Logs(plugin.Plugin):
                           color=0x6e100a,
                           timestamp=emote.created_at)
 
-        e.set_author(name=guild, icon_url=guild.avatar_url)
+        e.set_author(name=guild, icon_url=guild.icon_url)
 
         if ch:
             await ch.send(embed=e)

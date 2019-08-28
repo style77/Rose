@@ -48,6 +48,7 @@ def check_permissions(*, allow_owner=True, **permissions):
         return commands.check(predicate)(func)
     return inner
 
+
 def clean_text(text):
     z = escape_markdown(text)
     z = escape_mentions(text)
