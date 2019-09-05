@@ -4,8 +4,8 @@
     <div class="col align-items-start">
         {% for guild in managed_servers %}
             <div class="col">
-                <a href="/dashboard/{{ guild.id }}" class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="text-decoration: none;">
-                <img src="{% if guild.icon is not none %}{{ get_server_icon(guild) }}{% else %}https://dummyimage.com/64/23272a/FFFFFF/&text={{ get_acronym(guild.name) }}{% endif %}" class="rounded" style="width: 60px; height: auto;">
+                <a href="/dashboard/{{ guild['id'] }}" class="text-{% if session['theme'] == 'dark' %}light{% else %}dark{% endif %}" style="text-decoration: none;">
+                <img src="{{ get_server_icon(guild) }}" class="rounded" style="width: 60px; height: auto;">
                     {{ guild.name }}</a><br>
             </div><br>
         {% endfor %}

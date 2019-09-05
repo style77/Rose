@@ -15,6 +15,9 @@
   "hearts-desc": "Te ustawienia pozwalają na skonfigurowanie opcji heartboard-u, który polega na tym, że wysyła na ustawiony kanał wiadomość w formie cytatu mającą wyznaczoną ilością serduszek.",
   "rr-desc": "Po naciśnięciu wybranej przez Ciebie emotki, użytkownik dostaje wyznaczoną rolę.",
   "General": "Ogólne ustawienia",
-  "lead-general": "Ogólne ustawienia serwerowe.",
-  "general-desc1": "Ustawienia z lewej strony, pozwalają na ustawienie najbardziej podstawowych rzeczy."
+  "lead-general": "Podstawowe ustawienia serwerowe.",
+  "general-desc1": "Ustawienia z lewej strony, pozwalają na ustawienie najbardziej podstawowych rzeczy jak prefix.",
+  "general-desc2": "Ustawienia z prawej strony, pozwalają na ustawienie wszelkich kanałów, takich jak logi.",
+  "adult_confirm": "Czy na pewno masz co najmniej 18 lat?",
+  "save": "Zapisz zmiany"
 }

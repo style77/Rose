@@ -15,5 +15,9 @@
   "hearts-desc": "Hearts allow you to set heartboard, if you add specific amount of hearts to message then it'll show on set channel.",
   "rr-desc": "Reaction role is plugin that allows your server member to get role by clicking on reactions.",
   "General": "General settings",
-  "lead-general": "General server settings."
+  "lead-general": "Basic server settings.",
+  "general-desc1": "Settings from left side allows you to set the most basic things like prefix.",
+  "general-desc2": "Settings from right side allows you to set channels like logs.",
+  "adult_confirm": "Are you at least 18 years old?",
+  "save": "Save changes."
 }
