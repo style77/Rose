@@ -11,6 +11,7 @@ from discord.ext import commands, tasks
 auth = {"Client-ID": utils.get_from_config("twitch_client_id"),
         "Accept": "application/vnd.twitchtv.v5+json"}
 
+
 class Stream(object):
     def __init__(self, data, *, bot, channel_id, guild_id, lang):
         self.user = data['channel']
@@ -23,9 +24,6 @@ class Stream(object):
 
         self.lang = lang or "ENG"
 
-    # def __repr__(self): print(f"<[user_id: {self.user['display_name']}, notifications_channel: {self.channel},
-    # guild_id: {self.guild_id}]>")
-
     @property
     def is_live(self):
         if self.data is not None:
@@ -33,20 +31,20 @@ class Stream(object):
         return False
 
     def _prepare_embed(self):
-        if self.is_live is False:
-            return
-        self.embed = discord.Embed(description=_(self.lang, "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo "
-                                                            "z {}").format(self.user['display_name'],
-                                                                           self.user['display_name'],
-                                                                           self.user['game']),
-                                   color=0x6441a5)
-        self.embed.set_image(url=self.data['preview']['large'])
-        self.embed.set_author(name=self.user['display_name'], icon_url=self.data['channel']['logo'])
+        if self.is_live:
+            self.embed = discord.Embed(description=_(self.lang, "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo "
+                                                                "z {}").format(self.user['display_name'],
+                                                                               self.user['display_name'],
+                                                                               self.user['game']),
+                                       color=0x6441a5)
+            self.embed.set_image(url=self.data['preview']['large'])
+            self.embed.set_author(name=self.user['display_name'], icon_url=self.data['channel']['logo'])
 
     async def send_notif(self):
         self._prepare_embed()
         if self.channel and self.embed:
             await self.channel.send(embed=self.embed)
+
 
 class Streams(commands.Cog):
     def __init__(self, bot):
@@ -96,25 +94,18 @@ class Streams(commands.Cog):
                         if z is not None:
                             s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
                                        guild_id=stream['guild_id'], lang=language)
-                            # print('is not none wiec kozak')
-
                             try:
                                 if await online_streams.check(_id['users'][0]['_id'], stream['guild_id']) is False:
                                     await online_streams.add(stream['guild_id'], _id['users'][0]["_id"])
                                     await s.send_notif()
-                                    # print('wyslano')
                             except (KeyError, IndexError) as e:
                                 await online_streams.add(stream['guild_id'], _id['users'][0]["_id"])
                                 await s.send_notif()
-                                # print('wyslano, ale z keyerrorem/indexerrorem')
                         else:
-                            # print('else ogolnie')
                             try:
                                 await online_streams.remove(stream['guild_id'], _id['users'][0]["_id"])
-                                # print('usuwanie')
                             except (IndexError, KeyError) as e:
-                                pass
-                                # print('index err/key w else')
+                                print(e, 114)
 
         except Exception as e:
             traceback.print_exc()
@@ -173,6 +164,7 @@ class Streams(commands.Cog):
             return await ctx.send(_(ctx.lang, "Żadne powiadomienia o transmisjach na żywo nie są ustawione na tym serwerze."))
 
         return await ctx.send(f"`{', '.join([s['stream'] for s in streams])}`")
+
 
 def setup(bot):
     bot.add_cog(Streams(bot))

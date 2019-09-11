@@ -20,8 +20,10 @@ invite_regex = re.compile(r"(?:https?://)?discord(?:app\.com/invite|\.gg)/?[a-zA
 link_regex = re.compile(
     r"((http(s)?(\:\/\/))+(www\.)?([\w\-\.\/])*(\.[a-zA-Z]{2,3}\/?))[^\s\b\n|]*[^.,;:\?\!\@\^\$ -]")
 
+
 class NewGuild(Exception):
     pass
+
 
 class EmojiCensor:
     emoji_dict = dict(shit=':poop:',
@@ -52,6 +54,7 @@ class EmojiCensor:
             return EmojiCensor.emoji_dict[word]
         else:
             return None
+
 
 class Plugins(commands.Cog):
     def __init__(self, bot):
@@ -91,6 +94,7 @@ class Plugins(commands.Cog):
         except Exception as e:
             return await ctx.send(_(ctx.lang, "Nie możesz wyłączyć tego modułu."))
         return await ctx.send(":ok_hand:")
+
 
 class Settings(Plugin):
     """
@@ -393,7 +397,7 @@ class Settings(Plugin):
                     match = re.findall(link_regex, mc)
                     if match:
                         await m.channel.send(_(ctx.lang, "{author}, wysyłanie linków jest tutaj zabronione.").format(
-                            author = m.author.mention))
+                            author=m.author.mention))
                         ctx.author = self.bot.user
                         await ctx.invoke(self.bot.get_command("warn add"), member=m.author, reason="Anti link")
                         try:
@@ -411,38 +415,6 @@ class Settings(Plugin):
         if mc != safe_words:
             return ' '.join(safe_words)
         return None
-
-    @commands.command()
-    @check_permissions(manage_emojis=True)
-    async def add_emoji(self, ctx, name: str, emoji_url):
-        e = None
-        for emoji in self.bot.emojis:
-            if str(emoji.url) == emoji_url:
-                e = emoji.url
-                break
-
-        if not e:
-            await ctx.send(_(ctx.lang, "Nie znalazłem tej emotki.\nPamiętaj, żeby dodać emotke musi być ona na "
-                                              "serwerze na którym ja też jestem."))
-            return await add_react(ctx.message, False)
-
-        fp = io.BytesIO()
-        await e.url.save(fp)
-
-        await ctx.guild.create_custom_emoji(name=name, image=emoji_url)
-        await ctx.send(":ok_hand:")
-        await add_react(ctx.message, True)
-
-    @commands.command(aliases=['cooldown'])
-    @check_permissions(manage_channels=True)
-    async def slowmode(self, ctx, channel: typing.Optional[discord.TextChannel] = None, number: float=3):
-        channel = channel or ctx.channel
-        try:
-            await channel.edit(slowmode_delay=number)
-            return await add_react(ctx.message, True)
-        except Exception as e:
-            await ctx.send(e)
-            return await add_react(ctx.message, False)
 
     @commands.command()
     @check_permissions(manage_guild=True)
@@ -1130,6 +1102,38 @@ class Mod(Plugin):
         await ctx.send('Baj')
         await self.bot.logout()
 
+    @commands.command()
+    @check_permissions(manage_emojis=True)
+    async def add_emoji(self, ctx, name: str, emoji_id: int):
+        """ID emotki to zazwyczaj numerki po 'emojis/' i przed '.png' w url."""
+        e = self.bot.get_emoji(emoji_id)
+        if not e:
+            await ctx.send(_(ctx.lang, "Nie znalazłem tej emotki.\nPamiętaj, żeby dodać emotke musi być ona na "
+                                       "serwerze na którym ja też jestem."))
+            return await add_react(ctx.message, False)
+
+        if e in ctx.guild.emojis:
+            await ctx.send(_(ctx.lang, "Ta emotka jest już na tym serwerze."))
+            return await add_react(ctx.message, False)
+
+        fp = io.BytesIO()
+        await e.url.save(fp)
+
+        await ctx.guild.create_custom_emoji(name=name, image=fp.read(), reason=f"Invoked by: {ctx.author.name}")
+        await ctx.send(":ok_hand:")
+        await add_react(ctx.message, True)
+
+    @commands.command(aliases=['cooldown'])
+    @check_permissions(manage_channels=True)
+    async def slowmode(self, ctx, channel: typing.Optional[discord.TextChannel] = None, number: float = 3):
+        channel = channel or ctx.channel
+        try:
+            await channel.edit(slowmode_delay=number)
+            return await add_react(ctx.message, True)
+        except Exception as e:
+            await ctx.send(e)
+            return await add_react(ctx.message, False)
+
     @commands.command(aliases=['b'])
     @check_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
@@ -1163,7 +1167,8 @@ class Mod(Plugin):
     async def unban(self, ctx, member: BannedMember, *, reason: ModerationReason = None):
         await ctx.guild.unban(member.user, reason=reason)
         if member.reason:
-            await ctx.send(_(ctx.lang, "Odbanowano {}, który poprzednio został zbanowany za {}.").format(member.user, member.reason))
+            await ctx.send(_(ctx.lang, "Odbanowano {}, który poprzednio został zbanowany za {}.").format(member.user,
+                                                                                                         member.reason))
         else:
             await ctx.send(_(ctx.lang, "Odbanowano {}.").format(member.user))
         self.bot.dispatch('mod_command_use', ctx)
@@ -1380,7 +1385,8 @@ class Mod(Plugin):
         if not m:
             return await ctx.send(_(ctx.lang, "{} nie posiada żadnych warnów.").format(member))
         await self.remove_warn(ctx.author.id, ctx.guild.id, number)
-        return await ctx.send(_(ctx.lang, "{} usunął ostrzeżenie {} o numerze id {}.").format(ctx.author.mention, member.mention, number))
+        return await ctx.send(
+            _(ctx.lang, "{} usunął ostrzeżenie {} o numerze id {}.").format(ctx.author.mention, member.mention, number))
 
     @warn.command(aliases=['purge'])
     @check_permissions(kick_members=True)
@@ -1424,6 +1430,7 @@ class Mod(Plugin):
             p.add_line(line)
         for page in p.pages:
             await ctx.send(page)
+
 
 def setup(bot):
     bot.add_cog(Settings(bot))

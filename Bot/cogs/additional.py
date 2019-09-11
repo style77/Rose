@@ -619,9 +619,10 @@ class Additional(commands.Cog):
             await ctx.send(file=discord.File(fp, filename=f"{emoji.name}{'.png' if not emoji.animated else '.gif'}"))
         else:
             fmt_name = "-".join(f"{ord(c):x}" for c in emoji)
-            r = await ctx.get(f"http://twemoji.maxcdn.com/2/72x72/{fmt_name}.png")
+            async with aiohttp.ClientSession() as cs:
+                r = await cs.get(f"http://twemoji.maxcdn.com/2/72x72/{fmt_name}.png")
 
-            await ctx.send(file=discord.File(io.BytesIO(r), filename=f"{fmt_name}.png"))
+                await ctx.send(file=discord.File(io.BytesIO(r), filename=f"{fmt_name}.png"))
 
     @commands.command(name="firstmsg", aliases=["firstmessage"])
     async def first_message(self, ctx, channel: discord.TextChannel = None):

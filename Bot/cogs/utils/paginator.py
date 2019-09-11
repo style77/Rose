@@ -8,29 +8,9 @@ class CannotPaginate(Exception):
     pass
 
 class Pages:
-    """Implements a paginator that queries the user for the
-    pagination interface.
-    Pages are 1-index based, not 0-index based.
-    If the user does not reply within 2 minutes then the pagination
-    interface exits automatically.
-    Parameters
-    ------------
-    ctx: Context
-        The context of the command.
-    entries: List[str]
-        A list of entries to paginate.
-    per_page: int
-        How many entries show up per page.
-    show_entry_count: bool
-        Whether to show an entry count in the footer.
-    Attributes
-    -----------
-    embed: discord.Embed
-        The embed object that is being used to send pagination info.
-        Feel free to modify this externally. Only the description,
-        footer fields, and colour are internally modified.
-    permissions: discord.Permissions
-        Our permissions for the channel.
+    """
+    POdjebane i chuj co mizrobisz.
+      Kiedy Danny wypusci ext.Menus to napisze swoje obiecuje.
     """
 
     def __init__(self, ctx, *, entries, per_page=12, show_entry_count=True):

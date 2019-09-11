@@ -18,8 +18,11 @@ import math
 import random
 import itertools
 
-from cogs.utils import utils
-from cogs.utils import paginator
+from .utils import utils
+from .utils import paginator
+
+from .classes.plugin import Plugin
+
 
 async def add_react(message, type_: bool):
     emoji = '<:checkmark:601123463859535885>' if type_ is True else '<:wrongmark:601124568387551232>'
@@ -187,7 +190,7 @@ class Player(wavelink.Player):
                 await self.next_event.wait()
 
 
-class Music(commands.Cog):
+class Music(Plugin):
     def __init__(self, bot):
         self.bot = bot
         self.nodes = self.bot.loop.create_task(self.initiate_nodes())
@@ -378,6 +381,8 @@ class Music(commands.Cog):
 
         if not player._save_queue:
             player.queue._queue.clear()
+
+        player.current = None
 
         await ctx.send(_(ctx.lang, "Rozłączono."))
         return await add_react(ctx.message, True)

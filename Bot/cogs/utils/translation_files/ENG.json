@@ -386,5 +386,6 @@
     "{} włączył powtarzanie playlisty.": "{} has turned on queue repeat.",
     "{} wyłączył powtarzanie playlisty.": "{} has turned off queue repeat.",
     "{} zmienił prefix na `{}`.": "{} changed prefix to `{}`.",
-    "Nie znalazłem tej emotki.\nPamiętaj, żeby dodać emotke musi być ona na serwerze na którym ja też jestem.": "I could not find this emoji.\nRemember that if you want to add emoji it have to be in server that im in too."
+    "Nie znalazłem tej emotki.\nPamiętaj, żeby dodać emotke musi być ona na serwerze na którym ja też jestem.": "I could not find this emoji.\nRemember that if you want to add emoji it have to be in server that im in too.",
+    "Liczba musi być mniejsza od 2147483647.": "Number has to be lower than 2147483647."
 }

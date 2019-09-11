@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 from .classes import cache, plugin
 
+
 class Logs(plugin.Plugin):
     def __init__(self, bot):
         self.bot = bot
@@ -169,9 +170,9 @@ class Logs(plugin.Plugin):
 
             try:
                 text = _(await get_language(self.bot, guild.id),
-                        "{} został zbanowany przez {} z powodu `{}`.").format(user.mention,
-                                                                           moderator.mention,
-                                                                           reason)
+                         "{} został zbanowany przez {} z powodu `{}`.").format(user.mention,
+                                                                               moderator.mention,
+                                                                               reason)
             except UnboundLocalError:
                 text = _(await get_language(self.bot, guild.id),
                          "{} został zbanowany.").format(user.mention)
@@ -201,9 +202,9 @@ class Logs(plugin.Plugin):
 
             try:
                 text = _(await get_language(self.bot, guild.id),
-                        "{} został odbanowany przez {} z powodu `{}`.").format(user,
-                                                                            moderator.mention,
-                                                                            reason)
+                         "{} został odbanowany przez {} z powodu `{}`.").format(user,
+                                                                                moderator.mention,
+                                                                                reason)
             except UnboundLocalError:
                 text = _(await get_language(self.bot, guild.id),
                          "{} został odbanowany.").format(user)
@@ -236,7 +237,7 @@ class Logs(plugin.Plugin):
 
             try:
                 text = _(await get_language(self.bot, role.guild.id),
-                        "Rola {} utworzona przez {}.").format(role.mention, moderator.mention)
+                         "Rola {} utworzona przez {}.").format(role.mention, moderator.mention)
             except UnboundLocalError:
                 text = _(await get_language(self.bot, role.guild.id),
                          "Rola {} utworzona.").format(role.mention)
@@ -258,18 +259,19 @@ class Logs(plugin.Plugin):
     async def on_guild_role_delete(self, role):
         ch = await self.get_logs_channel(role.guild.id)
 
+        text = _(await get_language(self.bot, role.guild.id),
+                 "Rola {} usunięta.").format(f'**{role}**')
+
         try:
             async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_delete):
                 if entry.target.id == role.id:
                     moderator = entry.user
 
-            try:
-                text = _(await get_language(self.bot, role.guild.id),
-                         "Rola {} usunięta przez {}.").format(f'**{role}**', moderator.mention)
-            except UnboundLocalError:
-                text = _(await get_language(self.bot, role.guild.id),
-                         "Rola {} usunięta.").format(f'**{role}**')
-
+                    text = _(await get_language(self.bot, role.guild.id),
+                             "Rola {} usunięta przez {}.").format(f'**{role}**', moderator.mention)
+                else:
+                    text = _(await get_language(self.bot, role.guild.id),
+                             "Rola {} usunięta.").format(f'**{role}**')
         except discord.Forbidden:
             text = _(await get_language(self.bot, role.guild.id),
                      "Rola {} usunięta.").format(f'**{role}**')
@@ -286,7 +288,43 @@ class Logs(plugin.Plugin):
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, before, after):
-        pass
+        ch = await self.get_logs_channel(after.guild.id)
+        if before.name != after.name:
+
+            text = _(await get_language(self.bot, after.guild.id),
+                     "Nazwa roli zmieniona z {} na {}.").format(before.name, after.name)
+
+            try:
+                async for entry in after.guild.audit_logs(action=discord.AuditLogAction.role_update):
+                    if entry.target.id == after.id:
+                        moderator = entry.user
+
+                        text = _(await get_language(self.bot, after.guild.id),
+                                 "Nazwa roli zmieniona z {} na {} przez {}.").format(before.name, after.name,
+                                                                                     moderator.mention)
+                    else:
+                        text = _(await get_language(self.bot, after.guild.id),
+                                 "Nazwa roli zmieniona z {} na {}.").format(before.name, after.name)
+            except discord.Forbidden:
+                text = _(await get_language(self.bot, after.guild.id),
+                         "Nazwa roli zmieniona z {} na {}.").format(before.name, after.name)
+
+        elif before.hoist is not after.hoist:
+            if after.hoist is True:
+                text = _(await get_language(self.bot, after.guild.id),
+                         "Od teraz rola {} jest wyświetlana osobno.").format(after.mention)
+            else:
+                text = _(await get_language(self.bot, after.guild.id),
+                         "Rola {} nie jest już wyświetlana osobno.").format(after.mention)
+
+        e = discord.Embed(description=text,
+                            color=0xa86623,
+                            timestamp=before.created_at)
+        e.set_author(name=after.guild, icon_url=after.guild.icon_url)
+        e.set_footer(text="ID: {}".format(after.id))
+
+        if ch:
+            await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild, before, after):
@@ -311,6 +349,7 @@ class Logs(plugin.Plugin):
 
         if ch:
             await ch.send(embed=e)
+
 
 def setup(bot):
     bot.add_cog(Logs(bot))

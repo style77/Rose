@@ -579,8 +579,10 @@ guild: {}```""".format(cat.name,
             await ctx.send(_(ctx.lang, "Twój kot teraz odpoczywa."))
 
     @cat.command()
-    async def buy(self, ctx, amount: typing.Optional[int] = 1, *, thing: typing.Optional[str]='karma'):
+    async def buy(self, ctx, amount: typing.Optional[int] = 1, *, thing: typing.Optional[str] = 'karma'):
         cat = await self.get_cat(ctx.author)
+        if amount > 2147483647:
+            return await ctx.send(_(ctx.lang, "Liczba musi być mniejsza od 2147483647."))
         if cat.is_sleeping:
             return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa."))
         if cat.is_sleeping and cat.stamina == 100:

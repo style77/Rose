@@ -9,9 +9,9 @@ import wavelink
 import wrapper
 from discord.ext import commands
 
-from cogs.utils import utils
+from ..utils import utils
 
-from cogs.classes import cache
+from ..classes import cache
 
 OPTS = {'command_prefix': utils.get_pre,
         'description': 'Bot stworzony przez Style.\nv 1.0.1',
@@ -101,8 +101,8 @@ class Bot(commands.AutoShardedBot):
                 await asyncio.sleep(150)
             else:
                 liczbaa = await self.pg_con.fetchrow("SELECT * FROM bot_count")
-                newest_guild = liczbaa['newest_guild']
-                newest_guild = f"{newest_guild} \U0001f440."
+                # newest_guild = liczbaa['newest_guild']
+                # newest_guild = f"{newest_guild} \U0001f440."
                 liczba = liczbaa['messages']
                 liczbac = liczbaa['commands']
                 i = 0
@@ -128,16 +128,12 @@ class Bot(commands.AutoShardedBot):
                     f"{len(self.users)} members.",
                     f"{len(self.guilds)} guilds.",
                     f"after {liczbac} commands.",
-                    "just read the docs.",
                     f"{i} commands!",
-                    f"Style.",
-                    f"{v} all votes.",
+                    f"{v} total votes.",
                     f"/invite",
                     f"/support",
                     "people usually forget about this bot in 5minutes.",
-                    f"{uptime}% time online.",
-                    "v1.3!",
-                    newest_guild,
+                    f"101% time online."
                 ]
 
                 status = random.choice(stats)
