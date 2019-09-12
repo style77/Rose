@@ -1165,9 +1165,9 @@ class Settings(Plugin):
                 pass
 
         e = discord.Embed(
-            description=f"Usunięto **{g.name}**\nWłaściciel: {g.owner.mention} (**{g.owner.name}**)\nAktualna liczba serwerów: {len(self.bot.guilds)}",
-            color=discord.Color.dark_red())
-        e.set_author(name="Usunięto serwer", icon_url=g.icon_url)
+            description=f"Dodano **{g.name}**\nWłaściciel: {g.owner.mention} (**{g.owner.name}**)\nAktualna liczba serwerów: {len(self.bot.guilds)}",
+            color=discord.Color.green())
+        e.set_author(name="Dodano serwer", icon_url=g.icon_url)
         await self.bot.get_channel(610827984668065802).send(embed=e)
 
 class Mod(Plugin):
