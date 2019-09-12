@@ -26,9 +26,9 @@ async def get_pre(bot, message):
     get_prefix = await bot.pg_con.fetchrow(
         "SELECT * FROM guild_settings WHERE guild_id = $1", message.guild.id)
     if not get_prefix:
-        if bot.development:
-            return "!"
         return "/"
+    if bot.development:
+        return '!'
 
     return [f"{get_prefix['prefix']} ", get_prefix['prefix']]
 

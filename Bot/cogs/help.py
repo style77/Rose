@@ -21,9 +21,9 @@ class NewHelpCommand(commands.HelpCommand):
         self.zws = '\u200b'
 
     async def get_blocked_commands(self, guild_id):
-        f = await self.context.bot.pg_con.fetch("SELECT blocked_commands FROM guild_settings WHERE guild_id = $1",
-                                                guild_id)
-
+        f = await self.context.bot.get_blocked_commands(guild_id)
+        if not f:
+            return []
         plugins_off = await self.context.bot.pg_con.fetch("SELECT plugins_off FROM guild_settings WHERE guild_id = $1",
                                                           guild_id)
 

@@ -45,6 +45,8 @@ async def block_commands(ctx):
 @bot.check
 async def blacklist(ctx):
     blocked_members = await ctx.bot.pg_con.fetchrow("SELECT * FROM blacklist WHERE user_id = $1", ctx.author.id)
+    if not blocked_members:
+        return True
     if blocked_members:
         raise MemberInBlacklist()
     else:

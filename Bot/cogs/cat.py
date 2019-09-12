@@ -80,7 +80,8 @@ class Cat(commands.Cog):
 
     async def lvl_up(self, cat: DefaultCat):
         if cat.exp > round(700 * cat.level):
-            await self.bot.pg_con.execute("UPDATE cats SET level = level + 1, money = money + 65  WHERE owner_id = $1", cat.owner_id)
+            await self.bot.pg_con.execute("UPDATE cats SET level = level + 1, money = money + 65  WHERE owner_id = $1",
+                                          cat.owner_id)
             return True
         else:
             return False
@@ -93,7 +94,8 @@ class Cat(commands.Cog):
         cat = DefaultCat(self.bot, cat)
 
         if cat.food <= 0:
-            await self.bot.pg_con.execute("UPDATE cats SET is_dead = True, is_sleeping = False WHERE owner_id = $1", member.id)
+            await self.bot.pg_con.execute("UPDATE cats SET is_dead = True, is_sleeping = False WHERE owner_id = $1",
+                                          member.id)
             return True
 
         if cat.stamina <= 0:
@@ -101,7 +103,8 @@ class Cat(commands.Cog):
             return True
 
         if cat.health <= 0:
-            await self.bot.pg_con.execute("UPDATE cats SET is_dead = True, is_sleeping = False WHERE owner_id = $1", member.id)
+            await self.bot.pg_con.execute("UPDATE cats SET is_dead = True, is_sleeping = False WHERE owner_id = $1",
+                                          member.id)
             return True
 
         if cat.is_dead:
@@ -115,7 +118,8 @@ class Cat(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def sleeping_restore(self):
-        await self.bot.pg_con.execute("UPDATE cats SET sta = sta + 1, sleeping_time = sleeping_time + 1 WHERE sta < 100 AND is_sleeping = TRUE AND is_dead = FALSE")
+        await self.bot.pg_con.execute(
+            "UPDATE cats SET sta = sta + 1, sleeping_time = sleeping_time + 1 WHERE sta < 100 AND is_sleeping = TRUE AND is_dead = FALSE")
 
     @tasks.loop(minutes=75)
     async def losing_sta(self):
@@ -135,7 +139,7 @@ class Cat(commands.Cog):
 
     @staticmethod
     def progress_bar(draw, y: int, color: tuple, progress: int):
-        draw.rectangle(((41, y), (42+(round(progress*3.34)), y+27)), fill=color)
+        draw.rectangle(((41, y), (42 + (round(progress * 3.34)), y + 27)), fill=color)
 
     @staticmethod
     def write(image, text, cords: tuple, font, color: tuple = (0, 0, 0)):
@@ -173,25 +177,25 @@ class Cat(commands.Cog):
                     mask = Image.new('L', size, 0)
                     draw = ImageDraw.Draw(mask)
                     draw.ellipse((0, 0) + size, fill=255)
-                    
+
                     rgb_avatar = ImageOps.fit(im, size, centering=(0.5, 0.5))
                     rgb_avatar.putalpha(mask)
                     rgb_avatar.thumbnail(size)
-                    
+
                     bg.paste(caty, (44, 105), caty)
                     bg.paste(rgb_avatar, (35, 10), rgb_avatar)
-                    
+
                     d = ImageDraw.Draw(bg)
-                    
+
                     font = ImageFont.truetype(
                         r"images/fonts/light.otf", 45)
                     emoji_font = ImageFont.truetype(
                         r"images/fonts/emotes.otf", 45)
-                    
-                    name = cat.name        
+
+                    name = cat.name
                     if len(name) > 12:
                         name = name[:12] + "..."
-                    
+
                     self.write(
                         d,
                         name,
@@ -225,13 +229,13 @@ class Cat(commands.Cog):
                     if ctx.guild:
                         guild_name = ctx.guild.name
                         if len(guild_name) > 18:
-                            guild_name = guild_name[:18]+"..."
+                            guild_name = guild_name[:18] + "..."
                         self.write(d, guild_name, (10, 765), font=ImageFont.truetype(r"images/fonts/medium.otf", 15))
 
-                    self.progress_bar(d, 441, (52,152,219), cat.stamina)
+                    self.progress_bar(d, 441, (52, 152, 219), cat.stamina)
                     self.write(d, str(cat.stamina), (175, 435), font=ImageFont.truetype(
                         r"images/fonts/medium.otf", 30))
-                    self.progress_bar(d, 548, (46,204,113), cat.food)
+                    self.progress_bar(d, 548, (46, 204, 113), cat.food)
                     self.write(d, str(cat.food), (175, 542), font=ImageFont.truetype(
                         r"images/fonts/medium.otf", 30))
                     self.progress_bar(d, 647, (233, 30, 64), cat.health)
@@ -244,7 +248,8 @@ class Cat(commands.Cog):
         return final_buffer
 
     async def adopt_cat(self, user_id, name, color):
-        await self.bot.pg_con.execute("INSERT INTO cats (owner_id, name, color) VALUES ($1, $2, $3)", user_id, name, color)
+        await self.bot.pg_con.execute("INSERT INTO cats (owner_id, name, color) VALUES ($1, $2, $3)", user_id, name,
+                                      color)
 
     @commands.command()
     async def adopt(self, ctx):
@@ -257,7 +262,8 @@ class Cat(commands.Cog):
             return m.author == ctx.author and m.channel == ctx.channel
 
         if await self.bot.is_owner(ctx.author):
-            await ctx.send(_(ctx.lang, "Siema mordo, mam tu dla ciebie takiego specjalnego **FIOLETOWEGO** kotka, trzymaj!\nTeraz napisz jak chcesz go nazwać."))
+            await ctx.send(_(ctx.lang,
+                             "Siema mordo, mam tu dla ciebie takiego specjalnego **FIOLETOWEGO** kotka, trzymaj!\nTeraz napisz jak chcesz go nazwać."))
             try:
                 msg = await self.bot.wait_for('message', check=check, timeout=30)
             except asyncio.TimeoutError:
@@ -267,12 +273,13 @@ class Cat(commands.Cog):
             await self.adopt_cat(ctx.author.id, name, "owner_cat")
             return await ctx.send(_(ctx.lang, "Twój kot będzie nazywać się **{name}**.").format(name=name))
         kolor = random.choice(["czarnego",
-                            "szarego",
-                            "brązowego"])
+                               "szarego",
+                               "brązowego"])
         colors = {"czarnego": "black",
                   "szarego": "grey",
                   "brązowego": "brown"}
-        await ctx.send(_(ctx.lang, "Adoptowałeś {kolor} kota! Gratulacje.\nNapisz teraz jak chcesz go nazwać.").format(kolor=kolor))
+        await ctx.send(_(ctx.lang, "Adoptowałeś {kolor} kota! Gratulacje.\nNapisz teraz jak chcesz go nazwać.").format(
+            kolor=kolor))
         try:
             msg = await self.bot.wait_for('message', check=check, timeout=30)
         except asyncio.TimeoutError:
@@ -291,7 +298,8 @@ class Cat(commands.Cog):
         if cat.is_sleeping:
             return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa."))
         if cat.is_sleeping and cat.stamina == 100:
-            return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
+            return await ctx.send(
+                _(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
         kolor = cat.color
         path = r"images/cats/{}/{}.png"
         image_path = path.format(kolor, 1)
@@ -314,7 +322,8 @@ class Cat(commands.Cog):
 
         z = ['green', 'red', 'black']
         if not pick.lower() in z:
-            return await ctx.send(_(ctx.lang, "To nie jest prawidłowy wybór. Wybierz jeden z `{}`.").format(', '.join(z)))
+            return await ctx.send(
+                _(ctx.lang, "To nie jest prawidłowy wybór. Wybierz jeden z `{}`.").format(', '.join(z)))
 
         if not money:
             return await ctx.send(_(ctx.lang, "Musisz coś postawić."))
@@ -323,7 +332,7 @@ class Cat(commands.Cog):
             money = cat.money
 
         if money == "half":
-            money = round(cat.money/2)
+            money = round(cat.money / 2)
 
         try:
             money = int(money)
@@ -335,35 +344,36 @@ class Cat(commands.Cog):
 
         if cat.money < money:
             return await ctx.send(_(ctx.lang, "Nie masz tyle pieniędzy."))
-        
+
         x = random.randint(0, 30)
         win = False
 
         if pick.lower() == "green":
             if x == 0:
-                won_money = money*14
+                won_money = money * 14
                 win = True
             else:
                 win = False
         elif pick.lower() == "black":
             if x >= 15:
-                won_money = money*2
+                won_money = money * 2
                 win = True
             else:
                 win = False
         elif pick.lower() == "red":
             if x < 15:
-                won_money = money*2
+                won_money = money * 2
                 win = True
             else:
                 win = False
 
         if win:
             msg = _(ctx.lang, "Wygrałeś {:,d}$.\nWylosowana liczba: {}.").format(won_money, x)
-            await self.bot.pg_con.execute("UPDATE cats SET money = money + $1 WHERE owner_id = $2", won_money, ctx.author.id)
+            await self.bot.pg_con.execute("UPDATE cats SET money = money + $1 WHERE owner_id = $2", won_money,
+                                          ctx.author.id)
         else:
             msg = _(ctx.lang, "Przegrałeś.\nWylosowana liczba: {}.").format(x)
-            
+
         return await ctx.send(msg)
 
     @commands.command()
@@ -378,7 +388,7 @@ class Cat(commands.Cog):
             money = cat.money
 
         if money == "half":
-            money = round(cat.money/2)
+            money = round(cat.money / 2)
 
         try:
             money = int(money)
@@ -391,12 +401,12 @@ class Cat(commands.Cog):
         if cat.money < money:
             return await ctx.send(_(ctx.lang, "Nie masz tyle pieniędzy."))
 
-
         x = random.randint(0, 100)
 
         if x == 0:
-            new_money = cat.money*2
-            return await ctx.send(_(ctx.lang, "Wygrałeś JACKPOTA, twoje pieniądze zostały pomnożone x2.").format(new_money))
+            new_money = cat.money * 2
+            return await ctx.send(
+                _(ctx.lang, "Wygrałeś JACKPOTA, twoje pieniądze zostały pomnożone x2.").format(new_money))
         elif x >= 50:
             new_money = cat.money + (money)
             await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", new_money, ctx.author.id)
@@ -418,7 +428,7 @@ class Cat(commands.Cog):
             money = cat.money
 
         if money == "half":
-            money = round(cat.money/2)
+            money = round(cat.money / 2)
 
         try:
             money = int(money)
@@ -451,7 +461,7 @@ class Cat(commands.Cog):
         muliplier = (muliplier_map[x1] +
                      muliplier_map[x2] + muliplier_map[x3]) / 10
 
-        m = muliplier*money
+        m = muliplier * money
         won_money = round(m) - money
 
         text = _(ctx.lang, "{}\n\nMnożnik: {}. Wygrałeś {:,d}.").format(z, muliplier, int(won_money))
@@ -463,7 +473,8 @@ class Cat(commands.Cog):
             text = _(ctx.lang, "{}\n\nMnożnik: {}. Nic nie wygrałeś.").format(z, muliplier)
 
         await ctx.send(text)
-        await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", cat.money + won_money, ctx.author.id)
+        await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", cat.money + won_money,
+                                      ctx.author.id)
 
     @commands.command()
     async def transfer(self, ctx, member: discord.Member, money):
@@ -476,7 +487,7 @@ class Cat(commands.Cog):
             money = cat.money
 
         if str(money).lower() == "half":
-            money = round(cat.money/2)
+            money = round(cat.money / 2)
 
         try:
             money = int(money)
@@ -489,7 +500,8 @@ class Cat(commands.Cog):
         if money > cat.money:
             return await ctx.send(_(ctx.lang, "Nie masz tyle pieniędzy."))
 
-        await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", cat.money - money, ctx.author.id)
+        await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", cat.money - money,
+                                      ctx.author.id)
         await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", cat2.money + money, member.id)
 
         await ctx.send(_(ctx.lang, "{}, przelał {:,d}$ {}.").format(ctx.author.mention, money, member.mention))
@@ -506,13 +518,14 @@ class Cat(commands.Cog):
         if cat.is_sleeping:
             return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa."))
         if cat.is_sleeping and cat.stamina == 100:
-            return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
+            return await ctx.send(
+                _(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
         kolor = cat.color
         if ctx.lang == "PL":
             colors = {"black": "Czarny",
-                    "grey": "Szary",
-                    "brown": "Brązowy",
-                    "owner_cat": "Fioletowy"}
+                      "grey": "Szary",
+                      "brown": "Brązowy",
+                      "owner_cat": "Fioletowy"}
             kolor = colors.get(kolor)
         # sorry im too lazy to translate this
         await ctx.send("""```prolog
@@ -526,16 +539,16 @@ Jedzenie: {}
 Energia: {}
 Ilosc Karmy: {}
 guild: {}```""".format(cat.name,
-                                                                             kolor,
-                                                                             cat.premium,
-                                                                             cat.level,
-                                                                             cat.exp,
-                                                                             int(cat.money),
-                                                                             cat.health,
-                                                                             cat.food,
-                                                                             cat.food,
-                                                                             cat.karma,
-                                                      ctx.guild.name))
+                       kolor,
+                       cat.premium,
+                       cat.level,
+                       cat.exp,
+                       int(cat.money),
+                       cat.health,
+                       cat.food,
+                       cat.food,
+                       cat.karma,
+                       ctx.guild.name))
 
     @commands.command(aliases=['bal', 'money'])
     async def balance(self, ctx, member: discord.Member = None):
@@ -558,9 +571,11 @@ guild: {}```""".format(cat.name,
         x = random.randint(0, 100)
         if x >= 95:
             exp = random.randint(0, 3)
-            await self.bot.pg_con.execute("UPDATE cats SET exp = $1 WHERE name = $2", cat.exp+exp, cat.name)
+            await self.bot.pg_con.execute("UPDATE cats SET exp = $1 WHERE name = $2", cat.exp + exp, cat.name)
         if await self.lvl_up(cat):
-            await message.channel.send(_(await get_language(self.bot, message.guild.id), "{author} twój kot osiągnął {level} poziom.").format(author=message.author.mention, level=cat.level + 1))
+            await message.channel.send(
+                _(await get_language(self.bot, message.guild.id), "{author} twój kot osiągnął {level} poziom.").format(
+                    author=message.author.mention, level=cat.level + 1))
 
     @cat.command()
     async def sleep(self, ctx):
@@ -568,14 +583,18 @@ guild: {}```""".format(cat.name,
         cat = await self.get_cat(ctx.author)
         if cat.stamina == 100 and cat.is_sleeping:
             await ctx.send(_(ctx.lang, "Twój kot zregenerował siły do pełna."))
-            await self.bot.pg_con.execute('UPDATE cats SET is_sleeping = $1, sleeping_time = 0 WHERE owner_id = $2', False, ctx.author.id)
+            await self.bot.pg_con.execute('UPDATE cats SET is_sleeping = $1, sleeping_time = 0 WHERE owner_id = $2',
+                                          False, ctx.author.id)
         if cat.stamina == 100 and not cat.is_sleeping:
             return await ctx.send(_(ctx.lang, "Twój kot ma już maksymalną ilość energii."))
         if cat.is_sleeping:
-            await ctx.send(_(ctx.lang, "Twój kot odpoczywał **{time}**min i ma teraz **{sta}** energii.").format(time=cat.sleeping_time, sta=cat.stamina))
-            await self.bot.pg_con.execute("UPDATE cats SET is_sleeping = $1, sleeping_time = 0 WHERE owner_id = $2", False, ctx.author.id)
+            await ctx.send(_(ctx.lang, "Twój kot odpoczywał **{time}**min i ma teraz **{sta}** energii.").format(
+                time=cat.sleeping_time, sta=cat.stamina))
+            await self.bot.pg_con.execute("UPDATE cats SET is_sleeping = $1, sleeping_time = 0 WHERE owner_id = $2",
+                                          False, ctx.author.id)
         if not cat.is_sleeping:
-            await self.bot.pg_con.execute('UPDATE cats SET is_sleeping = $1, sleeping_time = 0 WHERE owner_id = $2', True, ctx.author.id)
+            await self.bot.pg_con.execute('UPDATE cats SET is_sleeping = $1, sleeping_time = 0 WHERE owner_id = $2',
+                                          True, ctx.author.id)
             await ctx.send(_(ctx.lang, "Twój kot teraz odpoczywa."))
 
     @cat.command()
@@ -586,7 +605,8 @@ guild: {}```""".format(cat.name,
         if cat.is_sleeping:
             return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa."))
         if cat.is_sleeping and cat.stamina == 100:
-            return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
+            return await ctx.send(
+                _(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
         if thing in self.cost:
             if self.cost[thing] > cat.money:
                 return await ctx.send(_(ctx.lang, "Nie masz tyle pieniędzy."))
@@ -594,22 +614,26 @@ guild: {}```""".format(cat.name,
                 "energy drink": "sta",
                 "health drink": "hp",
                 "food drink": "food"
-                }
+            }
             if thing in drinks_map:
-                await self.bot.pg_con.execute(f"UPDATE cats SET {drinks_map[thing]} = 100, money = $1 WHERE owner_id = $2", cat.money - self.cost[thing] , ctx.author.id)
+                await self.bot.pg_con.execute(
+                    f"UPDATE cats SET {drinks_map[thing]} = 100, money = $1 WHERE owner_id = $2",
+                    cat.money - self.cost[thing], ctx.author.id)
                 return await ctx.send(_(ctx.lang, "`{rzecz}` odnowione do pełna.").format(rzecz=drinks_map[thing]))
             if thing == 'karma':
-                if cat.money < self.cost['karma']*amount:
+                if cat.money < self.cost['karma'] * amount:
                     return await ctx.send(_(ctx.lang, "Nie masz tyle pieniędzy."))
                 money = cat.money - (self.cost['karma'] * amount)
                 karma = cat.karma + amount
-                await self.bot.pg_con.execute("UPDATE cats SET money = $1, karma = $2 WHERE owner_id = $3", money, karma, ctx.author.id)
+                await self.bot.pg_con.execute("UPDATE cats SET money = $1, karma = $2 WHERE owner_id = $3", money,
+                                              karma, ctx.author.id)
                 return await ctx.send(_(ctx.lang, "Zakupiłeś **{amount}** karmy.").format(amount=amount))
             if thing == 'premium':
                 if cat.premium:
                     return await ctx.send(_(ctx.lang, "Masz już premium."))
                 money = cat.money - self.cost['premium']
-                await self.bot.pg_con.execute("UPDATE cats SET premium = True, money = $1 WHERE owner_id = $2", money, ctx.author.id)
+                await self.bot.pg_con.execute("UPDATE cats SET premium = True, money = $1 WHERE owner_id = $2", money,
+                                              ctx.author.id)
                 return await ctx.send(":ok_hand:")
         else:
             return await ctx.send(_(ctx.lang, "Nie możesz kupić tej rzeczy."))
@@ -622,7 +646,8 @@ guild: {}```""".format(cat.name,
         e.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
         for item in self.cost:
             e.add_field(name=item, value='{:,d}'.format(int(self.cost[item])) + '$', inline=False)
-        e.set_footer(text=f"guild: {ctx.guild.name}")
+        e.set_footer(
+            text=_(ctx.lang, "Przykład: {}cat buy {}").format(ctx.prefix, random.choice([x for x in self.cost])))
         return await ctx.send(embed=e)
 
     @cat.command()
@@ -632,16 +657,23 @@ guild: {}```""".format(cat.name,
         if cat.is_sleeping:
             return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa."))
         if cat.is_sleeping and cat.sta == 100:
-            return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
+            return await ctx.send(
+                _(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
         if cat.karma == 0:
             return await ctx.send(_(ctx.lang, "Nie masz żadnego jedzenia."))
         if cat.food >= 100:
             return await ctx.send(_(ctx.lang, "Twój kot ma juz maksymalną ilość jedzenia"))
         if cat.food + 15 > 100:
-            await self.bot.pg_con.execute("UPDATE cats SET food = $1, karma = $2 WHERE owner_id = $3", cat.food + (100 - cat.food), cat.karma - 1, ctx.author.id)
-            return await ctx.send(_(ctx.lang, "Nakarmiłeś kotka.\nTeraz `{name}` ma **{new_food}** jedzenia.").format(name=cat.name, new_food=cat.food + (100 - cat.food)))
-        await self.bot.pg_con.execute('UPDATE cats SET food = $1, karma = $2 WHERE owner_id = $3', cat.food + 15, cat.karma - 1, ctx.author.id)
-        await ctx.send(_(ctx.lang, "Nakarmiłeś kotka.\nTeraz `{name}` ma **{food}** jedzenia.").format(name=cat.name, food=cat.food + 15))
+            await self.bot.pg_con.execute("UPDATE cats SET food = $1, karma = $2 WHERE owner_id = $3",
+                                          cat.food + (100 - cat.food), cat.karma - 1, ctx.author.id)
+            return await ctx.send(
+                _(ctx.lang, "Nakarmiłeś kotka.\nTeraz `{name}` ma **{new_food}** jedzenia.").format(name=cat.name,
+                                                                                                    new_food=cat.food + (
+                                                                                                                100 - cat.food)))
+        await self.bot.pg_con.execute('UPDATE cats SET food = $1, karma = $2 WHERE owner_id = $3', cat.food + 15,
+                                      cat.karma - 1, ctx.author.id)
+        await ctx.send(_(ctx.lang, "Nakarmiłeś kotka.\nTeraz `{name}` ma **{food}** jedzenia.").format(name=cat.name,
+                                                                                                       food=cat.food + 15))
 
     @cat.command(aliases=['attack', 'bij_go'])
     @commands.cooldown(1, 20, commands.BucketType.user)
@@ -653,7 +685,8 @@ guild: {}```""".format(cat.name,
         if chances == 1000:
             await ctx.send(_(ctx.lang, "Co ty odwaliłeś?! Za mocno!"))
             return await self.bot.pg_con.execute("UPDATE cats SET is_dead = True WHERE owner_id = $1", ctx.author.id)
-        return await self.bot.pg_con.execute("UPDATE cats SET hp = $2 WHERE owner_id = $1", ctx.author.id, cat.health - x)
+        return await self.bot.pg_con.execute("UPDATE cats SET hp = $2 WHERE owner_id = $1", ctx.author.id,
+                                             cat.health - x)
 
     @cat.command()
     async def revive(self, ctx):
@@ -661,9 +694,13 @@ guild: {}```""".format(cat.name,
         cat = await self.bot.pg_con.fetchrow("SELECT * FROM cats WHERE owner_id = $1", ctx.author.id)
         if not cat['is_dead']:
             return await ctx.send(_(ctx.lang, "Twój kot żyje."))
-        n_money = round(cat['money']/2)
-        await self.bot.pg_con.execute(f"UPDATE cats SET food = 10, karma = 0, sta = 15, hp = 50, is_dead = $1, money = $2 WHERE owner_id = $3", False, n_money, ctx.author.id)
-        await ctx.send(_(ctx.lang, "**{name}** *nagle powstał z martwych jako kot widmo i przeteleportował się pod okno* **{author}** *jego złego pana, tak naprawdę nikt nie wie czemu do niego wrócił, ale kogo to obchodzi.*").format(name=cat['name'], author=ctx.author))
+        n_money = round(cat['money'] / 2)
+        await self.bot.pg_con.execute(
+            f"UPDATE cats SET food = 10, karma = 0, sta = 15, hp = 50, is_dead = $1, money = $2 WHERE owner_id = $3",
+            False, n_money, ctx.author.id)
+        await ctx.send(_(ctx.lang,
+                         "**{name}** *nagle powstał z martwych jako kot widmo i przeteleportował się pod okno* **{author}** *jego złego pana, tak naprawdę nikt nie wie czemu do niego wrócił, ale kogo to obchodzi.*").format(
+            name=cat['name'], author=ctx.author))
 
     @cat.command(aliases=['p'])
     @commands.cooldown(1, 10800, BucketType.user)
@@ -677,7 +714,8 @@ guild: {}```""".format(cat.name,
             await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa."))
             return self.bot.get_command('cat play').reset_cooldown(ctx)
         if cat.is_sleeping and cat.stamina == 100:
-            await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
+            await ctx.send(
+                _(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
             return self.bot.get_command('cat play').reset_cooldown(ctx)
         if cat.stamina < 7 or cat.food < 12:
             await ctx.send(_(ctx.lang, "Twój kot jest zbyt zmęczony lub głodny."))
@@ -685,10 +723,14 @@ guild: {}```""".format(cat.name,
         async with ctx.typing():
             await asyncio.sleep(10)
             exp = random.randint(1, 15)
-            await ctx.send(_(ctx.lang, "Bawiłeś się z `{name}`.\nZdobyłeś **{exp}** expa.").format(name=cat.name, exp=exp))
-            await self.bot.pg_con.execute("UPDATE cats SET exp = $1, sta = $2, food = $3 WHERE owner_id = $4", cat.exp + exp, cat.stamina - 5, cat.food - 8, ctx.author.id)
+            await ctx.send(
+                _(ctx.lang, "Bawiłeś się z `{name}`.\nZdobyłeś **{exp}** expa.").format(name=cat.name, exp=exp))
+            await self.bot.pg_con.execute("UPDATE cats SET exp = $1, sta = $2, food = $3 WHERE owner_id = $4",
+                                          cat.exp + exp, cat.stamina - 5, cat.food - 8, ctx.author.id)
             if await self.lvl_up(cat):
-                await ctx.send(_(ctx.lang, "{author} twój kot osiągnął **{level}** level.").format(author=ctx.author.mention, level=cat.level + 1))
+                await ctx.send(
+                    _(ctx.lang, "{author} twój kot osiągnął **{level}** level.").format(author=ctx.author.mention,
+                                                                                        level=cat.level + 1))
 
     @cat.group(invoke_without_command=True)
     async def edit(self, ctx):
@@ -707,27 +749,33 @@ guild: {}```""".format(cat.name,
 
         new_name = new_name[:1].upper() + new_name[1:].lower()
 
-        await self.bot.pg_con.execute("UPDATE cats SET name = $1, money = $2 WHERE owner_id = $3", new_name, cat.money - 15000, ctx.author.id)
+        await self.bot.pg_con.execute("UPDATE cats SET name = $1, money = $2 WHERE owner_id = $3", new_name,
+                                      cat.money - 15000, ctx.author.id)
         await ctx.send(":ok_hand:")
 
     @edit.command()
-    async def color(self, ctx, *, new_color: str):
+    async def color(self, ctx, *, new_color: str = None):
         """Zmień kolor zwierzaka."""
         cat = await self.get_cat(ctx.author)
         if cat.money < 25000:
             return await ctx.send(_(ctx.lang, "Nie masz wystarczająco pieniędzy na zmiane koloru zwierzaka."))
 
         colors = ['black', 'brown', 'grey']
+        vip_colors = ['gold', 'plamablue', 'yellow', 'pink', 'plama_sea', 'plama_pretty_pink',
+                      'plama_mint', 'light_green']
         if cat.premium:
-            colors = ['black', 'brown', 'grey', 'gold', 'plamablue', 'yellow', 'pink']
-        if ctx.author.id == 185712375628824577:
-            colors = ['black', 'brown', 'grey', 'gold',
-                      'plamablue', 'yellow', 'pink', 'owner_cat']
+            colors.extend(vip_colors)
+        if await self.bot.is_owner(ctx.author):
+            colors.append('owner_cat')
 
-        if not new_color in colors:
-            return await ctx.send(_(ctx.lang, "Nie ma takiego koloru. Spróbuj jeden z {colors}.").format(colors=', '.join(colors)))
-        
-        await self.bot.pg_con.execute("UPDATE cats SET color = $1, money = $2 WHERE owner_id = $3", new_color, cat.money - 25000, ctx.author.id)
+        if not new_color:
+            return await ctx.send(_(ctx.lang, "Dostępne kolory `{}`.").format(', '.join(colors)))
+
+        if new_color not in colors:
+            return await ctx.send(_(ctx.lang, "Nie ma takiego koloru. Spróbuj jeden z `{}`.").format(', '.join(colors)))
+
+        await self.bot.pg_con.execute("UPDATE cats SET color = $1, money = $2 WHERE owner_id = $3", new_color,
+                                      cat.money - 25000, ctx.author.id)
         await ctx.send(":ok_hand:")
 
     @edit.command()
@@ -739,14 +787,17 @@ guild: {}```""".format(cat.name,
 
         themes = ["weed1", "weed2", "weed3", "sky1", "sky2", "sky3", "sky4", "sky5", "colors1", "jungle1", "void1"]
         z = ", ".join(themes)
-        if not new_theme in themes:
+        if new_theme not in themes:
             return await ctx.send(_(ctx.lang, "Nie ma takiego tła. Spróbuj jedno z `{}`.").format(z))
-        await self.bot.pg_con.execute("UPDATE cats SET theme = $1, money = $3 WHERE owner_id = $2", new_theme, ctx.author.id, cat.money-100000)
+        await self.bot.pg_con.execute("UPDATE cats SET theme = $1, money = $3 WHERE owner_id = $2", new_theme,
+                                      ctx.author.id, cat.money - 100000)
         await ctx.send(":ok_hand:")
 
     @commands.command()
     async def daily(self, ctx):
-        return await ctx.send(_(ctx.lang, "<https://discordbots.org/bot/538369596621848577/vote>, zagłosuj a za pare chwil dostaniesz nagrodę!"))
+        return await ctx.send(_(ctx.lang,
+                                "<https://discordbots.org/bot/538369596621848577/vote>, zagłosuj a za pare chwil dostaniesz nagrodę!"))
+
 
 def setup(bot):
     bot.add_cog(Cat(bot))

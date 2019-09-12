@@ -1,15 +1,18 @@
 import asyncio
 import io
+import json
 import random
 import re
 import traceback
 import typing
+from datetime import datetime
 
 import aiohttp
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 
+from .utils.checks import is_staff
 from .classes.converters import EasyOneDayTime, ModerationReason, TrueFalseConverter, TrueFalseError, BannedMember
 from .classes.plugin import Plugin
 from .classes import cache
@@ -54,6 +57,78 @@ class EmojiCensor:
             return EmojiCensor.emoji_dict[word]
         else:
             return None
+
+
+class News(commands.Cog):
+    """Newsy odnośnie Rose."""
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.group(invoke_without_command=True)
+    async def news(self, ctx):
+        with open(r'cogs/utils/news.json') as f_:
+            f = json.load(f_)
+
+        e = discord.Embed(color=self.bot.color, timestamp=ctx.message.created_at)
+
+        z = {}
+
+        if not f:
+            e.description = _(ctx.lang, 'Narazie brak newsów.')
+        else:
+            for i, _news in enumerate(f):
+                if not f[_news]['author'] in z:
+
+                    z[f[_news]['author']] = 1
+                else:
+                    z[f[_news]['author']] += 1
+
+                e.add_field(name=_news, value=f[_news]['description'], inline=False)
+
+                if i >= 2:
+                    break
+
+        # t = []
+        # for x in z:
+        #     t.append(f'{self.bot.get_user(x).name} - {z[x]}')
+        e.set_author(name="NEWS", icon_url=self.bot.user.avatar_url)
+        # e.set_footer(text=f"{', '.join(t)}")
+        await ctx.send(embed=e)
+
+    @news.command(hidden=True)
+    @is_staff()
+    async def post(self, ctx, title, *, content):
+        """Użycie: `[p]news post "title 1 2 3" content 1 2 3`"""
+        with open(r'cogs/utils/news.json') as f_:
+            f = json.load(f_)
+
+        if len(f) + 1 >= 4:
+            for x in f:
+                del f[x]
+                break
+
+        f[title] = {}
+        f[title]['description'] = content
+        f[title]['author'] = ctx.author.id
+        f[title]['datetime'] = int(datetime.timestamp(datetime.now()))
+
+        with open(r'cogs/utils/news.json', 'w') as f_:
+            json.dump(f, f_)
+
+        await ctx.send(_(ctx.lang, "Dodano newsa."))
+
+    @news.command(hidden=True)
+    @is_staff()
+    async def remove(self, ctx, *, title):
+        with open(r'cogs/utils/news.json') as f_:
+            f = json.load(f_)
+
+        del f[title]
+
+        with open(r'cogs/utils/news.json', 'w') as f_:
+            json.dump(f, f_)
+
+        await ctx.send(_(ctx.lang, "Usunięto newsa."))
 
 
 class Plugins(commands.Cog):
@@ -1071,6 +1146,10 @@ class Settings(Plugin):
         if guildd:
             await self.bot.pg_con.execute("DELETE FROM guild_settings WHERE guild_id = $1", guild.id)
 
+        e = discord.Embed(description=f"Usunięto **{guild.name}**\nWłaściciel: {guild.owner.mention} (**{guild.owner.name}**)\nAktualna liczba serwerów: {len(self.bot.guilds)}", color=discord.Color.dark_red())
+        e.set_author(name="Usunięto serwer", icon_url=guild.icon_url)
+        await self.bot.get_channel(610827984668065802).send(embed=e)
+
     @commands.Cog.listener()
     async def on_guild_join(self, g):
         guild = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", g.id)
@@ -1085,6 +1164,11 @@ class Settings(Plugin):
             except discord.Forbidden:
                 pass
 
+        e = discord.Embed(
+            description=f"Usunięto **{g.name}**\nWłaściciel: {g.owner.mention} (**{g.owner.name}**)\nAktualna liczba serwerów: {len(self.bot.guilds)}",
+            color=discord.Color.dark_red())
+        e.set_author(name="Usunięto serwer", icon_url=g.icon_url)
+        await self.bot.get_channel(610827984668065802).send(embed=e)
 
 class Mod(Plugin):
     def __init__(self, bot):
@@ -1436,3 +1520,4 @@ def setup(bot):
     bot.add_cog(Settings(bot))
     bot.add_cog(Mod(bot))
     bot.add_cog(Plugins(bot))
+    bot.add_cog(News(bot))

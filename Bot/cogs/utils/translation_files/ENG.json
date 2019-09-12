@@ -55,7 +55,7 @@
     "Zmień kolor zwierzaka.": "Change the color of the pet.",
     "Nie masz wystarczająco pieniędzy na zmiane koloru zwierzaka.": "You do not have enough money to change the color of the pet.",
     "Jaki chcesz, aby twój kot miał teraz kolor.\nWybierz jeden z: {colors}": "What kind of cat do you want to have now?\nChoose one of: {colors}",
-    "Nie ma takiego koloru. Spróbuj jeden z {colors}.": "There is no such color, try one of the {colors}.",
+    "Nie ma takiego koloru. Spróbuj jeden z `{}`.": "There is no such color, try one of the `{}`.",
     "Zmień tło na profilu zwierzaka.": "Change the background on the pet's profile.",
     "Nie masz wystarczająco pieniędzy na zmiane tła na profilu.": "You do not have enough money to change the background on the profile.",
     "Nie ma takiego tła. Spróbuj jedno z `{}`.": "There is no such background. Pick one from `{}`.",
@@ -387,5 +387,8 @@
     "{} wyłączył powtarzanie playlisty.": "{} has turned off queue repeat.",
     "{} zmienił prefix na `{}`.": "{} changed prefix to `{}`.",
     "Nie znalazłem tej emotki.\nPamiętaj, żeby dodać emotke musi być ona na serwerze na którym ja też jestem.": "I could not find this emoji.\nRemember that if you want to add emoji it have to be in server that im in too.",
-    "Liczba musi być mniejsza od 2147483647.": "Number has to be lower than 2147483647."
+    "Liczba musi być mniejsza od 2147483647.": "Number has to be lower than 2147483647.",
+    "Przykład: {}cat buy {}": "Example: {}cat buy {}",
+    "Dostępne kolory `{}`.": "Available colors `{}`.",
+    "Dodano newsa.": "Added news."
 }

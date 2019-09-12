@@ -19,7 +19,6 @@ OPTS = {'command_prefix': utils.get_pre,
         'command_not_found': '',
         'case_insensitive': True}
 
-
 class Bot(commands.AutoShardedBot):
     def __init__(self):
         super(Bot, self).__init__(**OPTS)
