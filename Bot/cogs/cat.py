@@ -779,16 +779,24 @@ guild: {}```""".format(cat.name,
         await ctx.send(":ok_hand:")
 
     @edit.command()
-    async def theme(self, ctx, *, new_theme: str):
+    async def theme(self, ctx, *, new_theme: str = None):
         """Zmień tło na profilu zwierzaka."""
         cat = await self.get_cat(ctx.author)
         if cat.money < 100000:
             return await ctx.send(_(ctx.lang, "Nie masz wystarczająco pieniędzy na zmiane tła na profilu."))
 
-        themes = ["weed1", "weed2", "weed3", "sky1", "sky2", "sky3", "sky4", "sky5", "colors1", "jungle1", "void1"]
-        z = ", ".join(themes)
+        themes = ["weed1", "weed2", "weed3"]
+        vip_themes = ["sky1", "sky2", "sky3", "sky4", "sky5", "colors1", "jungle1", "void1", "space1", "landscape1",
+                      "landscape2", "landscape3", "landscape4", "night_sky1"]
+        if cat.premium:
+            themes.extend(vip_themes)
+
+        if not new_theme:
+            return await ctx.send(_(ctx.lang, "Dostępne tła `{}`.").format(", ".join(themes)))
+
         if new_theme not in themes:
-            return await ctx.send(_(ctx.lang, "Nie ma takiego tła. Spróbuj jedno z `{}`.").format(z))
+            return await ctx.send(_(ctx.lang, "Nie ma takiego tła. Spróbuj jedno z `{}`.").format(", ".join(themes)))
+
         await self.bot.pg_con.execute("UPDATE cats SET theme = $1, money = $3 WHERE owner_id = $2", new_theme,
                                       ctx.author.id, cat.money - 100000)
         await ctx.send(":ok_hand:")
