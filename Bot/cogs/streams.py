@@ -62,50 +62,52 @@ class Streams(commands.Cog):
 
             async with aiohttp.ClientSession() as cs:
                 streams_fetch = await self.bot.pg_con.fetch("SELECT * FROM twitch_notifications")
-                for stream in streams_fetch:
-                    if stream:
-                        _id = await cs.get(f"https://api.twitch.tv/kraken/users?login={stream['stream']}", headers=auth)
+                for _stream in streams_fetch:
+                    if _stream:
+                        _id = await cs.get(f"https://api.twitch.tv/kraken/users?login={_stream['stream']}", headers=auth)
                         _id = await _id.json()
 
-                        try:
+                        if 'users' not in _id:
+                            continue
 
+                        try:
                             stream_ttv = await cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
                                                       headers=auth)
                             stream_ttv = await stream_ttv.json()
                         except (IndexError, KeyError):
-                            pass
+                            await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])
 
-                        get = GuildSettingsCache().get(stream['guild_id'])
+                        get = GuildSettingsCache().get(_stream['guild_id'])
                         if get:
                             notif_channel = get['database']['stream_notification']
                             language = get['database']['lang']
                         else:
                             z = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1",
-                                                            stream['guild_id'])
+                                                            _stream['guild_id'])
                             if z:
                                 notif_channel = z[0]['stream_notification']
                                 language = z[0]['lang']
+                            else:
+                                continue
 
-                        try:
-                            z = stream_ttv['stream']
-                        except KeyError:
-                            z = None
+                        z = stream_ttv['stream'] if 'stream' in stream_ttv else None
 
                         if z is not None:
                             s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
-                                       guild_id=stream['guild_id'], lang=language)
+                                       guild_id=_stream['guild_id'], lang=language)
                             try:
-                                if await online_streams.check(_id['users'][0]['_id'], stream['guild_id']) is False:
-                                    await online_streams.add(stream['guild_id'], _id['users'][0]["_id"])
+                                if await online_streams.check(_id['users'][0]['_id'], _stream['guild_id']) is False:
+                                    await online_streams.add(_stream['guild_id'], _id['users'][0]["_id"])
                                     await s.send_notif()
                             except (KeyError, IndexError) as e:
-                                await online_streams.add(stream['guild_id'], _id['users'][0]["_id"])
+                                await online_streams.add(_stream['guild_id'], _id['users'][0]["_id"])
                                 await s.send_notif()
                         else:
                             try:
-                                await online_streams.remove(stream['guild_id'], _id['users'][0]["_id"])
+                                await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])
                             except (IndexError, KeyError) as e:
-                                print(e, 114)
+                                await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])
+                                await self.bot.get_user(self.bot.owner_id).send(f"{e}, {108}")
 
         except Exception as e:
             traceback.print_exc()

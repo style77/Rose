@@ -27,6 +27,8 @@ class Logs(plugin.Plugin):
             return
 
         ch = await self.get_logs_channel(m.guild.id)
+        if not ch:
+            return
 
         e = discord.Embed(description=_(await get_language(self.bot, m.guild.id),
                                         "**Wiadomość wysłana przez {} w {} została usunięta.**\n{}").format(
@@ -36,8 +38,7 @@ class Logs(plugin.Plugin):
         e.set_author(name=m.author, icon_url=m.author.avatar_url)
         e.set_footer(text=f"ID: {m.author.id}")
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, m):
@@ -53,6 +54,8 @@ class Logs(plugin.Plugin):
             return
 
         ch = await self.get_logs_channel(m[0].guild.id)
+        if not ch:
+            return
 
         e = discord.Embed(description=_(await get_language(self.bot, m[0].guild.id),
                                         "**{} wiadomości usuniętych w {}.**").format(len(m) - 1, m[0].channel.mention),
@@ -60,14 +63,15 @@ class Logs(plugin.Plugin):
                           timestamp=m[0].created_at)
         e.set_author(name=m[0].guild, icon_url=m[0].guild.icon_url)
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
         if not after.guild:
             return
         ch = await self.get_logs_channel(after.guild.id)
+        if not ch:
+            return
 
         if before.content == after.content:
             return
@@ -86,8 +90,7 @@ class Logs(plugin.Plugin):
         e.set_author(name=after.author, icon_url=after.author.avatar_url)
         e.set_footer(text="ID: {}".format(after.author.id))
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_mod_command_use(self, ctx):
@@ -95,6 +98,8 @@ class Logs(plugin.Plugin):
             return
 
         ch = await self.get_logs_channel(ctx.guild.id)
+        if not ch:
+            return
 
         e = discord.Embed(description=_(await get_language(self.bot, ctx.guild.id),
                                         "{} użył komendy `{}`.").format(ctx.author.mention, ctx.command.name),
@@ -104,8 +109,7 @@ class Logs(plugin.Plugin):
         e.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
         e.set_footer(text="ID: {}".format(ctx.author.id))
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_prefix_change(self, ctx, new_prefix):
@@ -113,6 +117,8 @@ class Logs(plugin.Plugin):
             return
 
         ch = await self.get_logs_channel(ctx.guild.id)
+        if not ch:
+            return
 
         e = discord.Embed(description=_(await get_language(self.bot, ctx.guild.id),
                                         "{} zmienił prefix na `{}`.").format(ctx.author.mention, new_prefix),
@@ -122,12 +128,13 @@ class Logs(plugin.Plugin):
         e.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon_url)
         e.set_footer(text="ID: {}".format(ctx.author.id))
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
         ch = await self.get_logs_channel(member.guild.id)
+        if not ch:
+            return
 
         e = discord.Embed(description=_(await get_language(self.bot, member.guild.id),
                                         "{} ({}) dołaczył do `{}`.\nKonto stworzone: `{}`.").format(member.mention,
@@ -140,12 +147,13 @@ class Logs(plugin.Plugin):
 
         e.set_author(name=member, icon_url=member.avatar_url)
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         ch = await self.get_logs_channel(member.guild.id)
+        if not ch:
+            return
 
         e = discord.Embed(description=_(await get_language(self.bot, member.guild.id),
                                         "{} ({}) opuścił serwer.\nDołączył: `{}`.").format(member.mention, member,
@@ -155,12 +163,13 @@ class Logs(plugin.Plugin):
 
         e.set_author(name=member, icon_url=member.avatar_url)
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
         ch = await self.get_logs_channel(guild.id)
+        if not ch:
+            return
 
         try:
             async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
@@ -187,12 +196,13 @@ class Logs(plugin.Plugin):
         e.set_author(name=user, icon_url=user.avatar_url)
         e.set_footer(text="ID: {}".format(user.id))
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild, user):
         ch = await self.get_logs_channel(guild.id)
+        if not ch:
+            return
 
         try:
             async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
@@ -219,8 +229,7 @@ class Logs(plugin.Plugin):
         e.set_author(name=user, icon_url=user.avatar_url)
         e.set_footer(text="ID: {}".format(user.id))
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_member_update(self, before, update):
@@ -229,6 +238,8 @@ class Logs(plugin.Plugin):
     @commands.Cog.listener()
     async def on_guild_role_create(self, role):
         ch = await self.get_logs_channel(role.guild.id)
+        if not ch:
+            return
 
         try:
             async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_create):
@@ -252,12 +263,13 @@ class Logs(plugin.Plugin):
         e.set_author(name=role.guild, icon_url=role.guild.icon_url)
         e.set_footer(text="ID: {}".format(role.id))
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role):
         ch = await self.get_logs_channel(role.guild.id)
+        if not ch:
+            return
 
         text = _(await get_language(self.bot, role.guild.id),
                  "Rola {} usunięta.").format(f'**{role}**')
@@ -283,12 +295,15 @@ class Logs(plugin.Plugin):
         e.set_author(name=role.guild, icon_url=role.guild.icon_url)
         e.set_footer(text="ID: {}".format(role.id))
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, before, after):
         ch = await self.get_logs_channel(after.guild.id)
+        if not ch:
+            return
+        text = None
+
         if before.name != after.name:
 
             text = _(await get_language(self.bot, after.guild.id),
@@ -310,25 +325,34 @@ class Logs(plugin.Plugin):
                          "Nazwa roli zmieniona z {} na {}.").format(before.name, after.name)
 
         elif before.hoist is not after.hoist:
-            if after.hoist is True:
+            if after.hoist:
                 text = _(await get_language(self.bot, after.guild.id),
                          "Od teraz rola {} jest wyświetlana osobno.").format(after.mention)
             else:
                 text = _(await get_language(self.bot, after.guild.id),
                          "Rola {} nie jest już wyświetlana osobno.").format(after.mention)
 
+        elif before.color != after.color:
+            text = _(await get_language(self.bot, after.guild.id),
+                     "Przed: {}\nPo: {}").format(str(before.color),
+                                                 str(after.color))
+
+        if not text:
+            return
+
         e = discord.Embed(description=text,
-                            color=0xa86623,
-                            timestamp=before.created_at)
+                          color=0xa86623,
+                          timestamp=before.created_at)
         e.set_author(name=after.guild, icon_url=after.guild.icon_url)
         e.set_footer(text="ID: {}".format(after.id))
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild, before, after):
         ch = await self.get_logs_channel(guild.id)
+        if not ch:
+            return
 
         emote = None
 
@@ -347,8 +371,7 @@ class Logs(plugin.Plugin):
 
         e.set_author(name=guild, icon_url=guild.icon_url)
 
-        if ch:
-            await ch.send(embed=e)
+        await ch.send(embed=e)
 
 
 def setup(bot):

@@ -390,5 +390,6 @@
     "Liczba musi być mniejsza od 2147483647.": "Number has to be lower than 2147483647.",
     "Przykład: {}cat buy {}": "Example: {}cat buy {}",
     "Dostępne kolory `{}`.": "Available colors `{}`.",
-    "Dodano newsa.": "Added news."
+    "Dodano newsa.": "Added news.",
+    "Przed: {}\nPo: {}": "Before: {}\nAfter: {}"
 }

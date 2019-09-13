@@ -1153,7 +1153,8 @@ class Settings(Plugin):
     @commands.Cog.listener()
     async def on_guild_join(self, g):
         guild = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", g.id)
-        await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", g.id)
+        if not guild:
+            await self.bot.pg_con.execute("INSERT INTO guild_settings (guild_id) VALUES ($1)", g.id)
         for channel in g.text_channels:
             try:
                 await channel.send(_(await get_language(self.bot, g.id),
@@ -1497,10 +1498,9 @@ class Mod(Plugin):
         z = []
         i = 0
         lang = ctx.lang
+        cor = "by"
         if lang == "PL":
             cor = "przez"
-        elif lang == "ENG":
-            cor = "by"
 
         z.append(f"{member}\n\n")
 

@@ -609,22 +609,32 @@ class Additional(commands.Cog):
 
         await ctx.send(file=discord.File(fp, filename="tts.mp3"))
 
-    @commands.command(name="emoji", aliases=["bigemoji", "emojibig"])
+    @commands.command(name="emoji", aliases=["bigemoji", "emojibig", "big_emoji"])
     async def big_emoji(self, ctx, emoji: typing.Union[discord.Emoji, discord.PartialEmoji, str]):
         """Duża wersja emotki."""
         if isinstance(emoji, (discord.Emoji, discord.PartialEmoji)):
             fp = io.BytesIO()
             await emoji.url.save(fp)
 
-            await ctx.send(file=discord.File(fp, filename=f"{emoji.name}{'.png' if not emoji.animated else '.gif'}"))
+            e = discord.Embed()
+            e.set_image(url=f"attachment://{emoji.name}{'.png' if not emoji.animated else '.gif'}")
+            e.set_footer(text=f"Emoji from: {emoji.guild_id}")
+            await ctx.send(file=discord.File(fp, filename=f"{emoji.name}{'.png' if not emoji.animated else '.gif'}"),
+                           embed=e)
         else:
             fmt_name = "-".join(f"{ord(c):x}" for c in emoji)
             async with aiohttp.ClientSession() as cs:
-                r = await cs.get(f"http://twemoji.maxcdn.com/2/72x72/{fmt_name}.png")
+                url = f"http://twemoji.maxcdn.com/2/72x72/{fmt_name}.png"
+                r = await cs.get(url)
 
-                await ctx.send(file=discord.File(io.BytesIO(r), filename=f"{fmt_name}.png"))
+                e = discord.Embed()
+                e.set_image(url=f"attachment://{fmt_name}.png")
+                e.set_footer(text=f"URL: {url}")
+                await ctx.send(
+                    file=discord.File(io.BytesIO(await r.read()), filename=f"{fmt_name}.png"),
+                    embed=e)
 
-    @commands.command(name="firstmsg", aliases=["firstmessage"])
+    @commands.command(name="firstmsg", aliases=["firstmessage", "first_message"])
     async def first_message(self, ctx, channel: discord.TextChannel = None):
         """Pierwsza wiadomość z danego kanału."""
         channel = channel or ctx.channel
