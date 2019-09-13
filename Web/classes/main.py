@@ -51,21 +51,32 @@ class Discord:
 
 class DataBase:
     def __init__(self, config):
-        conn = psycopg2.connect(
+        self.conn = psycopg2.connect(
             dsn=f"dbname={config.dbname} user=style password={config.password} host={config.dbip} port={config.port}")
-        self.cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    def fetch(self, query, *, one=True):
+    def fetch(self, query, *args, **kwargs):
         """kwarg one means that fetch will return only first row."""
-
         self.cur.execute(query)
-        if one:
+        if kwargs.get('one'):
             return self.cur.fetchone()
         return self.cur.fetchall()
 
-    def get_guild_settings(self, guild_id: int):
-        f = self.fetch("SELECT * FROM guild_settings WHERE guild_id = {}".format(guild_id))
+    def get_guild_settings(self, guild_id: int, **kwargs):
+        one = kwargs.get('one') if 'one' in kwargs else False
+        f = self.fetch("SELECT * FROM guild_settings WHERE guild_id = {}".format(guild_id), one=one)
         return f
+
+    def update(self, guild_id: int, key, value):
+        if not self.get_guild_settings(guild_id):
+            self.insert_new(guild_id)
+        self.cur.execute("UPDATE guild_settings SET {} = {} WHERE guild_id = {}".format(key, value, guild_id))
+        self.conn.commit()
+        return True
+
+    def insert_new(self, guild_id):
+        self.cur.execute("INSERT INTO guild_settings (guild_id) VALUES ({})".format(guild_id))
+        self.conn.commit()
 
 
 class App(ErrorsHandler):
@@ -84,7 +95,7 @@ class App(ErrorsHandler):
         def main_page():
             session['current_page'] = '/'
 
-            if 'lang' not in session or 'theme' not in session or 'logged_in' not in session:
+            if any((i not in session) for i in ['lang', 'theme', 'logged_in']):
                 session['lang'] = 'eng'
                 session['theme'] = 'dark'  # todo change to light HAHAHHAH
                 session['logged_in'] = False
@@ -144,7 +155,6 @@ class App(ErrorsHandler):
                 for g in user.managed_guilds:
                     if not g['icon']:
                         g['icon'] = f"https://dummyimage.com/64/23272a/FFFFFF/&text={self.get_acronym(g['name'])}"
-                        print(g['icon'])
                     x.append(g)
                 self.cache.set(session['discord_token'], x)
             else:
@@ -171,7 +181,7 @@ class App(ErrorsHandler):
 
             return render_template('settings.html', get_text=self.app.get_text, session=session, user=user,
                                    client=client, get_server_icon=self.get_server_icon, get_acronym=self.get_acronym,
-                                   db=db, print=print)
+                                   db=db[0], guild_id=guild_id)
 
         @app.route("/selector", methods=['POST', 'GET'])
         def selector():  # todo make this shit better
@@ -189,12 +199,24 @@ class App(ErrorsHandler):
 
         @app.route("/update", methods=['POST', 'GET'])
         def updater():
-            print(request.method)
-            print(request.form)
-            print(request.form.to_dict())
             if request.method == 'POST':
+
+                all_plugins = ['Music', 'RR', 'Nsfw', 'Mod']
+
                 result = request.form.to_dict()
-                print(result)
+                settings = app.db.get_guild_settings(result['guild_id'], one=True)
+
+                for p in all_plugins:
+                    if p not in result:
+                        settings['plugins_off'].append(p)
+                    elif p in result and p in settings['plugins_off']:
+                        settings['plugins_off'].remove(p)
+
+                app.db.update(result['guild_id'], 'prefix', f"'{result['prefix']}'")
+
+                p_off = self._list_to_psycopg_array(settings['plugins_off'])
+
+                app.db.update(result['guild_id'], 'plugins_off', f"'{p_off}'")
                 return redirect(session['current_page'])
             else:
                 abort(403)
@@ -229,3 +251,7 @@ class App(ErrorsHandler):
             return f[text]
         except KeyError:
             return text
+
+    @staticmethod
+    def _list_to_psycopg_array(_list):
+        return '{' + ','.join(_list) + '}'

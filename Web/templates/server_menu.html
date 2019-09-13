@@ -6,7 +6,7 @@
             <div class="col">
                 <a href="/dashboard/{{ guild['id'] }}" class="text-{% if session['theme'] == 'dark' %}light{% else %}dark{% endif %}" style="text-decoration: none;">
                 <img src="{{ get_server_icon(guild) }}" class="rounded" style="width: 60px; height: auto;">
-                    {{ guild.name }}</a><br>
+                    {{ guild.name }}</a><a class="text-{% if session['theme'] == 'dark' %}light{% else %}dark{% endif %}">{% if guild.owner %}Owner{% else %}Admin{% endif %}</a><br>
             </div><br>
         {% endfor %}
     </div>
