@@ -29,7 +29,8 @@ class NewHelpCommand(commands.HelpCommand):
                                                           guild_id)
 
         blocked_commands = []
-        blocked_commands.extend(f[0])
+        if f:
+            blocked_commands.extend(f[0])
 
         if len(plugins_off[0]) > 0:
             for plugin in plugins_off[0]:

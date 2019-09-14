@@ -46,11 +46,11 @@ class CommandErrorHandler(commands.Cog):
             return await add_react(ctx.message, False)
 
         elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Bot nie posiada permisji ({perms}) do wykonania komendy **{cmd_name}**").format(cmd_name=ctx.command.name, perms=', '.join(error.missing_perms)))
+            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Bot nie posiada permisji ({perms}) do wykonania komendy **{cmd_name}**").format(cmd_name=ctx.command.qualified_name, perms=', '.join(error.missing_perms)))
             return await add_react(ctx.message, False)
 
         elif isinstance(error, commands.DisabledCommand):
-            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "{cmd_name} została wyłączona.").format(cmd_name=ctx.command.name))
+            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "{cmd_name} została wyłączona.").format(cmd_name=ctx.command.qualified_name))
             return await add_react(ctx.message, False)
 
         elif isinstance(error, commands.NotOwner):
@@ -73,7 +73,7 @@ class CommandErrorHandler(commands.Cog):
 
         elif isinstance(error, commands.NoPrivateMessage):
             try:
-                await ctx.author.send(_("ENG", "**{cmd_name}** nie może być użyta w prywatnych wiadomościach.").format(cmd_name=ctx.command.name)) # i dont have idea how to make it so lemme use eng as default language
+                await ctx.author.send(_("ENG", "**{cmd_name}** nie może być użyta w prywatnych wiadomościach.").format(cmd_name=ctx.command.qualified_name)) # i dont have idea how to make it so lemme use eng as default language
             except:
                 pass
             return await add_react(ctx.message, False)
@@ -91,11 +91,11 @@ class CommandErrorHandler(commands.Cog):
             return await add_react(ctx.message, False)
 
         elif isinstance(error, commands.UserInputError):
-            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Użycie `{prefix}{cmd_name} {args}`").format(prefix=ctx.prefix, cmd_name=ctx.command.name, args=' '.join(list(ctx.command.clean_params))))
+            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Użycie `{prefix}{cmd_name} {args}`").format(prefix=ctx.prefix, cmd_name=ctx.command.qualified_name, args=' '.join(list(ctx.command.clean_params))))
             return await add_react(ctx.message, False)
 
         elif isinstance(error, TrueFalseError):
-            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Użycie `{}set {} True/False`").format(ctx.prefix, ctx.command.name))
+            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Użycie `{}set {} True/False`").format(ctx.prefix, ctx.command.qualified_name))
             return await add_react(ctx.message, False)
 
         elif isinstance(error, MemberInBlacklist):
