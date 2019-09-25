@@ -36,20 +36,17 @@ class Logs(plugin.Plugin):
             color=0xb8352c,
             timestamp=m.created_at)
         e.set_author(name=m.author, icon_url=m.author.avatar_url)
+
+        if m.attachments:
+            e.set_image(url=m.attachments[0].url)
+
         e.set_footer(text=f"ID: {m.author.id}")
 
         await ch.send(embed=e)
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, m):
-        # in bulk_message_delete event arg m is list of messages, not one message object or bulk message object
-        # that's why we cant get its author and I have to set author after using some of mod commands that are specified
-        # in mod_commands.
-        # P.S. Im little scared that this will be bugged and people could get people from other server as
-        # command authors but we will see.
-
-        # P.S. 2 I have changed this and now its not getting author, instead mod_command_use is invoked and there i can
-        # get author so its perfect
+        # todo post all messages to hastebin
         if not m[0].guild:
             return
 
@@ -87,6 +84,12 @@ class Logs(plugin.Plugin):
             color=0xfabc11, timestamp=before.created_at)
         e.add_field(name=_(await get_language(self.bot, after.guild.id), "Przed"), value=before.content)
         e.add_field(name=_(await get_language(self.bot, after.guild.id), "Po"), value=after.content)
+
+        if before.attachments:
+            e.set_image(url=before.attachments[0].url)
+        if after.attachments:
+            e.set_image(url=after.attachments[0].url)
+
         e.set_author(name=after.author, icon_url=after.author.avatar_url)
         e.set_footer(text="ID: {}".format(after.author.id))
 

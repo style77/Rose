@@ -4,6 +4,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
+from .utils.checks import NoPremium
 from .cat import CatIsDead, MemberDoesNotHaveCat
 from .classes.converters import TrueFalseError
 from .mod import NewGuild
@@ -102,6 +103,10 @@ class CommandErrorHandler(commands.Cog):
             fetch = await self.bot.pg_con.fetchrow("SELECT * FROM blacklist WHERE user_id = $1", ctx.author.id)
             reason = fetch['reason']
             await ctx.send(_(await get_language(self.bot, ctx.guild.id), "Nie możesz używać komend, gdyż zostałeś zablokowany. Powód `{}`").format(reason))
+            return await add_react(ctx.message, False)
+
+        elif isinstance(error, NoPremium):
+            await ctx.send(_(await get_language(self.bot, ctx.guild.id), "{}, nie posiada konta premium.").format(ctx.author.name))
             return await add_react(ctx.message, False)
 
         elif isinstance(error, NewGuild):

@@ -290,7 +290,7 @@ class Fun(commands.Cog):
         e = discord.Embed(title=page, color=3553598, timestamp=ctx.message.created_at)
         e.set_image(
             url=f"https://api.apiflash.com/v1/urltoimage?access_key=eac65fa1e35b44bfb79c9bb570aa650f&url={page}")
-        e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+        e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
         await ctx.send(embed=e)
 
     @commands.command(name="cleverbot", aliases=["cb"])
@@ -451,7 +451,7 @@ class Fun(commands.Cog):
         e = discord.Embed(color=member.color)
         e.set_image(url=member.avatar_url)
         e.set_author(name=member)
-        e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+        e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
         await ctx.send(embed=e)
 
     @commands.command(name="user", aliases=["member", "userinfo"])

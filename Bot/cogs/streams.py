@@ -33,9 +33,11 @@ class Stream(object):
     def _prepare_embed(self):
         if self.is_live:
             self.embed = discord.Embed(description=_(self.lang, "[{}](https://twitch.tv/{}) rozpoczął transmisje na żywo "
-                                                                "z {}").format(self.user['display_name'],
+                                                                "z gry {} oraz z nazwą: **{}**.").format(
                                                                                self.user['display_name'],
-                                                                               self.user['game']),
+                                                                               self.user['display_name'],
+                                                                               self.user['game'],
+                                                                               self.user['status']),
                                        color=0x6441a5)
             self.embed.set_image(url=self.data['preview']['large'])
             self.embed.set_author(name=self.user['display_name'], icon_url=self.data['channel']['logo'])
@@ -44,6 +46,10 @@ class Stream(object):
         self._prepare_embed()
         if self.channel and self.embed:
             await self.channel.send(embed=self.embed)
+
+    def __repr__(self):
+        return f"Stream(user_id: {self.user}, channel: {self.channel}, guild_id: {self.guild_id}, embed_prepared: " \
+               f"{bool(self.embed)}, language: {self.lang})"
 
 
 class Streams(commands.Cog):
@@ -63,51 +69,44 @@ class Streams(commands.Cog):
             async with aiohttp.ClientSession() as cs:
                 streams_fetch = await self.bot.pg_con.fetch("SELECT * FROM twitch_notifications")
                 for _stream in streams_fetch:
-                    if _stream:
-                        _id = await cs.get(f"https://api.twitch.tv/kraken/users?login={_stream['stream']}", headers=auth)
+                    if not _stream:
+                        continue
+                    async with cs.get(
+                            f"https://api.twitch.tv/kraken/users?login={_stream['stream']}", headers=auth) as _id:
                         _id = await _id.json()
 
-                        if 'users' not in _id:
+                    if 'users' not in _id:
+                        continue
+
+                    async with cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
+                                      headers=auth) as stream_ttv:
+                        stream_ttv = await stream_ttv.json()
+
+                    if stream_ttv['stream'] is None:
+                        await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])
+                        continue
+
+                    get = GuildSettingsCache().get(_stream['guild_id'])
+                    if get:
+                        notif_channel = get['database']['stream_notification']
+                        language = get['database']['lang']
+                    else:
+                        z = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1",
+                                                        _stream['guild_id'])
+                        if z:
+                            notif_channel = z[0]['stream_notification']
+                            language = z[0]['lang']
+                        else:
                             continue
 
-                        try:
-                            stream_ttv = await cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
-                                                      headers=auth)
-                            stream_ttv = await stream_ttv.json()
-                        except (IndexError, KeyError):
-                            await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])
+                    s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
+                               guild_id=_stream['guild_id'], lang=language)
 
-                        get = GuildSettingsCache().get(_stream['guild_id'])
-                        if get:
-                            notif_channel = get['database']['stream_notification']
-                            language = get['database']['lang']
-                        else:
-                            z = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1",
-                                                            _stream['guild_id'])
-                            if z:
-                                notif_channel = z[0]['stream_notification']
-                                language = z[0]['lang']
-                            else:
-                                continue
-
-                        z = stream_ttv['stream'] if 'stream' in stream_ttv else None
-
-                        if z is not None:
-                            s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
-                                       guild_id=_stream['guild_id'], lang=language)
-                            try:
-                                if await online_streams.check(_id['users'][0]['_id'], _stream['guild_id']) is False:
-                                    await online_streams.add(_stream['guild_id'], _id['users'][0]["_id"])
-                                    await s.send_notif()
-                            except (KeyError, IndexError) as e:
-                                await online_streams.add(_stream['guild_id'], _id['users'][0]["_id"])
-                                await s.send_notif()
-                        else:
-                            try:
-                                await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])
-                            except (IndexError, KeyError) as e:
-                                await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])
-                                await self.bot.get_user(self.bot.owner_id).send(f"{e}, {108}")
+                    if await online_streams.check(_id['users'][0]['_id'], _stream['guild_id']) is False:
+                        await online_streams.add(_stream['guild_id'], _id['users'][0]["_id"])
+                        await s.send_notif()
+                    else:
+                        continue
 
         except Exception as e:
             traceback.print_exc()
@@ -126,36 +125,39 @@ class Streams(commands.Cog):
 
     @stream.command()
     @commands.has_permissions(manage_guild=True)
-    async def add(self, ctx, streamer: str=None):
+    async def add(self, ctx, streamer: str):
         """Narazie wspiera tylko twitchowych twórców."""
         if not streamer:
-            e = discord.Embed(description=_(ctx.lang, "Nie zapomnij, że zawsze podajemy koncówke z linku."))
+            e = discord.Embed(description=_(ctx.lang, "Nie zapomnij, że zawsze należy podać koncówkę z linku."))
             e.set_image(url="https://i.imgur.com/muVCzNd.png")
-            await ctx.send(_(ctx.lang, "Podaj kanał z którego powiadomienia będą przychodzić na wyznaczony kanał.\n\
-                                       Kanał ustawia się za pomocą komendy `{}set streams #channel`").format(
-                                                                                                            ctx.prefix),
-                           embed=e)
+            await ctx.send(embed=e)
 
-            def check(m):
-                return m.author == ctx.author and m.channel == ctx.channel
-
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=60)
-            except asyncio.TimeoutError:
-                return await ctx.send(_(ctx.lang, "Czas na odpowiedź minął."))
-            streamer = msg.content.lower()
-
-        await self.bot.pg_con.execute("INSERT INTO twitch_notifications (stream, guild_id) VALUES ($1, $2)", streamer, ctx.guild.id)
+        await self.bot.pg_con.execute("INSERT INTO twitch_notifications (stream, guild_id) VALUES ($1, $2)", streamer,
+                                      ctx.guild.id)
         await ctx.send(":ok_hand:")
 
     @stream.command()
     @commands.has_permissions(manage_guild=True)
-    async def remove(self, ctx, streamer: str=None):
+    async def remove(self, ctx, streamer: str):
         """Usuwa powiadomienia o transmisjach."""
         fetch = await self.bot.pg_con.fetchrow("SELECT * FROM twitch_notifications WHERE stream = $1 AND guild_id = $2", streamer, ctx.guild.id)
         if not fetch:
             return await ctx.send(_(ctx.lang, "Ten stream nie jest ustawiony."))
         await self.bot.pg_con.execute("DELETE FROM twitch_notifications WHERE stream = $1 AND guild_id = $2", streamer, ctx.guild.id)
+
+        online_streams = OnlineStreamsSaver()
+
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(
+                    f"https://api.twitch.tv/kraken/users?login={streamer}", headers=auth) as _id:
+                _id = await _id.json()
+
+            if 'users' not in _id:
+                print(_id)
+                return await ctx.send(":ok_hand:")
+
+        await online_streams.remove(ctx.guild.id, _id['users'][0]["_id"])
+
         await ctx.send(":ok_hand:")
 
     @stream.command()

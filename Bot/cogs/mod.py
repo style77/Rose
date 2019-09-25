@@ -5,7 +5,7 @@ import random
 import re
 import traceback
 import typing
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import aiohttp
 import discord
@@ -13,7 +13,8 @@ from discord.ext import commands, tasks
 from discord.ext.commands.cooldowns import BucketType
 
 from .utils.checks import is_staff
-from .classes.converters import EasyOneDayTime, ModerationReason, TrueFalseConverter, TrueFalseError, BannedMember
+from .classes.converters import EasyOneDayTime, ModerationReason, TrueFalseConverter, TrueFalseError, BannedMember, \
+    VexsTimeConverter
 from .classes.plugin import Plugin
 from .classes import cache
 from .music import add_react
@@ -180,8 +181,8 @@ class Settings(Plugin):
     def __init__(self, bot):
         self.bot = bot
         self.msgs = {}
-        self.youtube_key = utils.get_from_config('yt_key')
-        self.update_subs.start()
+        # self.youtube_key = utils.get_from_config('yt_key')
+        # self.update_subs.start()
 
     async def update_cache(self, guild):
         z = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", guild.id)
@@ -193,8 +194,8 @@ class Settings(Plugin):
         else:
             return True
 
-    def cog_unload(self):
-        self.update_subs.cancel()
+    # def cog_unload(self):
+    #     self.update_subs.cancel()
 
     @commands.command(hidden=True)
     @commands.is_owner()
@@ -215,34 +216,34 @@ class Settings(Plugin):
         await self.bot.pg_con.execute("DELETE FROM blacklist WHERE user_id = $1", user.id)
         return await ctx.send(_(ctx.lang, "Usunięto {} z blacklisty.").format(user.mention))
 
-    @tasks.loop(minutes=5)
-    async def update_subs(self):
-        try:
-            subs = await self.bot.pg_con.fetch("SELECT * FROM youtube_stats")
-            for sub in subs:
-                name = sub['name']
-                async with aiohttp.ClientSession() as cs:
-                    async with cs.get(
-                            f"https://www.googleapis.com/youtube/v3/channels?part=statistics&forUsername={name}&key={self.youtube_key}") as r:
-                        res = await r.json()
-                        try:
-                            new_subs = res["items"][0]["statistics"]["subscriberCount"]
-                            new_subs = "{}: {:,d}.".format(name, int(new_subs))
-                        except IndexError:
-                            new_subs = "channel not found."
-                        except KeyError as e:
-                            print(res)
-                            return
-                channel = self.bot.get_channel(sub['channel_id'])
-                if not channel:
-                    await self.bot.pg_con.execute("DELETE FROM youtube_stats WHERE channel_id = $1", sub['channel_id'])
-                await channel.edit(name=new_subs)
-        except Exception as e:
-            traceback.print_exc()
-
-    @update_subs.before_loop
-    async def update_subs_b4(self):
-        await self.bot.wait_until_ready()
+    # @tasks.loop(minutes=5)
+    # async def update_subs(self):
+    #     try:
+    #         subs = await self.bot.pg_con.fetch("SELECT * FROM youtube_stats")
+    #         for sub in subs:
+    #             name = sub['name']
+    #             async with aiohttp.ClientSession() as cs:
+    #                 async with cs.get(
+    #                         f"https://www.googleapis.com/youtube/v3/channels?part=statistics&forUsername={name}&key={self.youtube_key}") as r:
+    #                     res = await r.json()
+    #                     try:
+    #                         new_subs = res["items"][0]["statistics"]["subscriberCount"]
+    #                         new_subs = "{}: {:,d}.".format(name, int(new_subs))
+    #                     except IndexError:
+    #                         new_subs = "channel not found."
+    #                     except KeyError as e:
+    #                         print(res)
+    #                         return
+    #             channel = self.bot.get_channel(sub['channel_id'])
+    #             if not channel:
+    #                 await self.bot.pg_con.execute("DELETE FROM youtube_stats WHERE channel_id = $1", sub['channel_id'])
+    #             await channel.edit(name=new_subs)
+    #     except Exception as e:
+    #         traceback.print_exc()
+    #
+    # @update_subs.before_loop
+    # async def update_subs_b4(self):
+    #     await self.bot.wait_until_ready()
 
     # @commands.group(name="youtube", invoke_without_command=True, aliases=['yt'])
     # @check_permissions(manage_guild=True)
@@ -1142,9 +1143,13 @@ class Settings(Plugin):
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        guildd = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", guild.id)
-        if guildd:
+        guild_ = await self.bot.pg_con.fetch("SELECT * FROM guild_settings WHERE guild_id = $1", guild.id)
+        if guild_:
             await self.bot.pg_con.execute("DELETE FROM guild_settings WHERE guild_id = $1", guild.id)
+
+        guild__ = await self.bot.pg_con.fetch("SELECT * FROM streams WHERE guild_id = $1", guild.id)
+        if guild__:
+            await self.bot.pg_con.execute("DELETE FROM streams WHERE guild_id = $1", guild.id)
 
         e = discord.Embed(description=f"Usunięto **{guild.name}**\nWłaściciel: {guild.owner.mention} (**{guild.owner.name}**)\nAktualna liczba serwerów: {len(self.bot.guilds)}", color=discord.Color.dark_red())
         e.set_author(name="Usunięto serwer", icon_url=guild.icon_url)
@@ -1180,6 +1185,10 @@ class Mod(Plugin):
         self.bansays_en = ["**{}** was sent on holiday.",
                            "Justice hammer struck this time in **{}**.",
                            "**{}** melted in the air."]
+        self.temps_checker.start()
+
+    def cog_unload(self):
+        self.temps_checker.cancel()
 
     @commands.command(hidden=True)
     @commands.is_owner()
@@ -1288,26 +1297,107 @@ class Mod(Plugin):
     @commands.command()
     @commands.bot_has_permissions(kick_members=True)
     @check_permissions(kick_members=True)
-    async def mute(self, ctx, member: discord.Member, *, time: EasyOneDayTime):
-        """Wycisza osobe na zawsze, badź dany czas."""
+    async def mute(self, ctx, member: discord.Member, *, reason: str):
+        """Wycisza osobe na zawsze."""
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
             return await add_react(ctx.message, False)
         if member.id == ctx.author.id:
             await ctx.send(_(ctx.lang, "Nie możesz wyciszyć samego siebie."))
             return await add_react(ctx.message, False)
-        role = discord.utils.get(ctx.guild.roles, name="Muted")
+        if member.top_role >= ctx.author.top_role:
+            await ctx.send(_(ctx.lang, "Nie możesz wyciszyć osoby której najwyższa ranga jest nad twoją."))
+            return await add_react(ctx.message, False)
+        if member.top_role >= ctx.guild.me.top_role:
+            await ctx.send(_(ctx.lang, "Nie możesz wyciszyć osoby której najwyższa ranga jest nad moją."))
+            return await add_react(ctx.message, False)
+
+        role = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+        role = ctx.guild.get_role(role['mute_role'])
         if not role:
             role = await ctx.guild.create_role(name="Muted")
+            await self.bot.pg_con.execute("UPDATE guild_settings SET mute_role = $1 WHERE guild_id = $2", role.id,
+                                          ctx.guild.id)
+            for channel in ctx.guild.channels:
+                if isinstance(channel, discord.CategoryChannel):
+                    await channel.set_permissions(role, send_messages=False, add_reactions=False, speak=False)
+                else:
+                    synced = channel._overwrites == channel.category._overwrites if channel.category else False
+                    if not synced:
+                        await channel.set_permissions(role, send_messages=False, add_reactions=False, speak=False)
         await member.add_roles(role)
+
         await ctx.send(_(ctx.lang, "Drodzy państwo {} został wyciszony, wszyscy świętują.").format(member.mention))
-        if time:
-            await asyncio.sleep(time)
-            if any(r.name == 'Muted' for r in ctx.author.roles):
-                await member.remove_roles(role)
-                return await ctx.send(_(ctx.lang, "{} został odciszony.").format(member.mention))
+        await member.send(_(ctx.lang, "Zostałeś wyciszony na serwerze **{}** za **{}**.").format(ctx.guild.name, reason))
         self.bot.dispatch('mod_command_use', ctx)
         return await add_react(ctx.message, True)
+
+    @commands.command()
+    @commands.bot_has_permissions(kick_members=True)
+    @check_permissions(kick_members=True)
+    async def temp_mute(self, ctx, member: discord.Member, time: VexsTimeConverter, *, reason: str):
+        """Wycisza osobe na dany czas."""
+        if member.id == self.bot.user.id:
+            await ctx.send(random.choice(["O.o", "o.O"]))
+            return await add_react(ctx.message, False)
+        if member.id == ctx.author.id:
+            await ctx.send(_(ctx.lang, "Nie możesz wyciszyć samego siebie."))
+            return await add_react(ctx.message, False)
+        if member.top_role >= ctx.author.top_role:
+            await ctx.send(_(ctx.lang, "Nie możesz wyciszyć osoby której najwyższa ranga jest nad twoją."))
+            return await add_react(ctx.message, False)
+        if member.top_role >= ctx.guild.me.top_role:
+            await ctx.send(_(ctx.lang, "Nie możesz wyciszyć osoby której najwyższa ranga jest nad moją."))
+            return await add_react(ctx.message, False)
+
+        role = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+        role = ctx.guild.get_role(role['mute_role'])
+        if not role:
+            role = await ctx.guild.create_role(name="Muted")
+            await self.bot.pg_con.execute("UPDATE guild_settings SET mute_role = $1 WHERE guild_id = $2", role.id,
+                                          ctx.guild.id)
+            for channel in ctx.guild.channels:
+                if isinstance(channel, discord.CategoryChannel):
+                    await channel.set_permissions(role, send_messages=False, add_reactions=False, speak=False)
+                else:
+                    synced = channel._overwrites == channel.category._overwrites if channel.category else False
+                    if not synced:
+                        await channel.set_permissions(role, send_messages=False, add_reactions=False, speak=False)
+        await member.add_roles(role)
+
+        time = datetime.utcnow() + timedelta(seconds=time)
+        query = "INSERT INTO temps (type, role_id, moderator_id, timestamp, user_id, reason, ends_at, guild_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+        await self.bot.pg_con.execute(query, 'temp_mute', role.id, ctx.author.id, datetime.utcnow(),
+                                      member.id, reason, time, ctx.guild.id)
+
+        await ctx.send(_(ctx.lang, "Drodzy państwo {} został czasowo wyciszony, wszyscy świętują.").format(member.mention))
+        await member.send(
+            _(ctx.lang, "Zostałeś wyciszony na serwerze **{}** na czas **{}** za **{}**.").format(ctx.guild.name, time,
+                                                                                                  reason))
+        self.bot.dispatch('mod_command_use', ctx)
+        return await add_react(ctx.message, True)
+
+    @tasks.loop(seconds=5)
+    async def temps_checker(self):
+        temps = await self.bot.pg_con.fetch("SELECT * FROM temps")
+        for temp in temps:
+            if temp['type'] == 'temp_mute':
+                if datetime.utcnow() >= temp['ends_at']:
+                    guild = self.bot.get_guild(temp['guild_id'])
+                    lang = await self.bot.pg_con.fetchrow("SELECT lang FROM guild_settings WHERE guild_id = $1", guild.id)
+                    member = guild.get_member(temp['user_id'])
+                    role = guild.get_role(temp['role_id'])
+
+                    await member.remove_roles(role)
+                    try:
+                        await member.send(_(lang[0], 'Twoja kara wyciszenia na serwerze **{}** skończyła się.').format(guild.name))
+                    except discord.HTTPException:
+                        pass
+                    await self.bot.pg_con.execute("DELETE FROM temps WHERE user_id = $1 AND guild_id = $2 AND type = $3 AND ends_at = $4", member.id, guild.id, 'temp_mute', temp['ends_at'])
+
+    @temps_checker.before_loop
+    async def before_temps_checker(self):
+        await self.bot.wait_until_ready()
 
     @commands.command()
     @commands.bot_has_permissions(kick_members=True)
@@ -1317,14 +1407,16 @@ class Mod(Plugin):
         if member.id == self.bot.user.id:
             await ctx.send(random.choice(["O.o", "o.O"]))
             return await add_react(ctx.message, False)
-        role = discord.utils.get(ctx.guild.roles, name="Muted")
-        if any(r.name == 'Muted' for r in ctx.author.roles):
+        role = await self.bot.pg_con.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", ctx.guild.id)
+        role = ctx.guild.get_role(role['mute_role'])
+        role = role or discord.utils.get(ctx.guild.roles, name="Muted")
+        if any(r.id == role.id for r in ctx.author.roles):
             await member.remove_roles(role)
             await ctx.send(_(ctx.lang, "{} został odciszony przez {}.").format(member.mention, ctx.author.mention))
-            return await add_react(ctx.message, True)
+            await add_react(ctx.message, True)
         else:
             await ctx.send(_(ctx.lang, "**{}** nie jest wyciszony.").format(member))
-            return await add_react(ctx.message, False)
+            await add_react(ctx.message, False)
         self.bot.dispatch('mod_command_use', ctx)
 
     @commands.command(name="clear", aliases=["purge"])

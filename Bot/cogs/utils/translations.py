@@ -5,13 +5,13 @@ import json
 def translate(lang, text):
     if lang not in ["ENG"]:
         return text
-    file_ = open(r"cogs/utils/translation_files/{}.json".format(lang), encoding="utf8", errors='ignore')
-    z = json.load(file_)
-    try:
-        return z[text]
-    except KeyError:
-        print(f"Nie znaleziono {text} w pliku {file_}")
-        return text
+    with open(r"cogs/utils/translation_files/{}.json".format(lang), encoding="utf8", errors='ignore') as file_:
+        z = json.load(file_)
+        try:
+            return z[text]
+        except KeyError:
+            print(f"Nie znaleziono {text} w pliku {file_}")
+            return text
 
 
 async def language(bot, guild_id):

@@ -237,6 +237,21 @@ class EasyOneDayTime(Converter):
                 raise BadArgument()
             return time
 
+class VexsTimeConverter(commands.Converter):
+    async def convert(self, ctx, argument):
+        args = argument.lower()
+        matches = re.findall(time_regex, args)
+        time = 0
+        for v, k in matches:
+            try:
+                time += time_dict[k]*float(v)
+            except KeyError:
+                raise commands.BadArgument("{} is an invalid time-key! h/m/s/d are valid!".format(k))
+            except ValueError:
+                raise commands.BadArgument("{} is not a number!".format(v))
+        return time
+
+
 class EasyOneDayTime2(Converter):
     async def convert(self, ctx, argument):
         args = argument.lower()

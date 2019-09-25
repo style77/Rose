@@ -25,17 +25,17 @@ class NewHelpCommand(commands.HelpCommand):
 
     async def _get_blocked_commands(self, guild_id):
         f = await self.context.bot.get_blocked_commands(guild_id)
-        plugins_off = await self.context.bot.pg_con.fetch("SELECT plugins_off FROM guild_settings WHERE guild_id = $1",
+        plugins_off = await self.context.bot.pg_con.fetchrow("SELECT plugins_off FROM guild_settings WHERE guild_id = $1",
                                                           guild_id)
 
         blocked_commands = []
         if f:
             blocked_commands.extend(f[0])
 
-        if len(plugins_off[0]) > 0:
+        if plugins_off:
             for plugin in plugins_off[0]:
                 cog = self.context.bot.get_cog(plugin)
-                blocked_commands.extend([command.name for command in cog.commands])
+                blocked_commands.extend(command.name for command in cog.commands)
 
         return blocked_commands
 
@@ -159,7 +159,7 @@ class NewHelpCommand(commands.HelpCommand):
 
         e.set_author(name=f"{self.context.bot.user.name} help", icon_url=self.context.bot.user.avatar_url)
         e.set_footer(text=
-                     "🌹 " + _(self.context.lang,
+                     "\U0001f339" + _(self.context.lang,
                                "{} komend razem. Bot stworzony przez Style. Dołącz do serwera pomocy z botem w razie "
                                "problemów użyj: {}support. {}help [cmd_or_ext] - aby dowiedzieć się więcej o "
                                "komendzie lub module.").format(

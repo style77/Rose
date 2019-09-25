@@ -5,6 +5,7 @@ import aiosqlite
 
 
 class Database:
+    db = None
     need_to_create_tables = True
 
     @staticmethod
@@ -14,13 +15,16 @@ class Database:
             d[col[0]] = row[idx]
         return d
 
-    async def connect_pool(self):
+    @classmethod
+    async def connect_pool(cls):
         db = await aiosqlite.connect('cache.sqlite', timeout=5)
         # db.row_factory = self.dict_factory
+        cls.db = db
 
-        if self.need_to_create_tables:
-            await self.create_tables(db)
-            self.need_to_create_tables = False
+        if cls.need_to_create_tables:
+            await cls.create_tables(db)
+            cls.need_to_create_tables = False
+
         return db
 
     @staticmethod
@@ -78,29 +82,26 @@ class PrefixesCache(CacheService):
 
 
 class OnlineStreamsSaver(CacheService):
-    # data = {}
-
-    def __init__(self):
-        self.cursor = None
+    cursor = None
 
     async def connect(self):
-        self.cursor = await Database().connect_pool()
+        self.cursor = await Database.connect_pool()
 
-    async def set(self, first, items: dict):
+    async def set(self, guild_id, items: dict):
         if not self.cursor:
             await self.connect()
 
         key = list(items.keys())[0]
         val = list(items.values())[0]
 
-        fetch = await self.get_(first)
+        fetch = await self._get(guild_id)
         z = fetch[1].split(',')
         z.append(str(val[0]))
 
         streamers = ','.join(z)
 
         await self.cursor.execute(
-            f"UPDATE streams_saver SET {key} = '{streamers}' WHERE guild_id = {first}")
+            f"UPDATE streams_saver SET {key} = '{streamers}' WHERE guild_id = {guild_id}")
         await self.cursor.commit()
 
     async def add(self, guild_id, stream_id):
@@ -121,19 +122,27 @@ class OnlineStreamsSaver(CacheService):
         if not self.cursor:
             await self.connect()
 
-        if guild_id in self.data:
-
-            fetch = await self.get_(guild_id)
-            z = fetch[1].split(',')
-            z.remove(stream_id)
-
-            await self.cursor.execute(
-                f"UPDATE streams_saver SET streams_id = {z} WHERE guild_id = {guild_id}")
+        fetch = await self._get(guild_id)
+        if not fetch:
+            await self.cursor.execute(f"INSERT INTO streams_saver (guild_id) VALUES ({guild_id})")
             await self.cursor.commit()
-            return True
-        return False
+            fetch = await self._get(guild_id)
 
-    async def get_(self, guild_id):
+        z = fetch[1].split(',')
+        if stream_id not in z:
+            return
+        print(z)
+        z.remove(stream_id)
+        print(z)
+
+        await self.cursor.execute(
+            f"UPDATE streams_saver SET streams_id = '{','.join(z)}' WHERE guild_id = {guild_id}")
+        await self.cursor.commit()
+
+    async def _get(self, guild_id):
+        if not self.cursor:
+            await self.connect()
+
         fetch = await self.cursor.execute(f"SELECT * FROM streams_saver WHERE guild_id = {guild_id}")
         fetch = await fetch.fetchone()
         return fetch
@@ -144,20 +153,20 @@ class OnlineStreamsSaver(CacheService):
         if not self.cursor:
             await self.connect()
 
-        fetch = await self.get_(guild_id)
+        fetch = await self._get(guild_id)
 
         if not fetch and ins:
             await self.cursor.execute(f"INSERT INTO streams_saver (guild_id) VALUES ({guild_id})")
             await self.cursor.commit()
 
-        fetch = await self.get_(guild_id)
+        fetch = await self._get(guild_id)
         list_ = fetch[1].split(',')
 
         if str(streamer) not in list_:
-            list_.append(str(streamer))
-            streamers = ','.join(list_)
+            # list_.append(str(streamer))
+            # streamers = ','.join(list_)
+            return False
 
         elif str(streamer) in list_:
             return True
 
-        return False

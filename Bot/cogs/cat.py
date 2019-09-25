@@ -59,11 +59,11 @@ class Cat(commands.Cog):
         self.session = aiohttp.ClientSession(loop=bot.loop)
         self.rose_team = [185712375628824577, 403600724342079490]
         self.cost = {
-            "karma": 1500,
-            "energy drink": 12000,
-            "health drink": 14000,
-            "food drink": 10000,
-            "premium": 5000000}
+            "karma": 2000,
+            "energy drink": 22000,
+            "health drink": 24000,
+            "food drink": 20000,
+        }
 
     def cog_unload(self):
         self.losing_food.cancel()
@@ -115,6 +115,7 @@ class Cat(commands.Cog):
     @tasks.loop(minutes=120)
     async def losing_food(self):
         await self.bot.pg_con.execute("UPDATE cats SET food = food - 1 WHERE food > 0")
+        await self.bot.pg_con.execute("UPDATE cats SET is_dead = TRUE WHERE food = 0")
 
     @tasks.loop(seconds=60)
     async def sleeping_restore(self):
@@ -124,6 +125,7 @@ class Cat(commands.Cog):
     @tasks.loop(minutes=75)
     async def losing_sta(self):
         await self.bot.pg_con.execute("UPDATE cats SET sta = sta - 1 WHERE sta > 0 AND is_sleeping = FALSE")
+        await self.bot.pg_con.execute("UPDATE cats SET is_dead = TRUE WHERE sta = 0")
 
     @losing_food.before_loop
     async def losing_food_b4(self):
@@ -628,13 +630,13 @@ guild: {}```""".format(cat.name,
                 await self.bot.pg_con.execute("UPDATE cats SET money = $1, karma = $2 WHERE owner_id = $3", money,
                                               karma, ctx.author.id)
                 return await ctx.send(_(ctx.lang, "Zakupiłeś **{amount}** karmy.").format(amount=amount))
-            if thing == 'premium':
-                if cat.premium:
-                    return await ctx.send(_(ctx.lang, "Masz już premium."))
-                money = cat.money - self.cost['premium']
-                await self.bot.pg_con.execute("UPDATE cats SET premium = True, money = $1 WHERE owner_id = $2", money,
-                                              ctx.author.id)
-                return await ctx.send(":ok_hand:")
+            # if thing == 'premium':
+            #     if cat.premium:
+            #         return await ctx.send(_(ctx.lang, "Masz już premium."))
+            #     money = cat.money - self.cost['premium']
+            #     await self.bot.pg_con.execute("UPDATE cats SET premium = True, money = $1 WHERE owner_id = $2", money,
+            #                                   ctx.author.id)
+            #     return await ctx.send(":ok_hand:")
         else:
             return await ctx.send(_(ctx.lang, "Nie możesz kupić tej rzeczy."))
 
@@ -646,6 +648,7 @@ guild: {}```""".format(cat.name,
         e.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
         for item in self.cost:
             e.add_field(name=item, value='{:,d}'.format(int(self.cost[item])) + '$', inline=False)
+        e.add_field(name='premium', value='1,5$')
         e.set_footer(
             text=_(ctx.lang, "Przykład: {}cat buy {}").format(ctx.prefix, random.choice([x for x in self.cost])))
         return await ctx.send(embed=e)
@@ -656,20 +659,23 @@ guild: {}```""".format(cat.name,
         cat = await self.get_cat(ctx.author)
         if cat.is_sleeping:
             return await ctx.send(_(ctx.lang, "Twój kot aktualnie odpoczywa."))
+
         if cat.is_sleeping and cat.sta == 100:
             return await ctx.send(
                 _(ctx.lang, "Twój kot aktualnie odpoczywa, lecz ma już pełno energii. Przydałoby się go obudzić."))
+
         if cat.karma == 0:
             return await ctx.send(_(ctx.lang, "Nie masz żadnego jedzenia."))
+
         if cat.food >= 100:
             return await ctx.send(_(ctx.lang, "Twój kot ma juz maksymalną ilość jedzenia"))
+
         if cat.food + 15 > 100:
             await self.bot.pg_con.execute("UPDATE cats SET food = $1, karma = $2 WHERE owner_id = $3",
                                           cat.food + (100 - cat.food), cat.karma - 1, ctx.author.id)
-            return await ctx.send(
-                _(ctx.lang, "Nakarmiłeś kotka.\nTeraz `{name}` ma **{new_food}** jedzenia.").format(name=cat.name,
-                                                                                                    new_food=cat.food + (
-                                                                                                                100 - cat.food)))
+            text = _(ctx.lang, "Nakarmiłeś kotka.\nTeraz `{name}` ma **{new_food}** jedzenia.")
+            return await ctx.send(text.format(name=cat.name, new_food=cat.food + (100 - cat.food)))
+
         await self.bot.pg_con.execute('UPDATE cats SET food = $1, karma = $2 WHERE owner_id = $3', cat.food + 15,
                                       cat.karma - 1, ctx.author.id)
         await ctx.send(_(ctx.lang, "Nakarmiłeś kotka.\nTeraz `{name}` ma **{food}** jedzenia.").format(name=cat.name,
@@ -698,8 +704,9 @@ guild: {}```""".format(cat.name,
         await self.bot.pg_con.execute(
             f"UPDATE cats SET food = 10, karma = 0, sta = 15, hp = 50, is_dead = $1, money = $2 WHERE owner_id = $3",
             False, n_money, ctx.author.id)
-        await ctx.send(_(ctx.lang,
-                         "**{name}** *nagle powstał z martwych jako kot widmo i przeteleportował się pod okno* **{author}** *jego złego pana, tak naprawdę nikt nie wie czemu do niego wrócił, ale kogo to obchodzi.*").format(
+        await ctx.send(_(ctx.lang, "**{name}** *nagle powstał z martwych jako kot widmo i przeteleportował się pod "
+                                   "okno* **{author}** *jego złego pana, tak naprawdę nikt nie wie czemu do niego "
+                                   "wrócił, ale kogo to obchodzi.*").format(
             name=cat['name'], author=ctx.author))
 
     @cat.command(aliases=['p'])
@@ -735,7 +742,7 @@ guild: {}```""".format(cat.name,
     @cat.group(invoke_without_command=True)
     async def edit(self, ctx):
         z = []
-        for cmd in self.bot.get_command("cat edit").commands:
+        for cmd in ctx.command.commands:
             z.append(f"- {cmd.name}")
         await ctx.send(_(ctx.lang, "Możesz ustawić:\n```\n{}```").format('\n'.join(z)))
 
@@ -760,11 +767,11 @@ guild: {}```""".format(cat.name,
         if cat.money < 25000:
             return await ctx.send(_(ctx.lang, "Nie masz wystarczająco pieniędzy na zmiane koloru zwierzaka."))
 
-        colors = ['black', 'brown', 'grey']
-        vip_colors = ['gold', 'plamablue', 'yellow', 'pink', 'plama_sea', 'plama_pretty_pink',
-                      'plama_mint', 'light_green']
+        colors = ['black', 'brown', 'grey', 'yellow', 'pink']
+        premium_colors = ['gold', 'plamablue', 'plama_sea', 'plama_pretty_pink',
+                          'plama_mint', 'light_green']
         if cat.premium:
-            colors.extend(vip_colors)
+            colors.extend(premium_colors)
         if await self.bot.is_owner(ctx.author):
             colors.append('owner_cat')
 
@@ -785,11 +792,11 @@ guild: {}```""".format(cat.name,
         if cat.money < 100000:
             return await ctx.send(_(ctx.lang, "Nie masz wystarczająco pieniędzy na zmiane tła na profilu."))
 
-        themes = ["weed1", "weed2", "weed3"]
-        vip_themes = ["sky1", "sky2", "sky3", "sky4", "sky5", "colors1", "jungle1", "void1", "space1", "landscape1",
-                      "landscape2", "landscape3", "landscape4", "night_sky1"]
+        themes = ["weed1", "weed2", "weed3", "sky3", "landscape2"]
+        premium_themes = ["sky1", "sky2", "sky4", "sky5", "colors1", "jungle1", "void1", "space1", "landscape1",
+                          "landscape3", "landscape4", "night_sky1"]
         if cat.premium:
-            themes.extend(vip_themes)
+            themes.extend(premium_themes)
 
         if not new_theme:
             return await ctx.send(_(ctx.lang, "Dostępne tła `{}`.").format(", ".join(themes)))
@@ -804,7 +811,22 @@ guild: {}```""".format(cat.name,
     @commands.command()
     async def daily(self, ctx):
         return await ctx.send(_(ctx.lang,
-                                "<https://discordbots.org/bot/538369596621848577/vote>, zagłosuj a za pare chwil dostaniesz nagrodę!"))
+                                "<https://discordbots.org/bot/538369596621848577/vote>, zagłosuj a za pare chwil "
+                                "dostaniesz nagrodę!"))
+
+    @cat.command()
+    async def premium(self, ctx):  # $$$
+        cost = 1.5
+        owner = str(self.bot.get_user(185712375628824577))
+
+        text = f"**PREMIUM**\nMożesz zakupić specjalny dodatek do profilu twojego kota nazwany PREMIUM, lecz co on " \
+               f"daje?\n- więcej pięknych teł.\n- więcej fantastycznych kolorów\n- bonusy do levelowania kota\n**- i " \
+               f"wiele więcej!**"
+
+        e = discord.Embed(description=_(ctx.lang, text))
+        e.set_footer(text=_(ctx.lang, "Koszt: {}$. Kontakt: {}").format(cost, owner))
+
+        await ctx.send(embed=e)
 
 
 def setup(bot):

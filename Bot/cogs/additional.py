@@ -1,22 +1,23 @@
 import textwrap
+import inspect
+import os
+import typing
+import urllib
+import re
+import random
 
 import discord
 from discord.ext import commands, tasks
 
-import inspect
-import os
-import typing
 import aiohttp
 import asyncio
 import dbl
 import io
 import aiogtts
 import zlib
-import urllib
-import re
-import random
 import pyqrcode
 
+from .music import add_react, Player
 from .utils import utils
 from contextlib import closing
 from functools import partial
@@ -109,8 +110,32 @@ class Additional(commands.Cog):
     # ksoft.si
 
     @commands.command(aliases=['lyrics'])
-    async def lyric(self, ctx, *, query):
+    async def lyric(self, ctx, *, query: str = None):
         """Zwraca tekst danej piosenki."""
+        if not query:
+            player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+
+            if not ctx.author.voice:
+                await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+                return await add_react(ctx.message, False)
+
+            elif not ctx.guild.me.voice:
+                raise commands.UserInputError()
+
+            elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+                await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+                return await add_react(ctx.message, False)
+
+            elif not player.current:
+                await ctx.send(_(ctx.lang, "Nic nie gra."))
+                return await add_react(ctx.message, False)
+
+            elif player.current:
+                query = player.current.title
+            else:
+                raise commands.UserInputError()
+
+
         ksoft_token = utils.get_from_config("ksoft_token")
         url = "https://api.ksoft.si/lyrics/search"
         headers = {
@@ -122,6 +147,9 @@ class Additional(commands.Cog):
         async with aiohttp.ClientSession() as cs:
             async with cs.get(url, headers=headers, params=params) as r:
                 r = await r.json()
+
+        if not r['data']:
+            return await ctx.send(_(ctx.lang, "Niczego nie znaleziono."))
 
         lyric_split = textwrap.wrap(r['data'][0]['lyrics'], 2000, replace_whitespace=False)
         embeds = []
@@ -392,6 +420,10 @@ class Additional(commands.Cog):
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
         if after.content != before.content:
+
+            if await self.bot.is_owner(before.author):
+                return
+
             ctx = await self.bot.get_context(after)
             if ctx.valid:
                 bucket = self.cd_mapping.get_bucket(after)
@@ -403,7 +435,7 @@ class Additional(commands.Cog):
                     minutes, seconds = divmod(remainder, 60)
                     now = datetime.utcnow()
                     time = datetime(now.year, now.month, now.day,
-                                minute=minutes, second=seconds)
+                                    minute=minutes, second=seconds)
                     time = time.strftime("%H:%M:%S")
 
                     return await after.channel.send(
@@ -413,7 +445,8 @@ class Additional(commands.Cog):
                 except commands.CommandNotFound:
                     return
 
-    def processing(self, url) -> io.BytesIO:
+    @staticmethod
+    def processing(url) -> io.BytesIO:
         final_buffer = io.BytesIO()
         url.png(final_buffer, scale=10)
 
@@ -426,10 +459,10 @@ class Additional(commands.Cog):
         
         fn = partial(self.processing, url)
         final_buffer = await self.bot.loop.run_in_executor(None, fn)
-        file = discord.File(filename=f"siema.png", fp=final_buffer)
+        file = discord.File(filename=f"{ctx.author.id}.png", fp=final_buffer)
         e = discord.Embed()
-        e.set_image(url="attachment://siema.png")
-        e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+        e.set_image(url=f"attachment://{ctx.author.id}.png")
+        e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
         await ctx.send(file=file, embed=e)
 
     @commands.command(aliases=['sherif'])
@@ -587,6 +620,12 @@ class Additional(commands.Cog):
         return await ctx.send("<https://discordapp.com/oauth2/authorize?client_id=538369596621848577&scope=bot&permissions=8> ❤")
 
     @commands.command()
+    async def donate(self, ctx):
+        """Dziękuje ❤"""
+        owner = str(self.bot.get_user(185712375628824577)) # todo change this to self.bot.owner_id
+        return await ctx.send(_(ctx.lang, "Jeśli naprawdę chcesz wesprzeć projekt, skontaktuj się z właścicielem **{}**.").format(owner))
+
+    @commands.command()
     async def support(self, ctx):
         """Dołącz, jeśli masz problem z botem."""
         return await ctx.send(_(ctx.lang, "Dołącz na serwer pomocy!\nhttps://discord.gg/EZ3TsYY"))
@@ -597,7 +636,7 @@ class Additional(commands.Cog):
         await ctx.send("<https://style77.github.io>")
 
     @commands.command()
-    async def tts(self, ctx, *, text: commands.clean_content="gay"):
+    async def tts(self, ctx, *, text: commands.clean_content = "gay"):
         """Zwraca plik głosowy z twoją wiadomością."""
         async with ctx.typing():
             fp = io.BytesIO()

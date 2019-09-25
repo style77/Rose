@@ -89,7 +89,7 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
 
     def processing(self, text) -> BytesIO:
         fontpath = "images/fonts/Minecraft.ttf"
-        with Image.new("RGB", (450,250), (31, 32, 33)) as bg:
+        with Image.new("RGB", (450, 250), (31, 32, 33)) as bg:
             d = ImageDraw.Draw(bg)
             color = (255, 255, 255)
             text = textwrap.wrap(text, 24)
@@ -102,10 +102,10 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
                 color = random.choice([(173, 255, 47), (124, 252, 0), (0, 255, 0), (144, 238, 144)])
             if text.startswith('{b}'):
                 text = text.replace("{b}", "")
-                color = random.choice([(135,206,235), (135,206,250), (173,216,230), (176,224,230)])
+                color = random.choice([(135, 206, 235), (135, 206, 250), (173, 216, 230), (176, 224, 230)])
             if text.startswith('{r}'):
                 text = text.replace("{r}", "")
-                color = random.choice([(220,20,60), (255,0,0), (255,69,0), (205,92,92)])
+                color = random.choice([(220, 20, 60), (255, 0, 0), (255, 69, 0), (205, 92, 92)])
             font = ImageFont.truetype(fontpath, 30)
             d.text((10, 10), text, fill=color, font=font)
             final_buffer = BytesIO()
@@ -128,7 +128,7 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
         return final_buffer
 
     @commands.command(aliases=['tb'])
-    async def textbox(self, ctx, *, text: commands.clean_content="iam gay"):
+    async def textbox(self, ctx, *, text: commands.clean_content = "iam gay"):
         async with ctx.typing():
             texttocheck = textwrap.wrap(text, 24)
             if len(texttocheck) > 7:
@@ -138,28 +138,28 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
             file = discord.File(filename=f"{ctx.author.name}.png", fp=final_buffer)
             e = discord.Embed()
             e.set_image(url=f"attachment://{ctx.author.name}.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
-    #@commands.command()
-    #async def fakie(self, ctx, member: typing.Optional[discord.Member]=None, *, text: commands.clean_content="Jestem gejem"):
-        #"""używajcie tego z mózgiem prosze. Nie chcecie mieć problemów."""
-        #member = member or ctx.author
-        #if len(text) > 40:
-            #return await ctx.send('Ten tekst jest za długi.')
-        #async with ctx.typing():
-            #if isinstance(member, discord.Member):
-                #member_colour = member.colour.to_rgb()
-            #else:
-                #member_colour = (0, 0, 0)
-            #avatar_bytes = await self.get_avatar(ctx, member)
-            #fn = partial(self.processing_dsc, avatar_bytes, member_colour, text, member)
-            #final_buffer = await self.bot.loop.run_in_executor(None, fn)
-            #file = discord.File(filename=f"jebanko.png", fp=final_buffer)
-            #await ctx.send(file=file)
+    # @commands.command()
+    # async def fakie(self, ctx, member: typing.Optional[discord.Member]=None, *, text: commands.clean_content="Jestem gejem"):
+    # """używajcie tego z mózgiem prosze. Nie chcecie mieć problemów."""
+    # member = member or ctx.author
+    # if len(text) > 40:
+    # return await ctx.send('Ten tekst jest za długi.')
+    # async with ctx.typing():
+    # if isinstance(member, discord.Member):
+    # member_colour = member.colour.to_rgb()
+    # else:
+    # member_colour = (0, 0, 0)
+    # avatar_bytes = await self.get_avatar(ctx, member)
+    # fn = partial(self.processing_dsc, avatar_bytes, member_colour, text, member)
+    # final_buffer = await self.bot.loop.run_in_executor(None, fn)
+    # file = discord.File(filename=f"jebanko.png", fp=final_buffer)
+    # await ctx.send(file=file)
 
     @commands.command(aliases=['a'])
-    async def achievement(self, ctx, *, text: commands.clean_content="Jestem gejem"):
+    async def achievement(self, ctx, *, text: commands.clean_content = "Jestem gejem"):
         async with ctx.typing():
             if len(text) > 20:
                 return await ctx.send(_(ctx.lang, "Ten tekst jest za długi."))
@@ -168,13 +168,13 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
             file = discord.File(filename=f"siema.png", fp=final_buffer)
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     # Dankmember.services
 
     @commands.command()
-    async def bed(self, ctx, url: urlConverter=None, url2: urlConverter=None):
+    async def bed(self, ctx, url: urlConverter = None, url2: urlConverter = None):
         async with ctx.typing():
             url = url or str(ctx.author.avatar_url)
             url2 = url2 or str(ctx.guild.me.avatar_url)
@@ -187,41 +187,43 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
                     file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     @commands.command()
-    async def hitler(self, ctx, url: urlConverter=None):
+    async def hitler(self, ctx, url: urlConverter = None):
         async with ctx.typing():
             url = url or str(ctx.author.avatar_url)
             params = {
                 'avatar1': url
             }
             async with aiohttp.ClientSession() as cs:
-                async with cs.get("https://dankmemer.services/api/hitler", headers=self.dank_headers, params=params) as r:
+                async with cs.get("https://dankmemer.services/api/hitler", headers=self.dank_headers,
+                                  params=params) as r:
                     file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     @commands.command()
-    async def communism(self, ctx, url: urlConverter=None):
+    async def communism(self, ctx, url: urlConverter = None):
         async with ctx.typing():
             url = url or str(ctx.author.avatar_url)
             params = {
                 'avatar1': url
             }
             async with aiohttp.ClientSession() as cs:
-                async with cs.get("https://dankmemer.services/api/communism", headers=self.dank_headers, params=params) as r:
+                async with cs.get("https://dankmemer.services/api/communism", headers=self.dank_headers,
+                                  params=params) as r:
                     file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     @commands.command()
-    async def gay(self, ctx, url: urlConverter=None):
+    async def gay(self, ctx, url: urlConverter = None):
         async with ctx.typing():
             url = url or str(ctx.author.avatar_url)
             params = {
@@ -232,11 +234,11 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
                     file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     @commands.command()
-    async def jail(self, ctx, url: urlConverter=None):
+    async def jail(self, ctx, url: urlConverter = None):
         async with ctx.typing():
             url = url or str(ctx.author.avatar_url)
             params = {
@@ -247,11 +249,11 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
                     file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     @commands.command()
-    async def dab(self, ctx, url: urlConverter=None):
+    async def dab(self, ctx, url: urlConverter = None):
         async with ctx.typing():
             url = url or str(ctx.author.avatar_url)
             params = {
@@ -262,37 +264,39 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
                     file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     @commands.command()
-    async def brazzers(self, ctx, url: urlConverter=None):
+    async def brazzers(self, ctx, url: urlConverter = None):
         async with ctx.typing():
             url = url or str(ctx.author.avatar_url)
             params = {
                 'avatar1': url
             }
             async with aiohttp.ClientSession() as cs:
-                async with cs.get("https://dankmemer.services/api/brazzers", headers=self.dank_headers, params=params) as r:
+                async with cs.get("https://dankmemer.services/api/brazzers", headers=self.dank_headers,
+                                  params=params) as r:
                     file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     @commands.command()
-    async def bongocat(self, ctx, url: urlConverter=None):
+    async def bongocat(self, ctx, url: urlConverter = None):
         async with ctx.typing():
             url = url or str(ctx.author.avatar_url)
             params = {
                 'avatar1': url
             }
             async with aiohttp.ClientSession() as cs:
-                async with cs.get("https://dankmemer.services/api/bongocat", headers=self.dank_headers, params=params) as r:
+                async with cs.get("https://dankmemer.services/api/bongocat", headers=self.dank_headers,
+                                  params=params) as r:
                     file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
             e = discord.Embed()
             e.set_image(url="attachment://siema.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     """
@@ -318,7 +322,7 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
 
     def _piestatus(self, avydata, statuses):
         total = sum(statuses.values())
-        stat_deg = {k: (v/total)*360 for k, v in statuses.items()}
+        stat_deg = {k: (v / total) * 360 for k, v in statuses.items()}
         angles = dict()
         starting = -90
         for k, v in stat_deg.items():
@@ -357,10 +361,10 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
         base.paste(piebase, None, piebase)
         draw = ImageDraw.Draw(base)
         for k, v in statuses.items():
-            draw.rectangle(((bx, by[k]), (bx+30, by[k]+30)),
+            draw.rectangle(((bx, by[k]), (bx + 30, by[k] + 30)),
                            fill=status[k], outline=(255, 255, 255, 255))
             draw.text(
-                (bx+40, by[k]+8), f'{(v/total)*100:.2f}%', fill=discord_neutral, font=font)
+                (bx + 40, by[k] + 8), f'{(v / total) * 100:.2f}%', fill=discord_neutral, font=font)
         del draw
         buffer = io.BytesIO()
         base.save(buffer, 'png')
@@ -369,11 +373,11 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
 
     def processing2(self, avatar_bytes: bytes, colour: tuple, path, position, size) -> BytesIO:
         with Image.open(BytesIO(avatar_bytes)) as im:
-            im.thumbnail((200,200))
+            im.thumbnail((200, 200))
             with Image.new("RGB", im.size, colour) as background:
                 rgb_avatar = im.convert("RGB")
-                rgb_avatar.thumbnail((250,250))
-                background.paste(rgb_avatar, (0,0))
+                rgb_avatar.thumbnail((250, 250))
+                background.paste(rgb_avatar, (0, 0))
                 hat = Image.open(path)
                 hat.thumbnail(size)
                 background.paste(hat, position, mask=hat)
@@ -384,20 +388,21 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
         return final_buffer
 
     @commands.command()
-    async def hat(self, ctx, member: urlConverter=None, *, hat_name=None):
+    async def hat(self, ctx, member: urlConverter = None, *, hat_name=None):
         """Zwraca obrazek z czapką na twoim lub czyimś awatarze."""
         member = member or ctx.author
         hats_dict = {
-                    "christmas": [r"images/christmas_hat.png", (60, 10), (130, 130)],
-                    "witch": [r"images/witch_hat.png", (60, 10), (155, 155)],
-                    "autism": [r"images/autism_hat.png", (45, 10), (110, 110)],
-                    "wiatraczek_kurwa": [r"images/wiatraczek_kurwa_hat.png", (45, 10), (110, 110)],
-                    "incognito": [r"images/incognito_hat.png", (40, 20), (125, 125)],
-                    "?x?x?xxx??": [r"images/you_wont_find_this_hat.png", (40, 3), (120, 120)]
-                    }
+            "christmas": [r"images/christmas_hat.png", (60, 10), (130, 130)],
+            "witch": [r"images/witch_hat.png", (60, 10), (155, 155)],
+            "autism": [r"images/autism_hat.png", (45, 10), (110, 110)],
+            "wiatraczek_kurwa": [r"images/wiatraczek_kurwa_hat.png", (45, 10), (110, 110)],
+            "incognito": [r"images/incognito_hat.png", (40, 20), (125, 125)],
+            "?x?x?xxx??": [r"images/you_wont_find_this_hat.png", (40, 3), (120, 120)]
+        }
 
         if not hat_name in hats_dict:
-            return await ctx.send(_(ctx.lang, "Nie ma takiej czapki. Spróbuj {hats}").format(hats=', '.join([hat for hat in hats_dict])))
+            return await ctx.send(
+                _(ctx.lang, "Nie ma takiej czapki. Spróbuj {hats}").format(hats=', '.join([hat for hat in hats_dict])))
 
         async with ctx.typing():
             if isinstance(member, discord.Member):
@@ -414,39 +419,39 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
             file = discord.File(filename=f"{member.id}.png", fp=final_buffer)
             e = discord.Embed()
             e.set_image(url=f"attachment://{member.id}.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=file, embed=e)
 
     @commands.command()
-    async def tweet(self, ctx, member: typing.Optional[discord.Member]=None, *, text: str="iam gay"):
+    async def tweet(self, ctx, member: typing.Optional[discord.Member] = None, *, text: str = "iam gay"):
         """Tworzy tweeta."""
         member = member or ctx.author
         async with ctx.typing():
             f = await self.bot.app.tweet(str(member.avatar_url), text, member.name)
             e = discord.Embed()
             e.set_image(url=f"attachment://nothing.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=await f.get_discord_file(), embed=e)
 
     @commands.command()
-    async def blurple(self, ctx, url: urlConverter=None):
+    async def blurple(self, ctx, url: urlConverter = None):
         """Tworzy obrazek oparty na 3 kolorach discorda."""
         url = url or str(ctx.author.avatar_url)
         async with ctx.typing():
             f = await self.bot.app.blurple(url)
             e = discord.Embed()
             e.set_image(url=f"attachment://nothing.png")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=await f.get_discord_file(), embed=e)
 
     @commands.command()
-    async def triggered(self, ctx, url: urlConverter=None):
+    async def triggered(self, ctx, url: urlConverter = None):
         url = url or str(ctx.author.avatar_url)
         async with ctx.typing():
             f = await self.bot.app.triggered(url)
             e = discord.Embed()
             e.set_image(url=f"attachment://nothing.gif")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=await f.get_discord_file(), embed=e)
 
     @commands.group(invoke_without_command=True)
@@ -463,7 +468,7 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
             f = await self.bot.app.cuddle
             e = discord.Embed()
             e.set_image(url=f"attachment://nothing.gif")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=await f.get_discord_file(), embed=e)
 
     @anime.command()
@@ -472,7 +477,7 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
             f = await self.bot.app.hug
             e = discord.Embed()
             e.set_image(url=f"attachment://nothing.gif")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=await f.get_discord_file(), embed=e)
 
     @anime.command()
@@ -481,7 +486,7 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
             f = await self.bot.app.pat
             e = discord.Embed()
             e.set_image(url=f"attachment://nothing.gif")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=await f.get_discord_file(), embed=e)
 
     @anime.command()
@@ -490,8 +495,9 @@ class Images(commands.Cog, command_attrs=dict(cooldown=commands.Cooldown(1, 2.5,
             f = await self.bot.app.cuddle
             e = discord.Embed()
             e.set_image(url=f"attachment://nothing.gif")
-            e.set_footer(text="🌹 " + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
+            e.set_footer(text="\U0001f339" + _(ctx.lang, "Wykonane przez {}.").format(ctx.author.id))
             await ctx.send(file=await f.get_discord_file(), embed=e)
+
 
 def setup(bot):
     bot.add_cog(Images(bot))

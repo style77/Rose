@@ -1,7 +1,11 @@
 from discord.ext import commands
 
 
-class NoTodos(commands.CheckFailure):
+class NoTodos(commands.CommandError):
+    pass
+
+
+class NoPremium(commands.CommandError):
     pass
 
 
@@ -17,6 +21,15 @@ def has_todos():
         if t:
             return True
         raise NoTodos()
+    return commands.check(predicate)
+
+
+def has_premium():
+    async def predicate(ctx):
+        t = ctx.bot.pg_con.fetchrow("SELECT * FROM members WHERE id = $1", ctx.author.id)
+        if t:
+            return True
+        raise NoPremium()
     return commands.check(predicate)
 
 

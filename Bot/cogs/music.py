@@ -339,7 +339,7 @@ class Music(Plugin):
 
     @commands.command(aliases=['join'])
     async def connect(self, ctx):
-        if not ctx.author.voice:
+        if not ctx.author.voiBlood_Rosece:
             await ctx.send(_(ctx.lang, "Nie jesteś na żadnym kanale."))
             return await add_react(ctx.message, False)
 
@@ -378,9 +378,7 @@ class Music(Plugin):
 
         await player.disconnect()
         await player.stop()
-
-        if not player._save_queue:
-            player.queue._queue.clear()
+        player.queue._queue.clear()
 
         player.current = None
 
@@ -791,34 +789,34 @@ class Music(Plugin):
 
         player.update = True
 
-    @commands.command()
-    @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def save_queue(self, ctx):
-        """Zapisuje pozostałe piosenki z playlisty na następne włączenie muzyki."""
-        player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
-
-        if not await self.has_perms(ctx, manage_guild=True):
-            return await ctx.send(_(ctx.lang, "Nie masz odpowiednich uprawnień do zapisania kolejki."))
-
-        # player and member instances check
-        if not ctx.author.voice:
-            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
-            return await add_react(ctx.message, False)
-
-        elif not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
-            return await add_react(ctx.message, False)
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
-            return await add_react(ctx.message, False)
-
-        c = player._save_queue = not player._save_queue
-
-        if c is True:
-            return await ctx.send(_(ctx.lang, "{} włączył zapisywanie playlisty.").format(ctx.author.mention))
-        else:
-            return await ctx.send(_(ctx.lang, "{} wyłączył zapisywanie playlisty.").format(ctx.author.mention))
+    # @commands.command()
+    # @commands.cooldown(1, 10, commands.BucketType.guild)
+    # async def save_queue(self, ctx):
+    #     """Zapisuje pozostałe piosenki z playlisty na następne włączenie muzyki."""
+    #     player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+    #
+    #     if not await self.has_perms(ctx, manage_guild=True):
+    #         return await ctx.send(_(ctx.lang, "Nie masz odpowiednich uprawnień do zapisania kolejki."))
+    #
+    #     # player and member instances check
+    #     if not ctx.author.voice:
+    #         await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+    #         return await add_react(ctx.message, False)
+    #
+    #     elif not ctx.guild.me.voice:
+    #         await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+    #         return await add_react(ctx.message, False)
+    #
+    #     elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+    #         await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+    #         return await add_react(ctx.message, False)
+    #
+    #     c = player._save_queue = not player._save_queue
+    #
+    #     if c is True:
+    #         return await ctx.send(_(ctx.lang, "{} włączył zapisywanie playlisty.").format(ctx.author.mention))
+    #     else:
+    #         return await ctx.send(_(ctx.lang, "{} wyłączył zapisywanie playlisty.").format(ctx.author.mention))
 
     @commands.command(aliases=['loop_queue'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
