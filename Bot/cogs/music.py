@@ -339,7 +339,7 @@ class Music(Plugin):
 
     @commands.command(aliases=['join'])
     async def connect(self, ctx):
-        if not ctx.author.voiBlood_Rosece:
+        if not ctx.author.voice:
             await ctx.send(_(ctx.lang, "Nie jesteś na żadnym kanale."))
             return await add_react(ctx.message, False)
 
