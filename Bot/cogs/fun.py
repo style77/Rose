@@ -26,6 +26,7 @@ from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
 
+
 def simple_get(url):
     try:
         with closing(get(url, stream=True)) as resp:
@@ -38,15 +39,18 @@ def simple_get(url):
         print('Error during requests to {0} : {1}'.format(url, str(e)))
         return None
 
+
 def is_good_response(resp):
     content_type = resp.headers['Content-Type'].lower()
     return (resp.status_code == 200
             and content_type is not None
             and content_type.find('html') > -1)
 
+
 def uptime():
     p = psutil.Process(os.getpid())
     return int(time.time() - p.create_time())
+
 
 class Fun(commands.Cog):
     def __init__(self, bot):
@@ -62,9 +66,8 @@ class Fun(commands.Cog):
         """ａｅｓｔｈｅｔｉｃ"""
         fullwidth_offset = 65248
         await ctx.send("".join(map(
-            lambda c: chr(ord(c) + fullwidth_offset) if (ord(c)
-                                                         >= 0x21 and ord(c) <= 0x7E) else c,
-            msg)).replace(" ", chr(0x3000)))
+            lambda c: chr(
+                ord(c) + fullwidth_offset) if (0x21 <= ord(c) <= 0x7E) else c, msg)).replace(" ", chr(0x3000)))
 
     @commands.command(aliases=["hb", "note"])
     async def hastebin(self, ctx, *, content):

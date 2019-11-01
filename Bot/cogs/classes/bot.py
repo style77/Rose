@@ -19,6 +19,7 @@ OPTS = {'command_prefix': utils.get_pre,
         'command_not_found': '',
         'case_insensitive': True}
 
+
 class Bot(commands.AutoShardedBot):
     def __init__(self):
         super(Bot, self).__init__(**OPTS)
@@ -87,9 +88,6 @@ class Bot(commands.AutoShardedBot):
                                                       guild_id)
         return blocked_commands
 
-    async def on_guild_join(self, guild):
-        await self.pg_con.execute("UPDATE bot_count SET newest_guild = $1", guild.name)
-
     async def changing(self):
         await self.wait_until_ready()
         while not self.is_closed():
@@ -128,12 +126,11 @@ class Bot(commands.AutoShardedBot):
                     f"{len(self.users)} members.",
                     f"{len(self.guilds)} guilds.",
                     f"after {liczbac} commands.",
-                    f"{i} commands!",
-                    f"{v} total votes.",
-                    f"/invite",
-                    f"/support",
-                    "people usually forget about this bot in 5minutes.",
-                    f"101% time online."
+                    f"{i} total commands!",
+                    f"{v} total votes on top.gg.",
+                    f"Add me! /invite",
+                    f"Join! /support",
+                    "people usually forget about this bot in 5minutes."
                 ]
 
                 status = random.choice(stats)

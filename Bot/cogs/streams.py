@@ -78,9 +78,12 @@ class Streams(commands.Cog):
                     if 'users' not in _id:
                         continue
 
-                    async with cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
-                                      headers=auth) as stream_ttv:
-                        stream_ttv = await stream_ttv.json()
+                    try:
+                        async with cs.get(f"https://api.twitch.tv/kraken/streams/{_id['users'][0]['_id']}",
+                                          headers=auth) as stream_ttv:
+                            stream_ttv = await stream_ttv.json()
+                    except IndexError:
+                        continue
 
                     if stream_ttv['stream'] is None:
                         await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])

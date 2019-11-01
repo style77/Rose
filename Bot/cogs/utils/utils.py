@@ -51,7 +51,7 @@ def check_permissions(*, allow_owner=True, **permissions):
 
 def clean_text(text):
     z = escape_markdown(text)
-    z = escape_mentions(text)
+    z = escape_mentions(z)
     return z
 
 builtins.check_permissions = check_permissions

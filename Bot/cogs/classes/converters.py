@@ -332,8 +332,10 @@ class EmojiConverter(Converter):
                 else:
                     raise BadArgument()
 
+
 class TrueFalseError(commands.CommandError):
     pass
+
 
 class TrueFalseConverter(Converter):
     async def convert(self, ctx, argument):

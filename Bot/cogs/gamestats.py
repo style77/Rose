@@ -8,6 +8,7 @@ import riotwatcher
 from discord import Embed, Color, User
 from discord.ext import commands
 from fortnite_python import Fortnite
+from fortnite_python.exceptions import NotFoundError
 
 from fortnite_python.domain import Platform, Mode
 from osuapi import OsuApi, AHConnector, OsuMode
@@ -138,7 +139,10 @@ class GameStats(Plugin):
 
         nick = nick.replace('reserved--', '')
 
-        player = self.fortnite.player(nick, platform)
+        try:
+            player = self.fortnite.player(nick, platform)
+        except NotFoundError:
+            return await ctx.send(_("Nie znaleziono tej osoby. Sprawdź poprawność nazwy."))
 
         values = [int(x * 255) for x in colorsys.hsv_to_rgb(random.random(), 1, 1)]
 

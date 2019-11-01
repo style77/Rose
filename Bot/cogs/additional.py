@@ -422,7 +422,10 @@ class Additional(commands.Cog):
         if after.content != before.content:
 
             if await self.bot.is_owner(before.author):
-                return
+                try:
+                    await self.bot.process_commands(after)
+                except commands.CommandNotFound:
+                    return
 
             ctx = await self.bot.get_context(after)
             if ctx.valid:
@@ -514,7 +517,7 @@ class Additional(commands.Cog):
                     ]
             while c < i:
                 reactions.append(numbers[c])
-                c+=1
+                c += 1
             index = 0
             msg = []
             for opt in options:
@@ -546,7 +549,7 @@ class Additional(commands.Cog):
                 await self.dblpy.post_server_count()
             except Exception as e:
                 print(e)
-            await asyncio.sleep(180)
+            await asyncio.sleep(1800)
 
     @commands.Cog.listener()
     async def on_message(self, m):

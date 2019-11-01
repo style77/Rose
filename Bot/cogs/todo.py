@@ -7,6 +7,7 @@ from discord.utils import escape_mentions
 
 from .utils.paginator import Pages
 
+
 class Todo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

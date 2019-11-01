@@ -4,6 +4,7 @@ from discord.ext import commands
 from .classes.converters import EmojiConverter
 from .classes.plugin import Plugin
 
+
 class RR(Plugin):
     def __init__(self, bot):
         self.bot = bot
@@ -11,9 +12,15 @@ class RR(Plugin):
     async def update_role(self, toogle, guild_id, member, role_id):
         role = self.bot.get_guild(guild_id).get_role(role_id)
         if toogle == 'add':
-            return await member.add_roles(role)
+            try:
+                await member.add_roles(role)
+            except discord.HTTPException:
+                return
         elif toogle == 'remove':
-            return await member.remove_roles(role)
+            try:
+                await member.remove_roles(role)
+            except discord.HTTPException:
+                return
 
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_guild=True)
