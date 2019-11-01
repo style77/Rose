@@ -1,0 +1,33 @@
+development: yes
+color: "0x8a5353"
+token: "NTczMjMzMTI3NTU2NjQ0ODcz.XUrn1Q.j2__srKJ-pEOzb16NvtE1HaCD88"
+
+support_server: "EZ3TsYY"
+
+# database
+
+dbip: "149.202.62.19:35435"
+password: "Joas0505"
+dbname: "rose_dev"
+
+# apis
+
+badoszapi: "H3G7WBBA0C4CRDYYVLXT"
+
+fortnite_api: "7215a69f-294a-465b-994d-107c554f31d3"
+riot_api: "RGAPI-8e8ca92a-503e-4c55-a886-0d387fcd2c22"
+osu_api: "114a3765fa084fb3e970f2b849ae096dd0f2a5b9"
+
+yt_key: "AIzaSyCBbcFPiUYBOwpjZsnE1XTwggBt59YBbmw"
+ksoft_token: "ea65730f03990ba9f1ba9f944ebeb46f77d576b6"
+dbl: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzODM2OTU5NjYyMTg0ODU3NyIsImJvdCI6dHJ1ZSwiaWF0IjoxNTU4NjM1MDQ0fQ.Sl3u_6uAr-8QcmFNrXV4YNEpKk-Ctj41_gjq1CA3GFo"
+cleverbot_api: "&dOys_3%Lj@q=t4Rg0I)"
+dank_token: "25f49d58e68711b1c5fb1fbd5394e2c03323e3174ae9baac3625c7683e434ff5"
+twitch_client_id: "90mxvq885fljhh8hp3mvaerzt0dodq"
+
+spotify_id: "ea41818214954d3f8dcb4a232ba69416"
+spotify_secret: "20c82a4a2793459ead83f5b92a8f9442"
+
+# web
+client_secret: null
+client_id: null
