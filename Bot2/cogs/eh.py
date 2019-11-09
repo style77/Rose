@@ -17,10 +17,7 @@ class ErrorHandler(Plugin):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
 
-        f = await get_language(self.bot, ctx.guild)  # todo i dont have to use this but for some reasons i have wtf
-        lang = self.bot.polish if f == "PL" else self.bot.english
-
-        # lang = ctx.lang
+        lang = ctx.lang
 
         if hasattr(ctx.command, 'on_error'):
             return
@@ -40,6 +37,10 @@ class ErrorHandler(Plugin):
             except discord.HTTPException:
                 pass
             return await ctx.add_react(False)
+
+        elif isinstance(error, commands.NSFWChannelRequired):
+            await ctx.send(ctx.lang['channel_is_not_nsfw'])
+            return await ctx.add_react(ctx.message, False)
 
         elif isinstance(error, commands.MissingPermissions):
             await ctx.send(f"{lang['no_permissions']} `{', '.join(error.missing_perms)}`")

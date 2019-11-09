@@ -1,4 +1,5 @@
 import json
+import re
 
 import discord
 from discord.ext import commands
@@ -27,6 +28,26 @@ class SafeConverter(commands.Converter):
         argument = discord.utils.escape_markdown(argument)
         argument = discord.utils.escape_mentions(argument)
         return argument
+
+
+time_regex = re.compile(r"(?:(\d{1,5})(h|hr|hrs|s|sec|m|min|d|w|mo|y))+?")
+time_dict = {"h": 3600, "hr": 3600, "hrs": 3600, "s": 1, "sec": 1, "min": 60, "m": 60,
+             "d": 86400, "y": 31536000, "mo": 2592000, "w": 604800}
+
+
+class VexsTimeConverter(commands.Converter):
+    async def convert(self, ctx, argument):
+        args = argument.lower()
+        matches = re.findall(time_regex, args)
+        time = 0
+        for v, k in matches:
+            try:
+                time += time_dict[k]*float(v)
+            except KeyError:
+                raise commands.BadArgument("{} is an invalid time-key! h/m/s/d are valid!".format(k))
+            except ValueError:
+                raise commands.BadArgument("{} is not a number!".format(v))
+        return time
 
 
 class EmojiConverter(commands.Converter):

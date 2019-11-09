@@ -2,6 +2,7 @@ import asyncio
 import io
 import random
 import textwrap
+import time
 import unicodedata
 import urllib
 from functools import partial
@@ -14,9 +15,9 @@ import pyqrcode
 
 from discord.ext import commands
 
-from Bot2.cogs.classes.converters import EmojiConverter
+from .classes.converters import EmojiConverter
 from .utils import get
-from .classes.other import Plugin
+from .classes.other import Plugin, SeleniumPhase
 from pyfiglet import Figlet
 from requests import get
 from requests.exceptions import RequestException
@@ -30,7 +31,6 @@ class Fun(Plugin):
         if not self.bot.development:
             self.cleverbot = ac.Cleverbot(get("cleverbot_api"))
             self.cleverbot.set_context(ac.DictContext(self.cleverbot))
-        self.session = aiohttp.ClientSession(loop=bot.loop)
 
     @commands.command(aliases=['fw', 'fullwidth', 'ａｅｓｔｈｅｔｉｃ'])
     async def aesthetic(self, ctx, *, msg):
@@ -175,18 +175,33 @@ class Fun(Plugin):
         except asyncio.TimeoutError:
             await ctx.send(ctx.lang['no_one_guessed'])
 
-    @commands.command(name='ss')
+    @commands.command()
     @commands.is_nsfw()
-    async def ss(self, ctx, page):
-        if not page.startswith("http"):
-            page = f"https://{page}"
-        if not page.endswith("/"):
-            page = f"{page}/"
+    async def ss(self, ctx, *, page):
+        async with ctx.typing():
+            if not page.startswith("http"):
+                page = f"https://{page}"
+            if not page.endswith("/"):
+                page = f"{page}/"
+
+            start = time.time()
+            try:
+                im = await SeleniumPhase(self.bot).take_screenshot(page)
+            except Exception:
+                return await ctx.send(ctx.lang['could_not_take_ss'])
+
+            if not im:
+                return await ctx.send(ctx.lang['could_not_take_ss'])
+            buffer = io.BytesIO()
+            im.save(buffer, "png")
+            buffer.seek(0)
+        end = time.time()
+
+        f = discord.File(fp=buffer, filename=f"ss.png")
         e = discord.Embed(title=page, color=3553598, timestamp=ctx.message.created_at)
-        e.set_image(
-            url=f"https://api.apiflash.com/v1/urltoimage?access_key=eac65fa1e35b44bfb79c9bb570aa650f&url={page}")
+        e.set_image(url=f"attachment://ss.png")
         e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
-        await ctx.send(embed=e)
+        await ctx.send(content=f"Done in {round(end-start)}s.", file=f, embed=e)
 
     @commands.Cog.listener()
     async def on_message(self, message):

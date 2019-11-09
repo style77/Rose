@@ -14,6 +14,8 @@ dbname: "rose_dev"
 
 badoszapi: "H3G7WBBA0C4CRDYYVLXT"
 
+flower_api_key: "49b31d6b668f2216ece86747"
+
 fortnite_api: "7215a69f-294a-465b-994d-107c554f31d3"
 riot_api: "RGAPI-8e8ca92a-503e-4c55-a886-0d387fcd2c22"
 osu_api: "114a3765fa084fb3e970f2b849ae096dd0f2a5b9"

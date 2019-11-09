@@ -5,12 +5,14 @@ import traceback
 from datetime import datetime
 from collections import Counter
 
+import aiohttp
 import asyncpg
 import discord
+import wavelink
 
 from discord.ext import commands, tasks
 
-from ..utils.misc import get_prefix, get
+from ..utils.misc import get_prefix, get, get_language
 from .guild import Guild
 from .context import RoseContext
 
@@ -46,6 +48,8 @@ class Bot(commands.AutoShardedBot):
         self.socket_stats = Counter()
         self.uptime = datetime.utcnow()
 
+        self.wavelink = wavelink.Client(self)
+
         self.exts = list()
 
         self.usage = Counter()
@@ -54,10 +58,12 @@ class Bot(commands.AutoShardedBot):
 
     async def on_message(self, message):
         ctx = await self.get_context(message, cls=RoseContext)
+        if not message.guild:
+            language = "ENG"
+        else:
+            language = await get_language(self, message.guild)
+        ctx.lang = self.polish if language == "PL" else self.english
         await self.invoke(ctx)
-
-    async def get_context(self, message, *, cls=None):
-        return await super().get_context(message, cls=cls or RoseContext)
 
     # noinspection PyCallingNonCallable
     @tasks.loop(count=1)
@@ -76,14 +82,18 @@ class Bot(commands.AutoShardedBot):
                 traceback.print_exc()
 
     async def get_guild_settings(self, guild_id):
-        raw_guild_settings = await self.db.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", guild_id)
-        if raw_guild_settings is None:
-            raw_guild_settings = await self.add_guild_to_database(guild_id)
-
-        return Guild(self, raw_guild_settings)
+        if guild_id not in self._settings_cache:
+            raw_guild_settings = await self.db.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", guild_id)
+            if raw_guild_settings is None:
+                raw_guild_settings = await self.add_guild_to_database(guild_id)
+            g = Guild(self, raw_guild_settings)
+            self._settings_cache[guild_id] = g
+        else:
+            g = self._settings_cache.get(guild_id)
+        return g
 
     async def add_guild_to_database(self, guild_id):
-        new_guild = await self.db.execute("INSERT INTO guild_settings (guild_id) VALUES ($1) RETURNING *", guild_id)
+        new_guild = await self.db.fetchval("INSERT INTO guild_settings (guild_id) VALUES ($1) RETURNING *", guild_id)
         return new_guild
 
     async def clear_settings(self, guild_id):

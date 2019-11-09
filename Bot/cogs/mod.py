@@ -1176,6 +1176,7 @@ class Settings(Plugin):
         e.set_author(name="Dodano serwer", icon_url=g.icon_url)
         await self.bot.get_channel(610827984668065802).send(embed=e)
 
+
 class Mod(Plugin):
     def __init__(self, bot):
         self.bot = bot

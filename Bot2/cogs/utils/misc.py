@@ -1,3 +1,6 @@
+import io
+import zlib
+
 from yaml import load, Loader
 
 from discord.utils import escape_markdown, escape_mentions
@@ -14,15 +17,15 @@ async def get_prefix(bot, message):
     if not message.guild:
         return ""
 
-    prefix = await bot.db.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", message.guild.id)
+    guild_settings = await bot.get_guild_settings(message.guild.id)
 
-    if not prefix:
+    if not guild_settings:
         return "/"
 
     if bot.development:
         return '!'
 
-    return [f"{prefix['prefix']} ", prefix['prefix']]
+    return [f"{guild_settings.prefix} ", guild_settings.prefix]
 
 
 def get(thing):
@@ -31,15 +34,51 @@ def get(thing):
     return cfg[thing]
 
 
-async def get_language(bot, guild):
+async def get_language(bot, guild, *, only_id=False):
+    if only_id:
+        guild_id = guild
+    else:
+        guild_id = guild.id
+
     if not guild:
         return LANGUAGE
 
-    lang = await bot.db.fetchrow("SELECT lang FROM guild_settings WHERE guild_id = $1", guild.id)
-    if not lang:
+    guild_settings = await bot.get_guild_settings(guild_id)
+    if not guild_settings:
         return LANGUAGE
 
-    return lang[0]
+    return guild_settings.lang
+
+
+def transform_arguments(text, member):
+    if "<@USER>" in text:
+        text = text.replace("<@USER>", member.mention)
+
+    if "<USER>" in text:
+        text = text.replace("<USER>", member.name)
+
+    if "<USER.JOINED_AT>" in text:
+        text = text.replace("<USER.JOINED_AT>", str(member.joined_at))
+
+    if "<USER.CREATED>" in text:
+        text = text.replace("<USER.CREATED>", str(member.created_at))
+
+    if "<USER.ID>" in text:
+        text = text.replace("<USER.ID>", str(member.id))
+
+    if "<USER#DISCRIM>" in text:
+        text = text.replace("<USER#DISCRIM>", str(member))
+
+    if "<USER.DISCRIM>" in text:
+        text = text.replace("<USER.DISCRIM>", str(member.discriminator))
+
+    if "<GUILD>" in text:
+        text = text.replace("<GUILD>", member.guild.name)
+
+    if "<GUILD.ID>" in text:
+        text = text.replace("<GUILD.ID>", str(member.guild.id))
+
+    return text
 
 
 class SphinxObjectFileReader:

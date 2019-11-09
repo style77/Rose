@@ -1,11 +1,13 @@
 import os
 import re
 
+import aiohttp
 import discord
 from discord.ext import commands
+from io import BytesIO
 
-from Bot2.cogs.classes.converters import SafeConverter
-from Bot2.cogs.utils import SphinxObjectFileReader
+from .classes.converters import SafeConverter
+from .utils import SphinxObjectFileReader
 from .classes.other import Plugin
 
 
@@ -14,8 +16,6 @@ class Useful(Plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.bot = bot
-
-        self._rtfm_cache = dict()
 
     @commands.command(aliases=['yn'])
     async def yesno(self, ctx, *, option: SafeConverter):
@@ -223,6 +223,7 @@ class Useful(Plugin):
     @rtfm.command(name='python', aliases=['py'])
     async def rtfm_python(self, ctx, *, obj: str = None):
         await self.do_rtfm(ctx, 'python', obj)
+
 
 def setup(bot):
     bot.add_cog(Useful(bot))

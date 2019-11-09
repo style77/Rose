@@ -13,7 +13,7 @@ import discord
 time_regex = re.compile(r"(?:(\d{1,5})(h|hr|hrs|s|sec|m|min|d|w|mo|y))+?")
 link_regex = re.compile(
     r"((http(s)?(\:\/\/))+(www\.)?([\w\-\.\/])*(\.[a-zA-Z]{2,3}\/?))[^\s\b\n|]*[^.,;:\?\!\@\^\$ -]")
-time_dict = {"h": 3600, "hr": 3600, "hrs": 3600, "s": 1, "sec": 1, "min":60, "m": 60,
+time_dict = {"h": 3600, "hr": 3600, "hrs": 3600, "s": 1, "sec": 1, "min": 60, "m": 60,
              "d": 86400, "y": 31536000, "mo": 2592000, "w": 604800}
 hrs_re_en = re.compile("(?<=in )[^.]*")
 hrs_re_pl = re.compile("(?<=w )[^.]*")

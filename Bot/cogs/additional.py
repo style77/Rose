@@ -277,7 +277,6 @@ class Additional(commands.Cog):
 
         self._rtfm_cache = cache
 
-
     def finder(self, text, collection, *, key=None, lazy=True):
         suggestions = []
         text = str(text)

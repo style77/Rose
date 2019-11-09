@@ -1,8 +1,9 @@
 guild:
     security: {
-               'spam_messages': 3,
-               'max_warns': 3,
-               'punishment': 'kick',
+               'spam_messages': 3,  max = 10
+               'max_warns': 3,  max = 12
+               'punishment': 1,  max = 2
+                 # 0 - nothing, 2 - kick, 3 - ban
                'anti': {
                         'link': False,
                         'invites': False,
@@ -11,9 +12,10 @@ guild:
                }
 
     stars: {
-            'starboard': 1234567890,
+            'starboard': None,
             'emoji': "\U00002764",
             'self_starring': False
+            'stars_count': 3
             }
 
     raid_mode:
@@ -40,4 +42,4 @@ guild:
     global_emojis: False
 
     auto_role: 1234567890
-    prefix:
+    prefix: "/"

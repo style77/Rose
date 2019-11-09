@@ -16,10 +16,8 @@ bot = Bot()
 async def context_creator(ctx):
     bot.context = ctx
 
-    lang = await get_language(bot, ctx.guild)
-    ctx.lang = bot.polish if lang == "PL" else bot.english
-
-bot.exts = ['jishaku', 'owner', 'eh', 'fun', 'todo', 'social', 'events', 'miscellaneous', 'moderator']
+bot.exts = ['jishaku', 'owner', 'eh', 'fun', 'todo', 'social', 'events',
+            'miscellaneous', 'moderator', 'music', 'logs', 'nsfw&sfw', 'streams', 'cat']
 
 
 if '__main__' == __name__:

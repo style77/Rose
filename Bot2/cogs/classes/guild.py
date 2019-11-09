@@ -1,3 +1,5 @@
+import json
+
 from ..utils.misc import get_prefix
 from ..utils.DEFAULTS import HEARTBOARD_EMOJI, STARS_COUNT, WARNS_KICK
 
@@ -10,6 +12,9 @@ class Guild(object):
 
         self.guild_obj = bot.get_guild(req['guild_id'])
         self.id = req['guild_id']
+
+    def __getitem__(self, item):
+        return self.data.get(item, None)
 
     @property
     def prefix(self):
@@ -24,36 +29,28 @@ class Guild(object):
         return self.lang
 
     @property
-    def heartboard_emoji(self):  # todo update when heartboards will have custom emojis
-        return HEARTBOARD_EMOJI
+    def welcome_text(self):
+        return self.data['welcome_text']
 
     @property
-    def stars_count(self):
-        return self.data['stars_count'] or STARS_COUNT
+    def welcome_channel(self):
+        return self.data['welcome_channel']
 
     @property
-    def warns_kick(self):
-        return self.data['warns_kick'] or WARNS_KICK
+    def leave_text(self):
+        return self.data['leave_text']
 
     @property
-    def emoji_censor(self):
-        return self.data['emoji_censor'] or False
-
-    @property
-    def anti_raid(self):
-        return self.data['anti_raid'] or False
-
-    @property
-    def anti_link(self):
-        return self.data['anti_link'] or False
+    def leave_channel(self):
+        return self.data['leave_channel']
 
     @property
     def levels(self):
-        return self.data['levels'] or False
+        return self.data['levels']
 
     @property
-    def boost(self):
-        return self.data['boost'] or False
+    def security(self):
+        return json.loads(self.data['security'])
 
     def get_starboard(self):
         return self.bot.get_channel(self.data['starboard']) or None
@@ -64,6 +61,33 @@ class Guild(object):
     def get_mute_role(self):
         return self.guild_obj.get_role(self.data['mute_role']) or None
 
+    async def update_cache(self):
+        if self.id in self.bot._settings_cache:
+            raw_guild_settings = await self.bot.db.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", self.id)
+            if raw_guild_settings is None:
+                raw_guild_settings = await self.bot.add_guild_to_database(self.id)
+            g = Guild(self.bot, raw_guild_settings)
+            self.bot._settings_cache[self.id] = g
+        else:
+            raise ValueError("No reason to update cache.")
+
     async def set(self, key, value, *, table="guild_settings"):
-        await self.bot.db.execute(f"UPDATE {table} SET {key} = $1 WHERE guild_id = $2", value, self.id)
+        z = await self.bot.db.execute(f"UPDATE {table} SET {key} = $1 WHERE guild_id = $2", value, self.id)
+        await self.update_cache()
+        return z
+
+    async def set_security(self, key, value, *, base, table="guild_settings"):
+        sec = self.security
+        if base:
+            try:
+                sec[base][key] = value
+            except KeyError:
+                return False
+        else:
+            try:
+                sec[key] = value
+            except KeyError:
+                return False
+        await self.bot.db.execute(f"UPDATE {table} SET security = $1 WHERE guild_id = $2", json.dumps(sec), self.id)
+        await self.update_cache()
         return True

@@ -1,4 +1,59 @@
+import functools
+
 from discord.ext import commands
+
+from concurrent.futures.thread import ThreadPoolExecutor
+
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+from io import BytesIO
+from PIL import Image
+
+
+class SeleniumPhase:
+    EXECUTOR = ThreadPoolExecutor(10)
+    FIREFOX_DRIVER = "/home/style/PycharmProjects/Rosie/Bot2/assets/other/geckodriver"
+    FIREFOX_BINARY = "/usr/bin/firefox"
+    WINDOW_SIZE = "1920,1080"
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.loop = bot.loop
+
+        self.driver = None
+
+    def __scrape(self, url):
+        self.driver.get(url)
+
+    def _prepare_driver(self):
+        cap = DesiredCapabilities().FIREFOX
+        cap["marionette"] = True
+
+        options = Options()
+        options.headless = True
+        options.binary = self.FIREFOX_BINARY
+
+        self.driver = webdriver.Firefox(capabilities=cap, firefox_options=options, executable_path=self.FIREFOX_DRIVER)
+
+    def _take_screenshot(self, url):
+        if not self.driver:
+            self._prepare_driver()
+
+        self.__scrape(url)
+
+        png = self.driver.get_screenshot_as_png()
+        self.driver.close()
+
+        im = Image.open(BytesIO(png))
+        return im
+
+    async def take_screenshot(self, url):
+        func = functools.partial(self._take_screenshot, url)
+        x = await self.bot.loop.run_in_executor(None, func)
+        return x
 
 
 class Plugin(commands.Cog):

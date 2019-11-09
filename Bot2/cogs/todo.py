@@ -16,21 +16,15 @@ class TodoFinder(commands.Converter):
 
         query = "SELECT * FROM todo WHERE user_id = {} AND {} = {}"
 
-        print(type(argument))
-
         if argument.isdigit():  # because in discord everything is string
             q = query.format(ctx.author.id, 'id', argument)
-            print(q)
             first = await ctx.bot.db.fetchrow(q)
-            print(first)
             if not first:
                 return None
             return first
         elif isinstance(argument, str):
             q = query.format(ctx.author.id, 'description', f"'{argument}'")
-            print(q)
             second = await ctx.bot.db.fetchrow(q)
-            print(second)
             if not second:
                 return None
             return second
@@ -167,6 +161,14 @@ class Todo(Plugin):
     async def remove(self, ctx, *, catch: TodoFinder):
         if not catch:
             return await ctx.send(ctx.lang['todo_not_found'])
+
+        query_1 = "DELETE FROM todo WHERE user_id = $1 AND id = $2"
+        query_2 = "UPDATE todo SET id = id - 1 WHERE user_id = $1 AND id > $2"
+
+        await self.bot.db.execute(query_1, ctx.author.id, catch['id'])
+        await self.bot.db.execute(query_2, ctx.author.id, catch['id'])
+
+        await ctx.send(ctx.lang['removed_todo'])
 
 
 def setup(bot):
