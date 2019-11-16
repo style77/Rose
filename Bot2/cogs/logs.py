@@ -92,8 +92,8 @@ class Logs(Plugin):
         e = discord.Embed(
             description=lang['message_edited'].format(after.channel.mention, after.jump_url),
             color=0xfabc11, timestamp=before.created_at)
-        e.add_field(name=lang['before'], value=before.content)
-        e.add_field(name=lang['after'], value=after.content)
+        e.add_field(name=lang['before'], value=before.content, inline=False)
+        e.add_field(name=lang['after'], value=after.content, inline=False)
 
         if before.attachments:
             e.set_image(url=before.attachments[0].url)

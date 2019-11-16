@@ -1,4 +1,7 @@
 import random
+import re
+import shlex
+from collections import Counter
 
 import discord
 import typing
@@ -6,8 +9,8 @@ from discord.ext import commands, tasks
 
 from datetime import datetime, timedelta
 
-from .classes.other import Plugin
-from .classes.converters import ModerationReason, VexsTimeConverter
+from .classes.other import Plugin, Arguments
+from .classes.converters import ModerationReason, VexsTimeConverter, EmojiConverter, ValueRangeFromTo
 
 from .utils import clean_text
 
@@ -27,58 +30,58 @@ class PunishmentEnum(Enum):
     ban   = 2
 
 
-class AntiSpam:
-    def __init__(self, bot, context):
-        """
-        Basic representation for AntiSpam object, launch method is called when server decided to turn on antispam,
-        usually it's called with class:Raid.mode = 2
-
-        :param bot:
-        :param context:
-        """
-        self.bot = bot
-        self.ctx = context
-
-        self.guild_settings = bot._settings_cache.get(context.guild.id, bot.db.loop.create_task(self.get_settings))
-
-        self._message_cache = dict()  # i could use object from collections but let's keep it simple
-
-    async def get_settings(self):
-        guild = self.bot.get_guild_settings(self.ctx.guild.id)
-        return guild
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        # dict = {id: {[message, message]}}
-
-        guild_ = self.guild_settings[message.guild.id]
-
-        if guild_.security['anti']['spam'] is False:
-            return
-
-        if message.author.guild.guild_permissions.administrator:
-            return
-
-        if message.author.id in self._message_cache:
-            last = self._message_cache[message.author.id][-1]  # last component of list
-
-            if last.content != message.content and datetime.utcnow() - last.created_at >= timedelta(minutes=1):
-                del self._message_cache[message.author.id]
-
-            else:
-                self._message_cache[message.author.id].append(message)
-
-                if len(self._message_cache[message.author.id]) >= guild_.security['spam_messages']:
-
-                    mod = self.bot.get_cog('moderator')
-                    if not mod:
-                        return commands.ExtensionNotLoaded
-
-                    self.ctx.author = self.bot.user
-                    await self.ctx.invoke(self.bot.get_command('warn'), member=message.author)
-
-        else:
-            self._message_cache[message.author.id] = [message]
+# class AntiSpam:
+#     def __init__(self, bot, context):
+#         """
+#         Basic representation for AntiSpam object, launch method is called when server decided to turn on antispam,
+#         usually it's called with class:Raid.mode = 2
+#
+#         :param bot:
+#         :param context:
+#         """
+#         self.bot = bot
+#         self.ctx = context
+#
+#         self.guild_settings = bot._settings_cache.get(context.guild.id, bot.db.loop.create_task(self.get_settings))
+#
+#         self._message_cache = dict()  # i could use object from collections but let's keep it simple
+#
+#     async def get_settings(self):
+#         guild = self.bot.get_guild_settings(self.ctx.guild.id)
+#         return guild
+#
+#     @commands.Cog.listener()
+#     async def on_message(self, message):
+#         # dict = {id: {[message, message]}}
+#
+#         guild_ = self.guild_settings[message.guild.id]
+#
+#         if guild_.security['anti']['spam'] is False:
+#             return
+#
+#         # if message.author.guild.guild_permissions.administrator:
+#         #     return
+#
+#         if message.author.id in self._message_cache:
+#             last = self._message_cache[message.author.id][-1]  # last component of list
+#
+#             if last.content != message.content and datetime.utcnow() - last.created_at >= timedelta(minutes=1):
+#                 del self._message_cache[message.author.id]
+#
+#             else:
+#                 self._message_cache[message.author.id].append(message)
+#
+#                 if len(self._message_cache[message.author.id]) >= guild_.security['spam_messages']:
+#
+#                     mod = self.bot.get_cog('moderator')
+#                     if not mod:
+#                         return commands.ExtensionNotLoaded
+#
+#                     self.ctx.author = self.bot.user
+#                     await self.ctx.invoke(self.bot.get_command('warn'), member=message.author)
+#
+#         else:
+#             self._message_cache[message.author.id] = [message]
 
 
 class Moderator(Plugin):
@@ -216,32 +219,239 @@ class Moderator(Plugin):
             msg += could_not_ban_msg
         await ctx.send(msg)
 
-    @commands.command(aliases=["purge"])
+    async def do_removal(self, ctx, limit, predicate, *, before=None, after=None):
+        if limit > 2000:
+            return await ctx.send(f'Too many messages to search given ({limit}/2000)')
+
+        if before is None:
+            before = ctx.message
+        else:
+            before = discord.Object(id=before)
+
+        if after is not None:
+            after = discord.Object(id=after)
+
+        try:
+            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
+            await ctx.message.delete()
+        except discord.Forbidden as e:
+            return await ctx.send('I do not have permissions to delete messages.')
+        except discord.HTTPException as e:
+            return await ctx.send(f'Error: {e} (try a smaller search?)')
+
+        # spammers = Counter(m.author.display_name for m in deleted)
+        deleted = len(deleted)
+        # messages = [f'{deleted} message{" was" if deleted == 1 else "s were"} removed.']
+        # if deleted:
+        #     messages.append('')
+        #     spammers = sorted(spammers.items(), key=lambda t: t[1], reverse=True)
+        #     messages.extend(f'**{name}**: {count}' for name, count in spammers)
+        #
+        # to_send = '\n'.join(messages)
+
+        # if len(to_send) > 2000:
+        await ctx.send(ctx.lang['removed_messages'].format(deleted), delete_after=10)
+        # else:
+        #     await ctx.send(to_send, delete_after=10)
+
+    @commands.group(aliases=["purge", "remove"], invoke_without_command=True)
     @commands.bot_has_permissions(manage_messages=True)
     @commands.has_permissions(manage_messages=True)
-    async def clear(self, ctx, member: typing.Optional[discord.Member], channel: typing.Optional[discord.TextChannel],
-                    liczba):
+    async def clear(self, ctx, search: int):
         """Usuwa daną ilość wiadomości."""
-        channel = channel or ctx.channel
-        if liczba == "all":
-            liczba = None
-        else:
-            try:
-                liczba = int(liczba) + 1
-            except ValueError:
-                raise commands.UserInputError()
+        # channel = channel or ctx.channel
+        # if liczba == "all":
+        #     liczba = None
+        # else:
+        #     try:
+        #         liczba = int(liczba) + 1
+        #     except ValueError:
+        #         raise commands.UserInputError()
+        #
+        # if member is not None:
+        #     def check(m):
+        #         return m.author == member
+        #
+        #     await channel.purge(limit=liczba, check=check)
+        # else:
+        #     await channel.purge(limit=liczba)
+        # await ctx.send(ctx.lang['purged_message'].format(liczba - 1 if liczba is not None else ctx.lang['all_1'],
+        #                                                  channel.mention), delete_after=10)
 
-        if member is not None:
-            def check(m):
-                return m.author == member
-
-            await channel.purge(limit=liczba, check=check)
-        else:
-            await channel.purge(limit=liczba)
-        await ctx.send(ctx.lang['purged_message'].format(liczba - 1 if liczba is not None else ctx.lang['all_1'],
-                                                         channel.mention), delete_after=10)
-
+        await ctx.invoke(self._remove_all, search=search)
         self.bot.dispatch('mod_command_use', ctx)
+
+    @clear.command()
+    async def embeds(self, ctx, search: int):
+        """Removes messages that have embeds in them."""
+        await self.do_removal(ctx, search, lambda e: len(e.embeds))
+        self.bot.dispatch('mod_command_use', ctx)
+
+    @clear.command()
+    async def files(self, ctx, search: int):
+        """Removes messages that have attachments in them."""
+        await self.do_removal(ctx, search, lambda e: len(e.attachments))
+        self.bot.dispatch('mod_command_use', ctx)
+
+    @clear.command()
+    async def images(self, ctx, search: int):
+        """Removes messages that have embeds or attachments."""
+        await self.do_removal(ctx, search, lambda e: len(e.embeds) or len(e.attachments))
+        self.bot.dispatch('mod_command_use', ctx)
+
+    @clear.command(name='all')
+    async def _remove_all(self, ctx, search: int):
+        """Removes all messages."""
+        await self.do_removal(ctx, search, lambda e: True)
+        self.bot.dispatch('mod_command_use', ctx)
+
+    @clear.command()
+    async def user(self, ctx, member: discord.Member, search=100):
+        """Removes all messages by the member."""
+        await self.do_removal(ctx, search, lambda e: e.author == member)
+        self.bot.dispatch('mod_command_use', ctx)
+
+    @clear.command()
+    async def contains(self, ctx, search: int, *, substr: str):
+        """Removes all messages containing a substring.
+        The substring must be at least 3 characters long.
+        """
+        if len(substr) < 3:
+            await ctx.send(ctx.lang['clear_contains_more_than_3'])
+        else:
+            await self.do_removal(ctx, search, lambda e: substr in e.content)
+            self.bot.dispatch('mod_command_use', ctx)
+
+    @clear.command(name='bot')
+    async def _bot(self, ctx, search: int, prefix=None):
+        """Removes a bot user's messages and messages with their optional prefix."""
+
+        def predicate(m):
+            return (m.webhook_id is None and m.author.bot) or (prefix and m.content.startswith(prefix))
+
+        await self.do_removal(ctx, search, predicate)
+
+    @clear.command(name='emoji', aliases=['emojis'])
+    async def _emoji(self, ctx, search: int):
+        """Removes all messages containing custom emoji."""
+        custom_emoji = re.compile(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>')
+
+        def predicate(m):
+            return custom_emoji.search(m.content)
+
+        await self.do_removal(ctx, search, predicate)
+
+    @clear.command(name='reactions')
+    async def _reactions(self, ctx, search: int):
+        """Removes all reactions from messages that have them."""
+
+        if search > 2000:
+            return await ctx.send(ctx.lang['too_many_messages'].format(search))
+
+        total_reactions = 0
+        async for message in ctx.history(limit=search, before=ctx.message):
+            if len(message.reactions):
+                total_reactions += sum(r.count for r in message.reactions)
+                await message.clear_reactions()
+
+        await ctx.send(ctx.lang['removed_reactions'].format(total_reactions))
+
+    @clear.command()
+    async def custom(self, ctx, *, args: str):
+        """A more advanced purge command.
+        This command uses a powerful "command line" syntax.
+        Most options support multiple values to indicate 'any' match.
+        If the value has spaces it must be quoted.
+        The messages are only deleted if all options are met unless
+        the `--or` flag is passed, in which case only if any is met.
+        The following options are valid.
+        `--user`: A mention or name of the user to remove.
+        `--contains`: A substring to search for in the message.
+        `--starts`: A substring to search if the message starts with.
+        `--ends`: A substring to search if the message ends with.
+        `--search`: How many messages to search. Default 100. Max 2000.
+        `--after`: Messages must come after this message ID.
+        `--before`: Messages must come before this message ID.
+        Flag options (no arguments):
+        `--bot`: Check if it's a bot user.
+        `--embeds`: Check if the message has embeds.
+        `--files`: Check if the message has attachments.
+        `--emoji`: Check if the message has custom emoji.
+        `--reactions`: Check if the message has reactions
+        `--or`: Use logical OR for all options.
+        `--not`: Use logical NOT for all options.
+        """
+        parser = Arguments(add_help=False, allow_abbrev=False)
+        parser.add_argument('--user', nargs='+')
+        parser.add_argument('--contains', nargs='+')
+        parser.add_argument('--starts', nargs='+')
+        parser.add_argument('--ends', nargs='+')
+        parser.add_argument('--or', action='store_true', dest='_or')
+        parser.add_argument('--not', action='store_true', dest='_not')
+        parser.add_argument('--emoji', action='store_true')
+        parser.add_argument('--bot', action='store_const', const=lambda m: m.author.bot)
+        parser.add_argument('--embeds', action='store_const', const=lambda m: len(m.embeds))
+        parser.add_argument('--files', action='store_const', const=lambda m: len(m.attachments))
+        parser.add_argument('--reactions', action='store_const', const=lambda m: len(m.reactions))
+        parser.add_argument('--search', type=int, default=100)
+        parser.add_argument('--after', type=int)
+        parser.add_argument('--before', type=int)
+
+        try:
+            args = parser.parse_args(shlex.split(args))
+        except Exception as e:
+            await ctx.send(str(e))
+            return
+
+        predicates = []
+        if args.bot:
+            predicates.append(args.bot)
+
+        if args.embeds:
+            predicates.append(args.embeds)
+
+        if args.files:
+            predicates.append(args.files)
+
+        if args.reactions:
+            predicates.append(args.reactions)
+
+        if args.emoji:
+            custom_emoji = re.compile(r'<:(\w+):(\d+)>')
+            predicates.append(lambda m: custom_emoji.search(m.content))
+
+        if args.user:
+            users = []
+            converter = commands.MemberConverter()
+            for u in args.user:
+                try:
+                    user = await converter.convert(ctx, u)
+                    users.append(user)
+                except Exception as e:
+                    await ctx.send(str(e))
+                    return
+
+            predicates.append(lambda m: m.author in users)
+
+        if args.contains:
+            predicates.append(lambda m: any(sub in m.content for sub in args.contains))
+
+        if args.starts:
+            predicates.append(lambda m: any(m.content.startswith(s) for s in args.starts))
+
+        if args.ends:
+            predicates.append(lambda m: any(m.content.endswith(s) for s in args.ends))
+
+        op = all if not args._or else any
+
+        def predicate(m):
+            r = op(p(m) for p in predicates)
+            if args._not:
+                return not r
+            return r
+
+        args.search = max(0, min(2000, args.search))  # clamp from 0-2000
+        await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
 
     @commands.command()
     @commands.has_permissions(manage_roles=True)
@@ -368,10 +578,13 @@ class Moderator(Plugin):
         id_ = len(warns) + 1
         return id_
 
-    async def add_warn(self, ctx, member, reason, *, punish_without_asking=False):
+    async def add_warn(self, ctx, member, reason, *, punish_without_asking=False, check=True):
         id_ = await self._get_id(member)
 
-        ch = await self.check(ctx, member, reason, id_, punish_without_asking)
+        if check:
+            ch = await self.check(ctx, member, reason, id_, punish_without_asking)
+        else:
+            ch = True
         if ch is True:
             await self.bot.db.execute("INSERT INTO warns (user_id, guild_id, moderator, id, reason, timestamp) VALUES "
                                       "($1, $2, $3, $4, $5, $6)",
@@ -478,6 +691,7 @@ class Settings(Plugin):
         self.bot = bot
 
     @commands.group(name="set", invoke_without_command=True)
+    @commands.has_permissions(manage_guild=True)
     async def set_(self, ctx):
         z = []
         for cmd in ctx.command.commands:
@@ -486,6 +700,7 @@ class Settings(Plugin):
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def anti_link(self, ctx, argument: TrueFalseConverter):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -496,6 +711,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def anti_invites(self, ctx, argument: TrueFalseConverter):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -506,6 +722,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def anti_spam(self, ctx, argument: TrueFalseConverter):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -516,6 +733,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def anti_images(self, ctx, argument: TrueFalseConverter):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -526,6 +744,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command(aliases=['raid_mode'])
+    @commands.has_permissions(manage_guild=True)
     async def raid(self, ctx, mode: int):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -543,6 +762,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command(aliases=['punishement'])
+    @commands.has_permissions(manage_guild=True)
     async def punishements(self, ctx, mode: int):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -560,6 +780,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def welcome_text(self, ctx, *, text: str):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -570,6 +791,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def welcome_channel(self, ctx, channel: discord.TextChannel):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -580,6 +802,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def leave_text(self, ctx, *, text: str):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -590,6 +813,7 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def leave_channel(self, ctx, channel: discord.TextChannel):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -600,6 +824,105 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def auto_role(self, ctx, role: discord.Role):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set('auto_role', role.id)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('leave_channel', '@' + str(role)))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def starboard(self, ctx, channel: discord.TextChannel = None):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        starboard = guild.get_starboard()
+        if starboard and not channel:
+            ch = await ctx.confirm(ctx.lang['confirm_removing_starboard'], ctx.author)
+            if ch:
+                await starboard.delete(reason="Created a new starboard.")  # todo translate
+
+                overwrites = {
+                    ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False, read_messages=True),
+                }
+
+                channel = await ctx.guild.create_text_channel(name="starboard", overwrites=overwrites)
+            else:
+                return await ctx.send(ctx.lang['abort'])
+
+        elif not channel:
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False, read_messages=True),
+            }
+
+            channel = await ctx.guild.create_text_channel(name="starboard", overwrites=overwrites)
+
+        s = await guild.set_stars('starboard', channel.id)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('starboard', '#' + str(channel)))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def stars_emoji(self, ctx, emoji: EmojiConverter):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_stars('emoji', emoji)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('stars_emoji', emoji))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def stars_color(self, ctx, color):
+
+        hex_ = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
+
+        if not hex_:
+            return await ctx.send(ctx.lang['color_has_to_be_hex'])
+
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        color = color.replace("#", "")
+
+        s = await guild.set_stars('color', color)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('stars_color', color))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def self_starring(self, ctx, value: TrueFalseConverter):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_stars('self_starring', value)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('self_starring', value))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def stars_count(self, ctx, value: ValueRangeFromTo(0, 13)):  # 1 to 12
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        if not value:
+            return await ctx.send(ctx.lang['stars_count_bad_range'])
+
+        s = await guild.set_stars('stars_count', value)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('stars_count', value))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def stream_notification(self, ctx, channel: discord.TextChannel):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -608,6 +931,21 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['updated_setting'].format('stream_notification', '#' + str(channel)))
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @commands.command()
+    @commands.has_permissions(manage_channels=True)
+    async def space(self, ctx, channel):
+        if channel == "all":
+            for channel in ctx.guild.channels:
+                await channel.edit(name=channel.name.replace("-", " ").replace("_", " "))
+        else:
+            channel = await commands.TextChannelConverter().convert(ctx, channel)
+            if not channel:
+                channel = await commands.VoiceChannelConverter().convert(ctx, channel)
+                if not channel:
+                    return await ctx.send(ctx.lang[''])
+
+            await channel.edit(name=channel.name.replace("-", " ").replace("_", " "))
 
 
 def setup(bot):

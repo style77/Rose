@@ -52,8 +52,12 @@ class Guild(object):
     def security(self):
         return json.loads(self.data['security'])
 
+    @property
+    def stars(self):
+        return json.loads(self.data['stars'])
+
     def get_starboard(self):
-        return self.bot.get_channel(self.data['starboard']) or None
+        return self.bot.get_channel(self.stars['starboard']) or None
 
     def get_auto_role(self):
         return self.guild_obj.get_role(self.data['auto_role']) or None
@@ -76,7 +80,7 @@ class Guild(object):
         await self.update_cache()
         return z
 
-    async def set_security(self, key, value, *, base, table="guild_settings"):
+    async def set_security(self, key, value, *, base=None, table="guild_settings"):
         sec = self.security
         if base:
             try:
@@ -91,3 +95,16 @@ class Guild(object):
         await self.bot.db.execute(f"UPDATE {table} SET security = $1 WHERE guild_id = $2", json.dumps(sec), self.id)
         await self.update_cache()
         return True
+
+    async def set_stars(self, key, value, *, table="guild_settings"):
+        sec = self.stars
+
+        try:
+            sec[key] = value
+        except KeyError:
+            return False
+
+        await self.bot.db.execute(f"UPDATE {table} SET stars = $1 WHERE guild_id = $2", json.dumps(sec), self.id)
+        await self.update_cache()
+        return True
+

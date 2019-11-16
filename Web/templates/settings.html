@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+    <form action="/update" id="plugins_form" method="post">
+
+        <input name="guild_id" value="{{ guild_id }}">
+
+        <div id="SaveDiv" style="display: none; position: fixed; color: #fafafa; float: left; margin-right: 5px; z-index: 9999;">
+            <button type="submit" form="plugins_form" style="position: relative; left: 5%; top: 25%;">{{ get_text('save') }}</button>
+        </div>
+
+        <div class="lead" id="general">
+            <a href="#general" class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="font-size: 25px; position: relative; top: 8px; margin-left: 16px; text-decoration: none;">{{ get_text('General') }}</a>
+            <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="position: relative; top: 8px; margin-left: 30px;">{{ get_text('lead-general') }}</p>
+            <hr class="my-4" style="background-color: #fafafa;">
+        </div>
+
+        <div id="general1" class="d-flex flex-wrap" style="position: relative; margin-left: 3%; width: 45%; float: left; height: 600px; background-color: {% if session.theme == 'dark' %}#23272a{% else %}#e6e6e6{% endif %};">
+            <div class="lead">
+                <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="position: relative; top: 8px; margin-left: 30px;">{{ get_text('general-desc1') }}</p>
+                <hr class="my-4" style="background-color: {% if session.theme == 'dark' %}#fafafa{% else %}#23272a{% endif %};">
+            </div>
+            <div id="prefix" class="setting {{ session.theme }}" style="margin: 5px;">
+                <a href="#prefix" class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="text-decoration: none;">Prefix: </a><input type="text" name="prefix" value="{{ db['prefix'] }}" onchange="onChange('prefix')">
+            </div>
+        </div>
+
+        <div id="general2" class="d-flex flex-wrap" style="position: relative; width: 45%; height: 600px; margin: auto; background-color: {% if session.theme == 'dark' %}#23272a{% else %}#e6e6e6{% endif %};">
+            <div class="lead">
+                <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="position: relative; top: 8px; margin-left: 30px;">{{ get_text('general-desc2') }}</p>
+                <hr class="my-4" style="background-color: {% if session.theme == 'dark' %}#fafafa{% else %}#23272a{% endif %};">
+            </div>
+        </div>
+
+        <br>
+
+        <div class="lead" id="plugins">
+            <a href="#plugins" class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="font-size: 25px; position: relative; top: 8px; margin-left: 16px; text-decoration: none;">{{ get_text('Plugins') }}</a>
+            <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="position: relative; top: 8px; margin-left: 30px;">{{ get_text('lead-plugins') }}</p>
+            <hr class="my-4" style="background-color: {% if session.theme == 'dark' %}#fafafa{% else %}#23272a{% endif %};">
+        </div>
+
+        <div id="plugins1" class="d-flex flex-wrap" style="margin: 0 auto;">
+            <div class="plugin" style="background-color: {% if session.theme == 'dark' %}#23272a{% else %}#e6e6e6{% endif %}">
+                <a class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="font-size: 25px;">Music</a>
+                <i class="fas fa-music" style="position: absolute; color: {% if session.theme == 'dark' %}#fff{% else %}#23272a{% endif %}; margin-top: 17px; margin-left: 6px;"></i>
+                <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}">{{ get_text('music-desc') }}</p>
+
+                <div class="custom-control custom-switch" style="position: absolute; bottom: 0; right: 0; margin: 15px;">
+                    <input type="checkbox" name="Music" class="custom-control-input" id="customSwitch1" {% if 'Music' not in db['plugins_off'] %} checked {% endif %} onchange="onChange('Music')" value="1">
+                    <label class="custom-control-label" for="customSwitch1"></label>
+                </div>
+            </div>
+
+            <div class="plugin" style="background-color: {% if session.theme == 'dark' %}#23272a{% else %}#e6e6e6{% endif %}">
+                <a class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="font-size: 25px;">Nsfw</a>
+                <i class="fas fa-exclamation" style="position: absolute; color: {% if session.theme == 'dark' %}#fff{% else %}#23272a{% endif %}; margin-top: 17px; margin-left: 6px;"></i>
+                <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}">{{ get_text('nsfw-desc') }}</p>
+
+                <div class="custom-control custom-switch" style="position: absolute; bottom: 0; right: 0; margin: 15px;">
+                    <input type="checkbox" name="Nsfw" class="custom-control-input" id="customSwitch2" {% if 'Nsfw' not in db['plugins_off'] %} checked {% endif %} onchange="confirmation(); onChange('Nsfw')" value="1">
+                    <label class="custom-control-label" for="customSwitch2"></label>
+                </div>
+            </div>
+
+            <div class="plugin" style="background-color: {% if session.theme == 'dark' %}#23272a{% else %}#e6e6e6{% endif %}">
+                <a class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="font-size: 25px;">Mod</a>
+                <i class="fas fa-hammer" style="position: absolute; color: {% if session.theme == 'dark' %}#fff{% else %}#23272a{% endif %}; margin-top: 17px; margin-left: 6px;"></i>
+                <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}">{{ get_text('mod-desc') }}</p>
+
+                <div class="custom-control custom-switch" style="position: absolute; bottom: 0; right: 0; margin: 15px;">
+                    <input type="checkbox" name="Mod" class="custom-control-input" id="customSwitch3" {% if 'Mod' not in db['plugins_off'] %} checked {% endif %} onchange="onChange('Mod')" value="1">
+                    <label class="custom-control-label" for="customSwitch3"></label>
+                </div>
+            </div>
+
+            <div class="plugin" style="background-color: {% if session.theme == 'dark' %}#23272a{% else %}#e6e6e6{% endif %}">
+                <a class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="font-size: 25px;">Settings</a>
+                <i class="fas fa-wrench" style="position: absolute; color: {% if session.theme == 'dark' %}#fff{% else %}#23272a{% endif %}; margin-top: 17px; margin-left: 6px;"></i>
+                <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}">{{ get_text('settings-desc') }}</p>
+            </div>
+
+            <div class="plugin" style="background-color: {% if session.theme == 'dark' %}#23272a{% else %}#e6e6e6{% endif %}">
+                <a class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="font-size: 25px;">Hearts</a>
+                <i class="fas fa-heart" style="position: absolute; color: {% if session.theme == 'dark' %}#fff{% else %}#23272a{% endif %}; margin-top: 17px; margin-left: 6px;"></i>
+                <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}">{{ get_text('hearts-desc') }}</p>
+
+                <div class="custom-control custom-switch" style="position: absolute; bottom: 0; right: 0; margin: 15px;">
+                    <input type="checkbox" name="Hearts" class="custom-control-input" id="customSwitch4" {% if 'Hearts' not in db['plugins_off'] %} checked {% endif %} onchange="onChange('Hearts')" value="1">
+                    <label class="custom-control-label" for="customSwitch4"></label>
+                </div>
+            </div>
+
+            <div class="plugin" style="background-color: {% if session.theme == 'dark' %}#23272a{% else %}#e6e6e6{% endif %}">
+                <a class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}" style="font-size: 25px;">Reaction Role</a>
+                <i class="fas fa-directions" style="position: absolute; color: {% if session.theme == 'dark' %}#fff{% else %}#23272a{% endif %}; margin-top: 17px; margin-left: 6px;"></i>
+                <p class="text-{% if session.theme == 'dark' %}light{% else %}dark{% endif %}">{{ get_text('rr-desc') }}</p>
+
+                <div class="custom-control custom-switch" style="position: absolute; bottom: 0; right: 0; margin: 15px;">
+                    <input type="checkbox" name="RR" class="custom-control-input" id="customSwitch5" {% if 'RR' not in db['plugins_off'] %} checked {% endif %} onchange="onChange('RR')" value="1">
+                    <label class="custom-control-label" for="customSwitch5"></label>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script>
+
+        var changedThings = [];
+
+        var confirmBool;
+        var r;
+
+        var index;
+
+        function confirmation() {
+          confirmBool = !document.getElementById('customSwitch2').checked;
+          if (confirmBool == true) {
+            confirmBool = false
+          } else {
+            r = confirm("{{ get_text("adult_confirm") }}")
+            confirmBool = r
+          }
+        }
+
+        function onChange(module) {
+
+            if (changedThings.includes(module)) {
+                index = array.indexOf(module);
+                changedThings.splice(index, 1)
+
+                if (changedThings.length == 0) {
+                    document.getElementById('SaveDiv').style.display = "none";
+                }
+            } else {
+                changedThings.push(module)
+                document.getElementById('SaveDiv').style.display = "block";
+            }
+        }
+
+    </script>
+
+{% endblock %}

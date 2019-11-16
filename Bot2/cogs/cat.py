@@ -21,12 +21,19 @@ class SlotsEmojis(Enum):
     ROSE = "\U0001f339"
 
 
-class CatIsDead(commands.CommandError):
-    pass
+class CatError(commands.CommandError):
+    def __init__(self, type_):
+        self.type = type_
+
+
+class CatIsDead(CatError):
+    def __init__(self):
+        super().__init__('dead')
 
 
 class MemberDoesNotHaveCat(commands.CommandError):
-    pass
+    def __init__(self):
+        super().__init__('no_cat')
 
 
 class DefaultCat:
@@ -70,6 +77,66 @@ class Cat(commands.Cog):
         self.losing_sta.cancel()
         self.sleeping_restore.cancel()
 
+    async def _prepare_trivia(self, ctx, *, diff=None):
+        trivia_url = "https://opentdb.com/api.php?amount=1500&type=multiple"
+        if diff is not None:
+            trivia_url += f'&difficulty={diff}'
+
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(trivia_url) as req:
+                data = await req.json()
+
+        trivia = random.choice(data['results'])
+
+        e = discord.Embed(
+            description=f"{ctx.lang['category']}: {trivia['category']}\n{ctx.lang['difficulty']}: "
+                        f"{trivia['difficulty']}\n{ctx.lang['you_have']} **60** {ctx.lang['seconds']}.",
+            timestamp=ctx.message.created_at)
+        e.set_author(name=trivia['question'])
+
+        numbers = [
+            '1\N{combining enclosing keycap}',
+            '2\N{combining enclosing keycap}',
+            '3\N{combining enclosing keycap}',
+            '4\N{combining enclosing keycap}'
+        ]
+
+        answers = [trivia['correct_answer']]
+
+        answers.extend(trivia['incorrect_answers'])
+
+        random.shuffle(answers)
+
+        data = {}
+
+        for number, quest in zip(numbers, answers):
+
+            quest = quest.replace('&#039;', "'")
+            quest = quest.replace('&quot;', "“")
+
+            data[number] = quest
+
+            e.add_field(name=number, value=data[number], inline=False)
+
+        message = await ctx.send(embed=e)
+        for number in numbers:
+            await message.add_reaction(number)
+
+        def check(reaction, user):
+            return user == ctx.author and reaction.message.channel.id == ctx.channel.id
+
+        r, u = await self.bot.wait_for('reaction_add', check=check, timeout=60)
+
+        correct = None
+
+        for key, value in data.items():
+            if value == trivia['correct_answer']:
+                correct = key
+
+        if r.emoji == correct:
+            return True, trivia['correct_answer'], trivia['difficulty']
+        return False, trivia['correct_answer'], trivia['difficulty']
+
     async def get_cat(self, member):
         cat = await self.bot.db.fetchrow("SELECT * FROM cats WHERE owner_id = $1", member.id)
         if await self.is_dead(member):
@@ -81,7 +148,7 @@ class Cat(commands.Cog):
     async def lvl_up(self, cat: DefaultCat):
         if cat.exp > round(700 * cat.level):
             await self.bot.db.execute("UPDATE cats SET level = level + 1, money = money + 65  WHERE owner_id = $1",
-                                          cat.owner_id)
+                                      cat.owner_id)
             return True
         else:
             return False
@@ -271,7 +338,7 @@ class Cat(commands.Cog):
         name = name[:1].upper() + name[1:].lower()
         k = colors[kolor]
         await self.bot.db.execute("INSERT INTO cats (owner_id, name, color) VALUES ($1, $2, $3)",
-                                      ctx.author.id, name, k)
+                                  ctx.author.id, name, k)
         return await ctx.send(ctx.lang['cat_will_be_called'].format(name=name))
 
     @commands.group(invoke_without_command=True, aliases=['profile'])
@@ -294,6 +361,183 @@ class Cat(commands.Cog):
             final_buffer = await self.bot.loop.run_in_executor(None, fn)
             file = discord.File(filename=f"{cat.name}.png", fp=final_buffer)
             await ctx.send(file=file)
+
+    @commands.command()
+    async def roulette(self, ctx, pick: str, money):
+        cat = await self.get_cat(ctx.author)
+
+        z = ['green', 'red', 'black']
+        if not pick.lower() in z:
+            return await ctx.send(ctx.lang['not_correct_choose'].format(', '.join(z)))
+
+        if money == "all":
+            money = cat.money
+
+        if money == "half":
+            money = round(cat.money / 2)  # :)))
+
+        try:
+            money = int(money)
+        except ValueError:
+            return await ctx.send(ctx.lang['not_correct_value'])
+
+        if money < 5:
+            return await ctx.send(ctx.lang['too_low_value'])
+
+        if cat.money < money:
+            return await ctx.send(ctx.lang['you_dont_have_so_much'])
+
+        x = random.randint(0, 30)
+        win = False
+        won_money = None
+
+        if pick.lower() == "green":
+            if x == 0:
+                won_money = money * 14
+                win = True
+            else:
+                win = False
+        elif pick.lower() == "black":
+            if x >= 15:
+                won_money = money * 2
+                win = True
+            else:
+                win = False
+        elif pick.lower() == "red":
+            if x < 15:
+                won_money = money * 2
+                win = True
+            else:
+                win = False
+
+        if win and won_money:
+            msg = ctx.lang['you_won'].format(won_money, x)
+            await self.bot.pg_con.execute("UPDATE cats SET money = money + $1 WHERE owner_id = $2", won_money,
+                                          ctx.author.id)
+        else:
+            msg = ctx.lang['you_lose'].format(x)
+            await self.bot.pg_con.execute("UPDATE cats SET money = money - $1 WHERE owner_id = $2", money,
+                                          ctx.author.id)
+
+        return await ctx.send(msg)
+
+    @commands.command()
+    async def coinflip(self, ctx, money: int):
+        """Postaw i wygraj."""
+        cat = await self.get_cat(ctx.author)
+
+        if money == "all":
+            money = cat.money
+
+        if money == "half":
+            money = round(cat.money / 2)
+
+        try:
+            money = int(money)
+        except ValueError:
+            return await ctx.send(ctx.lang['not_correct_value'])
+
+        if money < 5:
+            return await ctx.send(ctx.lang['too_low_value'])
+
+        if cat.money < money:
+            return await ctx.send(ctx.lang['you_dont_have_so_much'])
+
+        x = random.randint(0, 100)
+
+        if x == 0:
+            new_money = cat.money * 2
+            return await ctx.send(ctx.lang['you_won_jackpot'].format(new_money))
+        elif x >= 50:
+            new_money = cat.money + money
+            await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", new_money, ctx.author.id)
+            return await ctx.send(ctx.lang['you_won_'].format(money))
+        else:
+            new_money = cat.money - money
+            await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", new_money, ctx.author.id)
+            return await ctx.send(ctx.lang['you_lose_'].format(new_money))
+
+    @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def slots(self, ctx, money: int):
+        cat = await self.get_cat(ctx.author)
+
+        if money == "all":
+            money = cat.money
+
+        if money == "half":
+            money = round(cat.money / 2)
+
+        try:
+            money = int(money)
+        except ValueError:
+            return await ctx.send(ctx.lang['not_correct_value'])
+
+        if money < 5:
+            return await ctx.send(ctx.lang['too_low_value'])
+
+        if cat.money < money:
+            return await ctx.send(ctx.lang['you_dont_have_so_much'])
+
+        all_slots_icons = [icon.value for icon in SlotsEmojis]
+
+        x1 = random.choice(all_slots_icons)
+        x2 = random.choice(all_slots_icons)
+        x3 = random.choice(all_slots_icons)
+
+        z = f"{x1} | {x2} | {x3}"
+
+        muliplier_map = {
+            "\U0001f335": 1,
+            "\U0001f48e": 2,
+            "\U00002764": 3,
+            "\U0001f496": 4,
+            "\U00002b50": 5,
+            "\U0001f339": 7
+        }
+
+        muliplier = (muliplier_map[x1] +
+                     muliplier_map[x2] + muliplier_map[x3]) / 10
+
+        m = muliplier * money
+        won_money = round(m) - money
+
+        text = ctx.lang['slots_won'].format(z, muliplier, int(won_money))
+
+        if won_money < 0:
+            text = ctx.lang['slots_lose'].format(z, muliplier, abs(won_money))
+
+        elif won_money == 0:
+            text = ctx.lang['slots_nothing'].format(z, muliplier)
+
+        await ctx.send(text)
+        await self.bot.pg_con.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", cat.money + won_money,
+                                      ctx.author.id)
+
+    @cat.command()
+    @commands.cooldown(1, 1800, commands.BucketType.user)
+    async def trivia(self, ctx, difficulty=None):
+        if difficulty not in [None, "easy", "medium", "hard"]:
+            raise commands.BadArgument("Wrong difficulty passed.")
+
+        m = await self._prepare_trivia(ctx, diff=difficulty)
+        cat = await self.get_cat(ctx.author)
+
+        won_map = {
+            'easy': random.randint(50, 120),
+            'medium': random.randint(150, 320),
+            'hard': random.randint(400, 650)
+        }
+
+        if m[0]:
+
+            won = won_map[m[2]]
+
+            await ctx.send(ctx.lang['trivia_won'].format(won))
+            await self.bot.db.execute("UPDATE cats SET money = $1 WHERE owner_id = $2", cat.money + won,
+                                      ctx.author.id)
+        else:
+            return await ctx.send(ctx.lang['trivia_lose'].format(m[1]))
 
 
 def setup(bot):

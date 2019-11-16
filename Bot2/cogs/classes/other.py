@@ -1,3 +1,4 @@
+import argparse
 import functools
 
 from discord.ext import commands
@@ -11,6 +12,11 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from io import BytesIO
 from PIL import Image
+
+
+class Arguments(argparse.ArgumentParser):
+    def error(self, message):
+        raise RuntimeError(message)
 
 
 class SeleniumPhase:

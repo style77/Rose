@@ -24,6 +24,9 @@ SPOTIFY_URI_tracks = re.compile("^(https:\/\/open.spotify.com\/track\/|spotify:t
 
 
 class Spotify:
+    def __init__(self):
+        self._playlist_cache = dict()
+        self._songs_cache = dict()
 
     async def _get_token(self):
         spotify_id = get("spotify_id")
@@ -83,6 +86,10 @@ class Spotify:
                 res = await r.json()
 
         return res
+
+    def add_to_cache(self, query, track: wavelink.Track):
+        if track not in self._music_cache:
+            self._music_cache.append(track)
 
 
 class Track(wavelink.Track):
@@ -187,6 +194,8 @@ class Music(Plugin):
         super().__init__(bot)
 
         self.bot = bot
+        self.spotify = Spotify()
+
         self.nodes = self.bot.loop.create_task(self.initiate_nodes())
         self.leave_channels.start()
 
@@ -230,6 +239,7 @@ class Music(Plugin):
 
                 if len(vc.channel.members) == 1:
                     await player.disconnect()
+                    player.queue._queue.clear()
         except Exception as e:
             print(e)
 
@@ -350,16 +360,6 @@ class Music(Plugin):
     async def disconnect(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
         await player.disconnect()
         await player.stop()
         player.queue._queue.clear()
@@ -371,88 +371,107 @@ class Music(Plugin):
     @commands.command(aliases=['p', '>'])
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def play(self, ctx, *, query: str):
-        await ctx.trigger_typing()
+        async with ctx.typing():
 
-        query = query.strip('<>')
+            orginal_query = query = query.strip('<>')
 
-        player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+            player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if not player.is_connected or not ctx.guild.me.voice:
-            await ctx.invoke(self.connect)
+            if not player.is_connected or not ctx.guild.me.voice:
+                await ctx.invoke(self.connect)
 
-        # if hasattr(player, 'dj'):
-        if not player.dj:
-            player.dj = ctx.author
-        # else:
-        #     owner = ctx.bot.get_user(ctx.bot.owner_id)
-        #     await owner.send(
-        #         f"For some reasons player object does not have dj attr, you have to restart bot.")
+            # player and member instances check
+            if not ctx.author.voice:
+                return await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
-        spotify = Spotify()
+            elif not ctx.guild.me.voice:
+                return await ctx.send(ctx.lang['am_not_on_any_vc'])
 
-        if SPOTIFY_URI_tracks.match(query):
-            res = await spotify.get_from_url(query)
-            artists = []
-            i = 0
-            for _ in res['artists']:
-                artists.append(res['artists'][i]['name'])
-            query = f"{' '.join(artists)} {res['name']}"
-            tracks = await self.bot.wavelink.get_tracks(f"ytsearch:{query}")
+            elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+                return await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
-        elif SPOTIFY_URI_playlists.match(query):
-            res = await spotify.get_playlist_from_url(query)
-            tracks = []
+            # if hasattr(player, 'dj'):
+            if not player.dj:
+                player.dj = ctx.author
+            # else:
+            #     owner = ctx.bot.get_user(ctx.bot.owner_id)
+            #     await owner.send(
+            #         f"For some reasons player object does not have dj attr, you have to restart bot.")
 
-            for track in res['tracks']['items']:
+            if SPOTIFY_URI_tracks.match(query):
+                res = await self.spotify.get_from_url(query)
                 artists = []
+                i = 0
+                for _ in res['artists']:
+                    artists.append(res['artists'][i]['name'])
+                query = f"{' '.join(artists)} {res['name']}"
+                tracks = await self.bot.wavelink.get_tracks(f"ytsearch:{query}")
 
-                for artist in track['track']['artists']:
-                    artists.append(artist['name'])
+            elif SPOTIFY_URI_playlists.match(query):
+                if query in self.spotify._playlist_cache:
+                    raw_data = self.spotify._playlist_cache.get(query)
+                    tracks = raw_data['tracks']
+                    res = raw_data['data']
 
-                query = f"{' '.join(artists)} - {track['track']['name']}"
-                track_ = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
-                if track_[0] not in tracks:
-                    tracks.append(track_[0])
+                    for t in tracks:
+                        await player.queue.put(t)
 
-            for t in tracks:
-                await player.queue.put(Track(t.id, t.info, ctx=ctx))
+                    if not player.entries:
+                        player.current = tracks[0]
 
-            if not player.entries:
-                player.current = tracks[0]
+                else:
+                    res = await self.spotify.get_playlist_from_url(query)
 
-            return await ctx.send(ctx.lang['added_playlist_to_queue'].format(res['name'], len(tracks)))
+                    tracks = []
 
-        else:
-            tracks = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
+                    for track in res['tracks']['items']:
+                        artists = []
 
-        tracks = await self.bot.wavelink.get_tracks(query) if tracks is None else tracks
+                        for artist in track['track']['artists']:
+                            artists.append(artist['name'])
 
-        if not tracks:
-            return await ctx.send(ctx.lang['song_not_found'])
+                        query = f"{' '.join(artists)} - {track['track']['name']}"
+                        track_ = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
 
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
+                        if not track_:
+                            continue
 
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
+                        if track_[0] not in tracks:
+                            tracks.append(track_[0])
 
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
+                    for t in tracks:
+                        await player.queue.put(Track(t.id, t.info, ctx=ctx))
 
-        if isinstance(tracks, wavelink.TrackPlaylist):
-            for t in tracks.tracks:
-                await player.queue.put(Track(t.id, t.info, ctx=ctx))
+                    if not player.entries:
+                        player.current = tracks[0]
 
-            await ctx.send(ctx.lang['added_playlist_to_queue'].format(tracks.data["playlistInfo"]["name"],
-                                                                      len(tracks.tracks)))
-        else:
-            track = tracks[0]
-            await ctx.send(ctx.lang['added_to_queue'].format(clean_text(track.title)))
-            await player.queue.put(Track(track.id, track.info, ctx=ctx))
-            if not player.entries:
-                player.current = track
-                player.last_track = player.entries.index(player.current)
+                    self.spotify._playlist_cache[orginal_query] = {}
+                    self.spotify._playlist_cache[orginal_query]['tracks'] = tracks
+                    self.spotify._playlist_cache[orginal_query]['data'] = res
+
+                return await ctx.send(ctx.lang['added_playlist_to_queue'].format(res['name'], len(tracks)))
+
+            else:
+                tracks = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
+
+            tracks = await self.bot.wavelink.get_tracks(query) if tracks is None else tracks
+
+            if not tracks:
+                return await ctx.send(ctx.lang['song_not_found'])
+
+            if isinstance(tracks, wavelink.TrackPlaylist):
+                for t in tracks.tracks:
+                    await player.queue.put(Track(t.id, t.info, ctx=ctx))
+
+                await ctx.send(ctx.lang['added_playlist_to_queue'].format(tracks.data["playlistInfo"]["name"],
+                                                                          len(tracks.tracks)))
+            else:
+                track = tracks[0]
+                await ctx.send(ctx.lang['added_to_queue'].format(clean_text(track.title)))
+                await player.queue.put(Track(track.id, track.info, ctx=ctx))
+                if not player.entries:
+                    player.current = track
+                    player.last_track = player.entries.index(player.current)
 
     @play.before_invoke
     async def before_play(self, ctx):
@@ -464,15 +483,6 @@ class Music(Plugin):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
         if not player:
             return
-
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
         if not player.current:
             return await ctx.send(ctx.lang['nothing_plays'])
@@ -501,16 +511,6 @@ class Music(Plugin):
         if not player:
             return
 
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
         if player.paused:
             return await ctx.invoke(self.resume_)
 
@@ -528,16 +528,6 @@ class Music(Plugin):
     @commands.command(name='resume')
     async def resume_(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
-
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
         if not player.paused:
             return await ctx.invoke(self.pause_)
@@ -560,16 +550,6 @@ class Music(Plugin):
         if (len(player.entries) + 1 if player.current else 0) == 0:
             return await ctx.send(ctx.lang['no_more_songs_to_skip'])
 
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
         if await self.has_perms(ctx, manage_guild=True):
             await ctx.send(ctx.lang['skipped_song'].format(ctx.author.mention))
             return await self.do_skip(ctx)
@@ -585,16 +565,6 @@ class Music(Plugin):
     async def set_eq(self, ctx, *, eq: str):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
         if eq.upper() not in player.equalizers:
             return await ctx.send(ctx.lang['not_correct_eq'].format(eq))
 
@@ -606,16 +576,6 @@ class Music(Plugin):
     @commands.cooldown(1, 2, commands.BucketType.guild)
     async def volume(self, ctx, *, value: int):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
-
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
         if not 0 < value < 101:
             return await ctx.send(ctx.lang['pass_value_from_0_100'])
@@ -631,16 +591,6 @@ class Music(Plugin):
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def queue_(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
-
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
         upcoming = list(itertools.islice(player.entries, 0, 10))
 
@@ -669,16 +619,6 @@ class Music(Plugin):
         """Miesza piosenki w kolejce."""
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
         if len(player.entries) < 3:
             return await ctx.send(ctx.lang['too_few_songs'])
 
@@ -698,16 +638,6 @@ class Music(Plugin):
     async def repeat_(self, ctx):
         """Włącza powtarzanie aktualnej piosenki."""
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
-
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
         if await self.has_perms(ctx, manage_guild=True):
             if player.repeat:
@@ -766,16 +696,6 @@ class Music(Plugin):
         """Włącza powtarzanie kolejki."""
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        # player and member instances check
-        if not ctx.author.voice:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
-        elif not ctx.guild.me.voice:
-            return await ctx.send(ctx.lang['am_not_on_any_vc'])
-
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
-
         c = player.queue_loop = not player.queue_loop
 
         if c is True:
@@ -804,6 +724,29 @@ class Music(Plugin):
               f'Server CPU: `{cpu}`\n\n' \
               f'Server Uptime: `{timedelta(milliseconds=node.stats.uptime)}`'
         await ctx.send(fmt)
+
+    @play.before_invoke
+    @queue_loop.before_invoke
+    @repeat_.before_invoke
+    @shuffle_.before_invoke
+    @queue_.before_invoke
+    @volume.before_invoke
+    @set_eq.before_invoke
+    @skip_.before_invoke
+    @resume_.before_invoke
+    @disconnect.before_invoke
+    @now_playing.before_invoke
+    @pause_.before_invoke
+    async def connect_handler(self, ctx):
+        # player and member instances check
+        if not ctx.author.voice:
+            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
+
+        elif not ctx.guild.me.voice:
+            return await ctx.send(ctx.lang['am_not_on_any_vc'])
+
+        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+            return await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
 
 def setup(bot):

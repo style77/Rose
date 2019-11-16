@@ -59,10 +59,12 @@ class Events(Plugin):
         if not message.guild:
             return
 
-        # if message.author.guild.guild_permissions.administrator:
-            # return
+        if message.author.guild_permissions.administrator:
+            return
 
         guild = await self.bot.get_guild_settings(message.guild.id)
+
+        language = self.bot.polish if guild.language == "PL" else self.bot.english
 
         mod = self.bot.get_cog("Moderator")
         if not mod:
@@ -71,7 +73,7 @@ class Events(Plugin):
 
         ctx = await self.bot.get_context(message, cls=RoseContext)
 
-        if guild.security['anti']['invites']:
+        if guild.security['anti']['invites']:  # todo on_member_join check if member nick is not invite
             match = re.fullmatch(INVITE_REGEX, message.content)
             if match:
                 try:
@@ -82,11 +84,11 @@ class Events(Plugin):
                 ctx.author = message.guild.me
                 reason = "Security: Sending invites."
 
-                z = await mod.add_warn(ctx, message.author, reason, punish_without_asking=True)
+                z = await mod.add_warn(ctx, message.author, reason, punish_without_asking=True, check=False)
                 if z:
-                    await ctx.send(ctx.lang['warned_member'].format(message.author.mention, reason))
+                    await ctx.send(language['warned_member'].format(message.author.mention, message.author, reason))
                 else:
-                    return await ctx.send(ctx.lang['cant_warn'])
+                    return await ctx.send(language['cant_warn'])
 
         if guild.security['anti']['link']:
             match = re.fullmatch(LINK_REGEX, message.content)
@@ -99,18 +101,18 @@ class Events(Plugin):
                 ctx.author = message.guild.me
                 reason = "Security: Sending links."
 
-                z = await mod.add_warn(ctx, message.author, reason, punish_without_asking=True)
+                z = await mod.add_warn(ctx, message.author, reason, punish_without_asking=True, check=False)
                 if z:
-                    await ctx.send(ctx.lang['warned_member'].format(message.author.mention, reason))
+                    await ctx.send(language['warned_member'].format(message.author.mention, message.author, reason))
                 else:
-                    return await ctx.send(ctx.lang['cant_warn'])
+                    return await ctx.send(language['cant_warn'])
 
         if guild.security['anti']['spam']:
 
             if message.author.id in self._message_cache:
                 last = self._message_cache[message.author.id][-1]  # last component of list
 
-                if last.content != message.content and datetime.utcnow() - last.created_at >= timedelta(minutes=1):
+                if last.content != message.content:
                     del self._message_cache[message.author.id]
 
                 else:
@@ -118,17 +120,19 @@ class Events(Plugin):
 
                     if len(self._message_cache[message.author.id]) >= guild.security['spam_messages']:
 
-                        mod = self.bot.get_cog('moderator')
-                        if not mod:
-                            return commands.ExtensionNotLoaded
+                        # mod = self.bot.get_cog('moderator')
+                        # if not mod:
+                        #     raise commands.ExtensionNotLoaded
 
                         ctx.author = self.bot.user
-                        reason = "Security: Sending links."
-                        z = await mod.add_warn(ctx, message.author, reason, punish_without_asking=True)
+                        reason = "Security: Spam."
+
+                        z = await mod.add_warn(ctx, message.author, reason, punish_without_asking=True, check=False)
+                        del self._message_cache[message.author.id]
                         if z:
-                            await ctx.send(ctx.lang['warned_member'].format(message.author.mention, reason))
+                            await ctx.send(language['warned_member'].format(message.author.mention, message.author, reason))
                         else:
-                            return await ctx.send(ctx.lang['cant_warn'])
+                            return await ctx.send(language['cant_warn'])
 
             else:
                 self._message_cache[message.author.id] = [message]
@@ -151,6 +155,10 @@ class Events(Plugin):
                 raise commands.BadArgument("Language set on this server is wrong.\nPlease join support server to "
                                            "fix this issue.")
             await message.channel.send(msg)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        pass
 
     @commands.Cog.listener()
     async def on_command(self, ctx):

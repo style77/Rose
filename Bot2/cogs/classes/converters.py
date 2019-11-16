@@ -52,15 +52,43 @@ class VexsTimeConverter(commands.Converter):
 
 class EmojiConverter(commands.Converter):
     async def convert(self, ctx, argument):
-        em = await commands.EmojiConverter().convert(ctx, argument)
+        em = None
+
+        try:
+            em = await commands.EmojiConverter().convert(ctx, argument)
+        except commands.BadArgument:
+            pass
+
         if not em:
-            em = await commands.PartialEmojiConverter().convert(ctx, argument)
-            if not em:
-                with open(r'cogs/utils/emoji_map.json', 'r') as f:
-                    line = json.load(f)
+            try:
+                em = await commands.PartialEmojiConverter().convert(ctx, argument)
+            except commands.BadArgument:
+                pass
+
+        if not em:
+            with open(r'assets/other/emoji_map.json', 'r') as f:
+                line = json.load(f)
                 if argument in line.values():
                     return argument
                 else:
                     raise commands.BadArgument()
+        else:
+            if not discord.utils.find(lambda emoji_: emoji_.id == em.id, ctx.bot.emojis):
+                raise commands.BadArgument(f"Emoji \"{argument}\" not found.")
 
-        return f"<:{em.name}:{em.id}>"
+            if em.animated:
+                emoji = f"<a:{em.name}:{em.id}>"
+            else:
+                emoji = f"<:{em.name}:{em.id}>"
+            return emoji
+
+
+class ValueRangeFromTo(commands.Converter):
+    def __init__(self, from_, to):
+        self.from_ = from_
+        self.to = to
+
+    async def convert(self, ctx, argument: int):
+        if self.from_ < int(argument) < self.to:
+            return int(argument)
+        return None

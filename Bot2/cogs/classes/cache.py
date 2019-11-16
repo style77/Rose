@@ -60,27 +60,6 @@ class CacheService(object):
             self.data[first][key] = value
 
 
-class GuildSettingsCache(CacheService):
-    data = {}
-
-    def set(self, guild, database_fetch):
-        if hasattr(guild, 'id'):
-            z = guild.id
-        else:
-            z = guild
-        super().set(z, {"guild": guild, "database": database_fetch})
-
-    def update(self, guild, key, value):
-        super().update(guild.id, key, value)
-
-
-class PrefixesCache(CacheService):
-    data = {}
-
-    def set(self, guild, prefix):
-        super().set(guild.id, {"prefix": prefix})
-
-
 class OnlineStreamsSaver(CacheService):
     cursor = None
 

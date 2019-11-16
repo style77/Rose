@@ -8,6 +8,7 @@ from discord.ext import commands
 from .utils import get_language
 from .classes.other import Plugin
 
+from .cat import CatError
 
 class ErrorHandler(Plugin):
     def __init__(self, bot):
@@ -77,13 +78,22 @@ class ErrorHandler(Plugin):
             return await ctx.add_react(False)
 
         elif isinstance(error, commands.CheckFailure):
-            return await ctx.send(lang['no_permissions'] + '.')
+            await ctx.send(lang['no_permissions'] + '.')
+            return await ctx.add_react(False)
 
         elif isinstance(error, (commands.BadArgument, )):
-            return await ctx.send(str(error))
+            await ctx.send(str(error))
+            return await ctx.add_react(False)
 
         elif isinstance(error, commands.UserInputError):
             await ctx.send(f"{lang['proper_use']} `{ctx.prefix}{ctx.command.qualified_name} {' '.join(list(ctx.command.clean_params))}`")
+            return await ctx.add_react(False)
+
+        elif isinstance(error, CatError):
+            if error.type == "dead":
+                await ctx.send(f"{ctx.author}, {lang['dead_cat']}.")
+            elif error.type == "no_cat":
+                await ctx.send(f"{ctx.author}, {lang['no_cat']}.")
             return await ctx.add_react(False)
 
         else:

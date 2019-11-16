@@ -40,8 +40,7 @@ class SFW(Plugin):
                     fn = f"gay.{file_format}"
                     file = discord.File(fp=io.BytesIO(file), filename=fn)
 
-            values = [int(x * 255) for x in colorsys.hsv_to_rgb(random.random(), 1, 1)]
-            e = discord.Embed(title=file_name, color=Color.from_rgb(*values))
+            e = discord.Embed(title=file_name, color=self.bot.color)
             e.set_image(url=f"attachment://{fn}")
             e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
             await ctx.send(file=file, embed=e)
@@ -69,8 +68,7 @@ class NSFW(Plugin):
                     fn = f"gay.{file_format}"
                     file = discord.File(fp=io.BytesIO(file), filename=fn)
 
-            values = [int(x * 255) for x in colorsys.hsv_to_rgb(random.random(), 1, 1)]
-            e = discord.Embed(title=file_name, color=Color.from_rgb(*values))
+            e = discord.Embed(title=file_name, color=self.bot.color)
             e.set_image(url=f"attachment://{fn}")
             e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
             await ctx.send(file=file, embed=e)
@@ -89,8 +87,7 @@ class NSFW(Plugin):
                     fn = f"gay.{file_format}"
                     file = discord.File(fp=io.BytesIO(file), filename=fn)
 
-            values = [int(x * 255) for x in colorsys.hsv_to_rgb(random.random(), 1, 1)]
-            e = discord.Embed(title=file_name, color=Color.from_rgb(*values))
+            e = discord.Embed(title=file_name, color=self.bot.color)
             e.set_image(url=f"attachment://{fn}")
             e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
             await ctx.send(file=file, embed=e)
@@ -109,8 +106,7 @@ class NSFW(Plugin):
                     fn = f"gay.{file_format}"
                     file = discord.File(fp=io.BytesIO(file), filename=fn)
 
-            values = [int(x * 255) for x in colorsys.hsv_to_rgb(random.random(), 1, 1)]
-            e = discord.Embed(title=file_name, color=Color.from_rgb(*values))
+            e = discord.Embed(title=file_name, color=self.bot.color)
             e.set_image(url=f"attachment://{fn}")
             e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
             await ctx.send(file=file, embed=e)
@@ -129,8 +125,7 @@ class NSFW(Plugin):
                     fn = f"gay.{file_format}"
                     file = discord.File(fp=io.BytesIO(file), filename=fn)
 
-            values = [int(x * 255) for x in colorsys.hsv_to_rgb(random.random(), 1, 1)]
-            e = discord.Embed(title=file_name, color=Color.from_rgb(*values))
+            e = discord.Embed(title=file_name, color=self.bot.color)
             e.set_image(url=f"attachment://{fn}")
             e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
             await ctx.send(file=file, embed=e)
