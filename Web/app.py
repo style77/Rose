@@ -2,9 +2,9 @@ import secrets
 
 from flask import Flask
 
-from Web import models
-from Web.classes.handler import ErrorsHandler
-from Web.classes.main import App, CacheService
+import models
+from classes.handler import ErrorsHandler
+from classes.main import App, CacheService
 
 app = Flask("Rose")
 

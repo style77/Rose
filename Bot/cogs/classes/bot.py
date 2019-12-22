@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import random
 import traceback
 from datetime import datetime
@@ -15,12 +16,24 @@ from discord.ext import commands, tasks
 from ..utils.misc import get_prefix, get, get_language
 from .guild import Guild
 from .context import RoseContext
+from .database import Database
 
 OPTS = {'command_prefix': get_prefix,
         'description': 'Bot stworzony przez Style#0011.\nv2.0',
         'pm_help': False,
         'command_not_found': '',
         'case_insensitive': True}
+
+
+class LanguageObject:
+    def __init__(self, raw_object):
+        self.raw_object = raw_object
+        
+    def __getitem__(self, item):
+        try:
+            return self.raw_object[item]
+        except KeyError:
+            return item
 
 
 class Bot(commands.AutoShardedBot):
@@ -63,9 +76,16 @@ class Bot(commands.AutoShardedBot):
         if not message.guild:
             language = "ENG"
         else:
-            language = await get_language(self, message.guild)
-        ctx.lang = self.polish if language == "PL" else self.english
+            guild = await self.get_guild_settings(message.guild.id)
+            language = guild.language
+        
+        raw_lang = self.get_language_object(language)
+        ctx.lang = LanguageObject(raw_lang)
         await self.invoke(ctx)
+
+    def get_language_object(self, lang):
+        raw_lang = self.polish if lang == "PL" else self.english
+        return raw_lang
 
     # noinspection PyCallingNonCallable
     @tasks.loop(count=1)
@@ -74,11 +94,20 @@ class Bot(commands.AutoShardedBot):
             dsn=f"postgresql://{get('dbip')}/{get('dbname')}", user="style",
             password=get("password"))
 
+        # self.db = Database(self, poll)
+
     # noinspection PyCallingNonCallable
     @tasks.loop(count=1)
     async def _load_extensions(self):
         for module in self.exts:
             try:
+                path = os.path.abspath(f"cogs/{module}.py").replace("/", ".")
+                path = path.replace(".py", "")
+
+                path = list(path)
+                path[0] = ""
+                path = ''.join(path)
+
                 self.load_extension(f"cogs.{module}")
             except Exception as e:
                 traceback.print_exc()

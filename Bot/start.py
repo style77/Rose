@@ -16,8 +16,8 @@ bot = Bot()
 async def context_creator(ctx):
     bot.context = ctx
 
-bot.exts = ['jishaku', 'owner', 'eh', 'fun', 'todo', 'social', 'events', 'miscellaneous', 'moderator', 'music', 'logs',
-            'nsfw&sfw', 'streams', 'cat', 'stars', 'gamestats', 'help', 'stats']
+bot.exts = ['owner', 'eh', 'fun', 'todo', 'social', 'events', 'miscellaneous', 'moderator', 'music', 'logs',
+            'nsfw&sfw', 'streams', 'cat', 'stars', 'gamestats', 'help', 'stats', 'afk']
 
 
 if '__main__' == __name__:
@@ -27,7 +27,7 @@ if '__main__' == __name__:
     except KeyboardInterrupt:
         loop.run_until_complete(bot.logout())
     finally:
-        bot.session.close()
-        for task in bot.tasks():
-            task.close()
+        loop.run_until_complete(bot.session.close())
+        # for task in bot.tasks():
+        #     task.close()
         loop.close()

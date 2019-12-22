@@ -1,13 +1,15 @@
-@media  your server, according to your preferencesscreen and (max-width: 950px) {
+/* @media your server, according to your preferencesscreen and (max-width: 950px) {
     #footer {
         display: none;
     }
-}
+} */
 
 * {
-   font-size: 18px;
-   line-height: 1.428;
-   font-family: "Gravity";
+    font-size: 18px;
+    line-height: 1.428;
+    font-family: "Gravity";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 a, p {
@@ -21,8 +23,8 @@ a, p {
 
 @media (max-width: @screen-sm) {
     * {
-       font-size: 22px;
-       line-height: 1.428;
+        font-size: 22px;
+        line-height: 1.428;
     }
 }
 

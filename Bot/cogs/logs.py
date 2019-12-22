@@ -1,6 +1,8 @@
 import aiohttp
 import discord
 
+import functools
+
 from discord.ext import commands
 
 from .classes.other import Plugin
@@ -35,8 +37,8 @@ class Logs(Plugin):
         if not ch:
             return
 
-        language = await get_language(self.bot, m.guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(m.guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         e = discord.Embed(description=lang['message_deleted'].format(
             m.author.mention, m.channel.mention, m.content),
@@ -53,7 +55,6 @@ class Logs(Plugin):
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, m):
-        # todo post all messages to hastebin
         if not m[0].guild:
             return
 
@@ -61,30 +62,30 @@ class Logs(Plugin):
         if not ch:
             return
 
-        language = await get_language(self.bot, m[0].guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(m[0].guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
-        content = ""
-        for msg in m:
-            if not msg.content:
-                continue
+        # content = []
+        # for msg in m:
+        #     if not msg.content:
+        #         continue
 
-            content += f"{msg.author}: {msg.content} //{str(msg.created_at)}\n"
+        #     content.append(f"{msg.author}: {msg.content} //{str(msg.created_at)}\n")
 
-        async with self.bot.session.post("https://hastebin.com/documents", data=content.encode('utf-8')) as post:
-            post = await post.json()
-
-        if 'key' in post:
-            url = f"https://hastebin.com/{post['key']}"
-        else:
-            url = 'brak'
-
-        e = discord.Embed(description=lang['bulk_message_deleted'].format(len(m), m[0].channel.mention, url),
+        e = discord.Embed(description=lang['bulk_message_deleted'].format(len(m), m[0].channel.mention),
                           color=0x6e100a,
                           timestamp=m[0].created_at)
         e.set_author(name=m[0].guild, icon_url=m[0].guild.icon_url)
 
+
+        func = functools.partial(self.bot.cogs['Useful'].processing, m)
+        
+        buf = await self.bot.loop.run_in_executor(None, func)
+        
+        f = discord.File(filename=f"{m[0].channel.name}.txt", fp=buf)
+
         await ch.send(embed=e)
+        await ch.send(file=f)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
@@ -101,8 +102,8 @@ class Logs(Plugin):
         if not before.content or not after.content:
             return
 
-        language = await get_language(self.bot, after.guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(after.guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         e = discord.Embed(
             description=lang['message_edited'].format(after.channel.mention, after.jump_url),
@@ -162,8 +163,8 @@ class Logs(Plugin):
         if not ch:
             return
 
-        language = await get_language(self.bot, member.guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(member.guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         e = discord.Embed(description=lang['member_joined'].format(member.mention, member, member.guild.name,
                                                                    str(member.created_at)),
@@ -180,8 +181,8 @@ class Logs(Plugin):
         if not ch:
             return
 
-        language = await get_language(self.bot, member.guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(member.guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         e = discord.Embed(description=lang['leaved_server'].format(member.mention, member, member.joined_at),
                           color=0x6e100a,
@@ -197,8 +198,8 @@ class Logs(Plugin):
         if not ch:
             return
 
-        language = await get_language(self.bot, guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         try:
             async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
@@ -228,8 +229,8 @@ class Logs(Plugin):
         if not ch:
             return
 
-        language = await get_language(self.bot, guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         try:
             async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
@@ -263,8 +264,8 @@ class Logs(Plugin):
         if not ch:
             return
 
-        language = await get_language(self.bot, role.guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(role.guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         try:
             async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_create):
@@ -293,8 +294,8 @@ class Logs(Plugin):
         if not ch:
             return
 
-        language = await get_language(self.bot, role.guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(role.guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         try:
             async for entry in role.guild.audit_logs(action=discord.AuditLogAction.role_create):
@@ -384,8 +385,8 @@ class Logs(Plugin):
         if not emote:
             return
 
-        language = await get_language(self.bot, guild)
-        lang = self.bot.polish if language == "PL" else self.bot.english
+        guild = await self.bot.get_guild_settings(guild.id)
+        lang = self.bot.get_language_object(guild.language)
 
         e = discord.Embed(description=lang['emote_added'].format(str(emote)),
                           color=0x6e100a,

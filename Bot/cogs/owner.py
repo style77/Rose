@@ -1,5 +1,11 @@
 import collections
 import textwrap
+import importlib
+import sys
+import time
+from io import BytesIO
+
+import json
 
 from psutil import Process
 from os import getpid
@@ -11,10 +17,12 @@ from discord.ext import commands
 from jishaku.codeblocks import codeblock_converter
 from jishaku.modules import ExtensionConverter
 
+from .custom_jishaku import Jishaku
+
 from .classes.other import Plugin
 
 from tabulate import tabulate
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 class Owner(Plugin, command_attrs=dict(hidden=True)):
@@ -41,8 +49,12 @@ class Owner(Plugin, command_attrs=dict(hidden=True)):
         total = sum(self.bot.socket_stats.values())
         cpm = total / minutes
 
-        stats = [f"{event}: {x}" for event, x in self.bot.socket_stats.most_common()]
-        z = '\n'.join(stats)
+        # stats = [f"{event}: {x}" for event, x in self.bot.socket_stats.most_common()]
+        # z = '\n'.join(stats)
+
+        z = ""
+        for event, x in self.bot.socket_stats.most_common():
+            z += f"{event}:{' ' * int(21 - len(str(event)))}{x}\n"
 
         await ctx.send(f"{total} {ctx.lang['sockets_observed']} ({cpm:.2f}/minute):\n```{z}```")
 
@@ -54,21 +66,57 @@ class Owner(Plugin, command_attrs=dict(hidden=True)):
 
         await ctx.send('```\n' + text + '```')
 
-    @commands.command(aliases=['cmds_usage'])
-    async def commands_usage(self, ctx):
-        plt.clf()
+    # @staticmethod
+    # def do_bar_chart(title, x_label, y_label, values, names):
 
-        usage = collections.OrderedDict(sorted(self.bot.usage.items(), key=lambda kv: kv[1], reverse=True))
+    #     # Clear the plot.
+    #     plt.clf()
 
-        plt.bar([k for k in usage.keys()], [v for v in usage.values()])
+    #     # Create a bar graph with grid lines
+    #     plt.bar(names, values, width=0.5, zorder=3)
+    #     plt.grid(zorder=0)
 
-        plt.ylabel("Usage")
-        plt.xlabel("Commands")
+    #     # Add labels
+    #     plt.ylabel(y_label)
+    #     plt.xlabel(x_label)
+    #     plt.title(title)
 
-        plt.xticks(rotation=90)
-        plt.savefig("usage.png")
+    #     # Rotate x-labels by 90 degrees
+    #     plt.xticks(rotation=-90)
 
-        return await ctx.send(file=discord.File("assets/images/usage.png"))
+    #     # Make the layout of plot conform to the text
+    #     plt.tight_layout()
+
+    #     # Save the image to a buffer.
+    #     bar_chart = BytesIO()
+    #     plt.savefig(bar_chart)
+
+    #     # Close the image.
+    #     plt.close()
+
+    #     # Return image
+    #     bar_chart.seek(0)
+    #     return bar_chart
+
+    # @commands.command(aliases=['cmds_usage'])
+    # async def commands_usage(self, ctx):
+    #     usage = collections.OrderedDict(sorted(self.bot.usage.items(), key=lambda kv: kv[1], reverse=True))
+
+    #     start = time.perf_counter()
+
+    #     bar_chart = self.do_bar_chart("Command usage", "Command", "Usage", [v for v in usage.values()],
+    #                                   [k for k in usage.keys()])
+    #     end = time.perf_counter()
+    #     await ctx.send(f"Done in {end - start:.3f}s", file=discord.File(filename=f"StatsBar.png", fp=bar_chart))
+
+    @commands.command()
+    async def reload_languages(self, ctx):
+        with open(r"assets/languages/eng.json") as f:
+            self.bot.english = json.load(f)
+
+        with open(r"assets/languages/pl.json") as f:
+            self.bot.polish = json.load(f)
+        await ctx.send(':ok_hand:')
 
     @commands.group(invoke_without_command=True)
     async def sql(self, ctx):
@@ -135,7 +183,7 @@ class Owner(Plugin, command_attrs=dict(hidden=True)):
         if guild in ["this", "self"]:
             guild = ctx.guild
         else:
-            guild = discord.utils.get(self.bot.guilds, id=guild)
+            guild = self.bot.get_guild(int(guild))
 
         g = await self.bot.get_guild_settings(guild.id)
 
@@ -183,7 +231,7 @@ class Owner(Plugin, command_attrs=dict(hidden=True)):
         if guild in ["this", "self"]:
             guild = ctx.guild
         else:
-            guild = discord.utils.get(self.bot.guilds, id=guild)
+            guild = self.bot.get_guild(int(guild))
 
         if value.isdigit():
             value = int(value)
@@ -214,4 +262,5 @@ class Owner(Plugin, command_attrs=dict(hidden=True)):
 
 
 def setup(bot):
+    bot.add_cog(Jishaku(bot))
     bot.add_cog(Owner(bot))

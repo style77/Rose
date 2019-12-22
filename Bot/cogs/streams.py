@@ -22,7 +22,7 @@ class Stream(object):
 
         self.embed = None
 
-        self.lang = bot.polish if lang == "PL" else bot.english
+        self.lang = bot.get_language_object(lang)
 
     @property
     def is_live(self):

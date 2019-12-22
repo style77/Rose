@@ -1,0 +1,8 @@
+{
+  "pl": {
+    "Jak ustawić statystyki?": "Użyj komendy `[p]set stats [statystyka] [kanał-głosowy]`, aby ustawić tekst użyj `[p]set stats [statystyka]-text [tekst]`"
+  },
+  "eng": {
+    "How to setup stats?": "Use command `[p]set stats [stat] [voice-channel]`, to set text use `[p]set stats [stat]-text [text]`"
+  }
+}

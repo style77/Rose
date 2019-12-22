@@ -1,4 +1,4 @@
-from Web.utils import get
+from utils import get
 from . import http, User
 
 class Client(object):

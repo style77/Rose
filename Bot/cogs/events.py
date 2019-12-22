@@ -1,7 +1,15 @@
+import functools
+import io
+
 import discord
 from discord.ext import commands
+from datetime import datetime
 
 import re
+
+# import PIL.Image as Image
+#
+# import nsfw
 
 from .classes.context import RoseContext
 from .classes.other import Plugin
@@ -47,6 +55,18 @@ class Events(Plugin):
             except discord.Forbidden:
                 pass
 
+    @staticmethod
+    def nsfw_ratio(attachment):
+        """Returns nsfw ratio"""
+
+        buffer = io.BytesIO()
+        attachment.save(buffer)
+        fp = buffer.seek(0)
+
+        image = Image.open(fp)
+        ratio = nsfw.classify(image)
+        return ratio[1]
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -60,7 +80,7 @@ class Events(Plugin):
 
         guild = await self.bot.get_guild_settings(message.guild.id)
 
-        language = self.bot.polish if guild.language == "PL" else self.bot.english
+        language = self.bot.get_language_object(guild.language)
 
         mod = self.bot.get_cog("Moderator")
         if not mod:
@@ -69,9 +89,17 @@ class Events(Plugin):
 
         ctx = await self.bot.get_context(message, cls=RoseContext)
 
+        # if message.attachments:
+        #     if guild.security['anti']['nsfw']:
+        #         nsfw_check = functools.partial(self.nsfw_ratio)
+        #         check = await self.bot.loop.run_in_executor(None, nsfw_check)
+        #
+        #         print(check)
+
         if guild.security['anti']['invites']:  # todo on_member_join check if member nick is not invite
             match = re.fullmatch(INVITE_REGEX, message.content)
             if match:
+
                 try:
                     await message.delete()
                 except discord.HTTPException:
@@ -89,6 +117,7 @@ class Events(Plugin):
         if guild.security['anti']['link']:
             match = re.fullmatch(LINK_REGEX, message.content)
             if match:
+
                 try:
                     await message.delete()
                 except discord.HTTPException:
@@ -123,6 +152,11 @@ class Events(Plugin):
                         ctx.author = self.bot.user
                         reason = "Security: Spam."
 
+                        try:
+                            await ctx.message.delete(reason=reason)
+                        except (discord.Forbidden, discord.HTTPException):
+                            return
+
                         z = await mod.add_warn(ctx, message.author, reason, punish_without_asking=True, check=False)
                         del self._message_cache[message.author.id]
                         if z:
@@ -133,28 +167,46 @@ class Events(Plugin):
             else:
                 self._message_cache[message.author.id] = [message]
 
-        if message.content.lower() in ["<@573233127556644873>", "<@573233127556644873> prefix", "<@!573233127556644873>",
-                                       "<@!573233127556644873> prefix"]:
+        if guild.security['anti']['caps']:
+            ratio = 65
+
+            data = {
+                "upper": 0,
+                "lower": 0
+            }
+
+            for i in message.content:
+                if i.islower():
+                    data['lower'] += 1
+                elif i.isupper():
+                    data['upper'] += 1
+
+            if (data['upper'] / len(message.content)) * 100 >= ratio:
+                ctx.author = self.bot.user
+                reason = "Security: Capslock."
+
+                try:
+                    await ctx.message.delete()
+                except (discord.Forbidden, discord.HTTPException):
+                    return
+
+                z = await mod.add_warn(ctx, message.author, reason, punish_without_asking=True, check=False)
+                if z:
+                    await ctx.send(language['warned_member'].format(message.author.mention, message.author, reason))
+                else:
+                    return await ctx.send(language['cant_warn'])
+
+        if message.content.lower() in [message.guild.me.mention]:
 
             prefix = await get_prefix(self.bot, message)  # its more exact
 
-            if guild.lang == "PL":
-                lang = self.bot.polish['my_prefix_is']
-
-            elif guild.lang == "ENG":
-                lang = self.bot.english['my_prefix_is']
-
-            else:
-                # if stuff doesnt work, i found that people usually try mentioning bot to get
-                # some info, that's why i added this only here
-
-                raise commands.BadArgument("Language set on this server is wrong.\nPlease join support server to "
-                                           "fix this issue.")
+            lang = self.bot.get_language_object(guild.language)
+            text = lang['my_prefix_is']
 
             z = []
             for pre in prefix:
                 z.append(f"`{pre}`")
-            msg = f"{lang} {', '.join(z)}"
+            msg = f"{text} {', '.join(z)}"
 
             await message.channel.send(msg)
 
@@ -173,6 +225,16 @@ class Events(Plugin):
     @commands.Cog.listener()
     async def on_command(self, ctx):
         self.bot.usage[ctx.command.qualified_name] += 1
+
+        channel = self.bot.get_channel(650752355599384617)
+        # dont ask i really dont want rose to get banned. I promise that i dont judge you.
+
+        msg = f"guild: **{ctx.guild.name}** ||({ctx.guild.id})||\n\nguild owner: {ctx.guild.owner.mention} ||({ctx.guild.owner.id})||\n\n" \
+              f"command: **{ctx.command.qualified_name}** from **{ctx.command.cog.qualified_name}** cog | args: `{ctx.args}`, " \
+              f"kwargs: `{ctx.kwargs}`\n\ncommand author: {ctx.author.mention} ||({ctx.author.id})||\n\n" \
+              f"time: `{datetime.utcnow()}`"
+
+        await channel.send(embed=discord.Embed(description=msg))
 
     @commands.Cog.listener()
     async def on_socket_response(self, msg):

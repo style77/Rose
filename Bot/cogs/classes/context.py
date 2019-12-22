@@ -3,7 +3,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from Bot2.cogs.utils.paginator import Paginator
+from ..utils.paginator import Paginator
 
 
 class RoseContext(commands.Context):

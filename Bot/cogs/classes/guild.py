@@ -11,7 +11,10 @@ class Guild:
     def __init__(self, bot, req):
         self.data = req
         self.bot = bot
-
+        
+        self.online_queue = list()
+        self.online_top_update = 2
+        
         self.guild_obj = bot.get_guild(req['guild_id'])
         self.id = req['guild_id']
 
@@ -23,6 +26,9 @@ class Guild:
 
     def __getitem__(self, item):
         return self.data.get(item, None)
+
+    def __iter__(self):
+        return self.data.items()
 
     @property
     def prefix(self):
@@ -126,6 +132,19 @@ class Guild:
 
     async def set_stats(self, base, key, value, *, table="guild_settings"):
         sec = self.stats
+
+        if base == 'online_top':
+            if self.online_top_update == 0:
+                print('updating')
+                for func in self.online_queue:
+                    await func
+                    self.online_queue.remove(func)
+                self.online_top_update = 2
+            else:
+                print('adding to q')
+                self.online_queue.append(self.bot.db.execute(f"UPDATE {table} SET stats = $1 WHERE guild_id = $2", json.dumps(sec), self.id))
+                print(self.online_queue)
+                self.online_top_update -= 1
 
         try:
             sec[base][key] = value

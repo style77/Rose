@@ -5,10 +5,8 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
-from .utils import get_language
 from .classes.other import Plugin
 
-from .cat import CatError
 
 class ErrorHandler(Plugin):
     def __init__(self, bot):
@@ -52,7 +50,7 @@ class ErrorHandler(Plugin):
             return await ctx.add_react(False)
 
         elif isinstance(error, commands.DisabledCommand):
-            await ctx.send(f"{ctx.command.qualified_name} {lang['cmd_off']}.")
+            await ctx.send(f"{lang['command']} {ctx.command.qualified_name} {lang['cmd_off']}.")
             return await ctx.add_react(False)
 
         elif isinstance(error, commands.NotOwner):
@@ -119,7 +117,7 @@ class ErrorHandler(Plugin):
 
     @staticmethod
     async def write_error(error):
-        with open(r"*.errors", "a+") as f:
+        with open(r"errors.log", "a+") as f:
             f.write(error)
 
 

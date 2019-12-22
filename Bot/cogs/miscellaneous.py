@@ -4,12 +4,16 @@ import re
 import aiohttp
 import discord
 import typing
+import functools
+
+from bs4 import BeautifulSoup
 from discord.ext import commands
-from io import BytesIO
+from io import StringIO
 
 from .classes.converters import SafeConverter
 from .utils import SphinxObjectFileReader
 from .classes.other import Plugin
+from .utils import get_language
 
 
 class Useful(Plugin):
@@ -17,6 +21,94 @@ class Useful(Plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.bot = bot
+
+    def processing(self, history):
+        buf = StringIO()
+            
+        for i, message in enumerate(history):
+            content = message.content
+            
+            if message.attachments:
+                content = message.attachments[0].url
+            if message.embeds:
+                e = message.embeds[0]
+                content = "embed"
+                
+            if not content:
+                continue
+                
+            buf.write(
+                f"#{i+1} {message.channel.name}  -  {message.author}: {content}  / {str(message.created_at)}\n")
+
+        buf.seek(0)
+        return buf
+
+    @commands.command()
+    async def history(self, ctx, limit=50):
+        """Zwraca plik z historią wiadomości."""
+        
+        history = []
+        
+        async with ctx.channel.typing():
+            async for message in ctx.channel.history(limit=limit):
+                history.append(message)
+        
+        func = functools.partial(self.processing, history)
+        
+        buf = await self.bot.loop.run_in_executor(None, func)
+        
+        file = discord.File(filename=f"{ctx.channel.name}.txt", fp=buf)
+        await ctx.send(file=file)
+
+    @commands.command(aliases=["avy", "awatar"])
+    async def avatar(self, ctx, member: discord.Member = None):
+        member = member or ctx.author
+
+        e = discord.Embed(color=member.color)
+        e.set_image(url=member.avatar_url)
+        e.set_author(name=member)
+        e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+        await ctx.send(embed=e)
+
+    @commands.command(name="user", aliases=["member", "userinfo"])
+    async def user_info(self, ctx, user: discord.Member = None):
+        """Zwraca informacje o koncie Discord, twoim bądź osoby oznaczonej."""
+        if ctx.message.author.bot:
+            return
+        user = user or ctx.author
+        userjoinedat = str(user.joined_at).split('.', 1)[0]
+        usercreatedat = str(user.created_at).split('.', 1)[0]
+        shared = sum(g.get_member(user.id) is not None for g in self.bot.guilds)
+
+        userembed = discord.Embed(
+            description=user.name +
+                        ("<:bottag:597838054237011968>" if user.bot else ''),
+            color=user.color,
+            timestamp=ctx.message.created_at)
+        userembed.set_author(
+            name=user.display_name, icon_url=user.avatar_url)
+        userembed.set_thumbnail(url=user.avatar_url)
+        userembed.add_field(name=ctx.lang['joined_server'], value=userjoinedat)
+        userembed.add_field(name=ctx.lang['created_account'], value=usercreatedat)
+        if user.activity:
+            userembed.add_field(name=ctx.lang['playing'], value=user.activity.name)
+        userembed.add_field(name=ctx.lang['shared_servers'], value=shared)
+        if user.status is not None:
+            userembed.add_field(name="Status", value=user.status)
+        userembed.add_field(name=ctx.lang['rank_color'], value=user.color)
+        userembed.add_field(name="Tag", value=f'`{user.discriminator}`')
+        userembed.add_field(name=ctx.lang['highest_rank'], value=str(user.top_role))
+        userembed.add_field(name=ctx.lang['ranks'], value=', '.join([r.mention for r in user.roles]))
+        userembed.set_footer(text=f'ID: {user.id}')
+        await ctx.send(embed=userembed)
+
+    @commands.command(aliases=["amionmobile?"])
+    async def amionmobile(self, ctx, member: discord.Member = None):
+        member = member or ctx.author
+        if member.is_on_mobile():
+            await ctx.send(ctx.lang['yes'])
+        else:
+            await ctx.send(ctx.lang['no'])
 
     @commands.command(name="firstmsg", aliases=["firstmessage", "first_message", "first_msg"])
     async def first_message(self, ctx, channel: discord.TextChannel = None):
@@ -54,6 +146,16 @@ class Useful(Plugin):
 
         for r in reactions:
             await msg.add_reaction(r)
+
+    @commands.command(aliases=['same_tag'])
+    @commands.cooldown(1, 4, commands.BucketType.user)
+    async def sametag(self, ctx, search_tag=None):
+        search_tag = search_tag or ctx.author.discriminator
+        users = [discord.utils.get(ctx.guild.members, discriminator=search_tag)]
+        if not users:
+            return await ctx.send(ctx.lang['not_found'])
+        z = ',\n'.join([str(user) for user in users])
+        await ctx.send(f"`{z}`")
 
     @commands.command()
     async def poll(self, ctx, *options: SafeConverter):
@@ -282,6 +384,23 @@ class Useful(Plugin):
                               description="\n".join(thing))
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def pypi(self, ctx, name: str):
+        """Szuka modułu z pypi.org."""
+        if not name:
+            return await ctx.send("https://pypi.org")
+        async with ctx.typing():
+            raw_html = self.bot.cogs['Fun'].simple_get(f"https://pypi.org/search/?q={name}")
+            html = BeautifulSoup(raw_html, 'html.parser')
+            name_s = html.find('span', attrs={'class': 'package-snippet__name'})
+            ver = html.find('span', attrs={'class': 'package-snippet__version'})
+            desc = html.find('p', attrs={'class': 'package-snippet__description'})
+
+            e = discord.Embed(
+                title=f"{name_s.text} v{ver.text}", description=desc.text, url=f"https://pypi.org/project/{name_s.text}")
+            await ctx.send(embed=e)
+
 
 def setup(bot):
     bot.add_cog(Useful(bot))

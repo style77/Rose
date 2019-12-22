@@ -7,17 +7,20 @@ import unicodedata
 import urllib
 from functools import partial
 
+import aiogtts
 import aiohttp
 
 import async_cleverbot as ac
 import discord
 import pyqrcode
+import typing
 
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from .classes.converters import EmojiConverter
-from .utils import get
+from .utils import get, get_language
+from .utils.improved_discord import clean_text
 from .classes.other import Plugin, SeleniumPhase
 from pyfiglet import Figlet
 from requests import get
@@ -25,6 +28,9 @@ from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
 
+from PIL import Image
+
+from jishaku.functools import executor_function
 
 class Fun(Plugin):
     def __init__(self, bot):
@@ -32,6 +38,22 @@ class Fun(Plugin):
         if not self.bot.development:
             self.cleverbot = ac.Cleverbot(get("cleverbot_api"))
             self.cleverbot.set_context(ac.DictContext(self.cleverbot))
+
+        self.calls = dict()
+
+    @executor_function
+    def color_processing(self, color: discord.Color):
+        with Image.new('RGB', (64, 64), color.to_rgb()) as im:
+            buff = io.BytesIO()
+            im.save(buff, 'png')
+        buff.seek(0)
+        return buff
+
+    @commands.command()
+    async def color(self, ctx, color: discord.Color=None):
+        color = color or ctx.author.color
+        buff = await self.color_processing(color=color)
+        await ctx.send(file=discord.File(fp=buff, filename='color.png'))
 
     @commands.command(aliases=['fw', 'fullwidth', 'ａｅｓｔｈｅｔｉｃ'])
     async def aesthetic(self, ctx, *, msg):
@@ -350,6 +372,128 @@ class Fun(Plugin):
         """
         text = f"{ctx.lang['howdy_sheriff']} {emote}."
         await ctx.send(template.replace(":emote:", str(emote)) + "\n" + text)
+
+    @commands.command(name="10s")
+    @commands.cooldown(1, 12, commands.BucketType.user)
+    async def clickintenseconds(self, ctx):
+
+        e = discord.Embed(title=ctx.lang['click_when_you_think'], description=ctx.lang['clicked_in'].format('?.??'))
+        e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+        msg = await ctx.send(embed=e)
+        await msg.add_reaction("\U000023f2")
+
+        start = time.time()
+
+        def ch(r, u):
+            return r.message.channel == ctx.channel and u == ctx.author and str(r.emoji) == "\U000023f2"
+
+        r, u = await self.bot.wait_for('reaction_add', check=ch)
+
+        end = time.time()
+        time_ = end - start
+
+        e.description = ctx.lang['clicked_in'].format(round(time_, 2))
+        await msg.edit(embed=e)
+
+    @commands.command()
+    async def tts(self, ctx, *, text: commands.clean_content):
+        """Zwraca plik głosowy z twoją wiadomością."""
+        async with ctx.typing():
+            fp = io.BytesIO()
+            lang = await get_language(self.bot, ctx.guild)
+
+            if lang == "ENG":
+                lang = "EN"
+
+            await aiogtts.aiogTTS().write_to_fp(text, fp, lang=lang.lower())
+            fp.seek(0)
+
+        await ctx.send(file=discord.File(fp, filename=f"{ctx.author.id}.mp3"))
+
+    @commands.command(name="emoji", aliases=["bigemoji", "emojibig", "big_emoji"])
+    async def big_emoji(self, ctx, emoji: typing.Union[discord.Emoji, discord.PartialEmoji, str]):
+        """Duża wersja emotki."""
+        if isinstance(emoji, (discord.Emoji, discord.PartialEmoji)):
+            fp = io.BytesIO()
+            await emoji.url.save(fp)
+
+            e = discord.Embed()
+            e.set_image(url=f"attachment://{emoji.name}{'.png' if not emoji.animated else '.gif'}")
+            e.set_footer(text=f"Emoji from: {emoji.guild_id}")
+            await ctx.send(file=discord.File(fp, filename=f"{emoji.name}{'.png' if not emoji.animated else '.gif'}"),
+                           embed=e)
+        else:
+            fmt_name = "-".join(f"{ord(c):x}" for c in emoji)
+            async with aiohttp.ClientSession() as cs:
+                url = f"http://twemoji.maxcdn.com/2/72x72/{fmt_name}.png"
+                r = await cs.get(url)
+
+                e = discord.Embed()
+                e.set_image(url=f"attachment://{fmt_name}.png")
+                e.set_footer(text=f"URL: {url}")
+                await ctx.send(
+                    file=discord.File(io.BytesIO(await r.read()), filename=f"{fmt_name}.png"),
+                    embed=e)
+
+    @commands.command()
+    async def nitro(self, ctx, *, rest):
+        """Wysyła pierwszą znalezioną emotke z podaną nazwą."""
+        rest = rest.lower()
+        found_emojis = [emoji for emoji in ctx.bot.emojis
+                        if emoji.name.lower() == rest and emoji.require_colons]
+        if found_emojis:
+            await ctx.send(str(random.choice(found_emojis)))
+        else:
+            await ctx.send(ctx.lang['nothing_found'])
+
+    @commands.command()
+    @commands.cooldown(1, 15, commands.BucketType.user)
+    async def call(self, ctx):
+        if ctx.author.id in self.calls:
+            return await ctx.send(ctx.lang['already_in_call'])
+
+        self.calls[ctx.author.id] = {"talking_with": None, "me": ctx.author, "channel": ctx.channel}
+
+        await ctx.send(ctx.lang['added_to_call_queue'])
+
+        for m in self.calls:
+            if self.calls[m]['talking_with']:
+                continue
+
+            if m == ctx.author.id:
+                continue
+
+            if self.calls[m]['channel'] == ctx.channel:
+                continue
+
+            self.calls[m]['talking_with'] = ctx.author
+            self.calls[ctx.author.id]['talking_with'] = self.calls[m]['me']
+            await ctx.send(ctx.lang['found_caller'])
+            break
+        else:
+            await ctx.send(ctx.lang['no_one_found_wait'])
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.id not in self.calls:
+            return
+
+        if not self.calls[message.author.id]['talking_with']:  # nie ma drugiej osoby
+            return
+
+        talking_with = self.calls[message.author.id]['talking_with']
+
+        if message.channel != self.calls[message.author.id]['channel']:
+            return
+
+        if message.content.lower() == "end":
+            self.calls[talking_with.id]['talking_with'] = None
+            del self.calls[message.author.id]
+
+        channel = self.calls[talking_with.id]['channel']
+
+        await channel.send(f"{message.author} >> {clean_text(message.content)}")
+        await message.channel.send(f"{message.author} << {clean_text(message.content)}")
 
 
 def setup(bot):

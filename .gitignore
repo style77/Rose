@@ -178,12 +178,16 @@ fabric.properties
 
 .DS_STORE
 
-Bot2/config.yml
-Bot2/Lavalink.jar
+Bot/config.yml
+Bot/Lavalink.jar
 
-Bot2/assets/other/geckodriver.log
+Bot/assets/other/geckodriver.log
 
 Web/config.yml
 
 Pipfile.lock
 Pipfile
+
+.idea
+cache.sqlite
+config.yml

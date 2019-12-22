@@ -9,10 +9,10 @@ import redis
 from flask import session, render_template, request, redirect, abort
 from requests_oauthlib import OAuth2Session
 
-from Web.classes.handler import ErrorsHandler
-from Web.models import User, Client, Server
-from Web.utils import checks
-from Web.utils import get
+from classes.handler import ErrorsHandler
+from models import User, Client, Server
+from utils import checks
+from utils import get
 
 scopes = ['identify', 'email', 'guilds']
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -100,7 +100,7 @@ class App(ErrorsHandler):
                 session['theme'] = 'dark'  # todo change to light HAHAHHAH
                 session['logged_in'] = False
 
-            return render_template('index.html', get_text=self.app.get_text, session=session)
+            return render_template(r'index.html', get_text=self.app.get_text, session=session)
 
         @app.route('/login')
         def login_page():

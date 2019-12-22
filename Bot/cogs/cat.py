@@ -14,7 +14,7 @@ import discord
 from PIL import ImageFont, ImageDraw, ImageOps, Image
 from discord.ext import commands, tasks
 
-from Bot2.cogs.classes import other
+from .classes import other
 from .classes.converters import AmountConverter
 from .utils import fuzzy, get_language
 
@@ -407,7 +407,7 @@ class Cat(commands.Cog):
     async def get_cat(self, member):
         cat = await self.bot.db.fetchrow("SELECT * FROM cats WHERE owner_id = $1", member.id)
         guild = await self.bot.get_guild_settings(member.guild.id)
-        lang = self.bot.polish if guild.lang == "PL" else self.bot.english
+        lang = self.bot.get_language_object(guild.lang)
         if await self.is_dead(member):
             raise commands.BadArgument(f"{member}, {lang['dead_cat'].format(guild.prefix)}")
         if not cat:
@@ -415,7 +415,7 @@ class Cat(commands.Cog):
         return DefaultCat(self.bot, cat)
 
     async def lvl_up(self, cat):
-        if cat['exp'] > round(700 * cat['level']):
+        if cat['exp'] > round(9222 * cat['level']):
             await self.bot.db.execute("UPDATE cats SET level = level + 1, money = money + 65  WHERE owner_id = $1",
                                       cat['owner_id'])
             return True
@@ -456,7 +456,7 @@ class Cat(commands.Cog):
     @tasks.loop(seconds=60)
     async def sleeping_restore(self):
         await self.bot.db.execute("UPDATE cats SET sta = sta + 1, sleeping_time = sleeping_time + 1 WHERE sta < 100 AND is_sleeping = true AND is_dead = false")
-        await self.bot.db.execute("UPDATE cats SET sleeping_time = 0 AND is_sleeping = false WHERE is_sleeping = true AND sta = 100")
+        await self.bot.db.execute("UPDATE cats SET sleeping_time = 0, is_sleeping = false WHERE is_sleeping = true AND sta = 100")
 
     @tasks.loop(minutes=75)
     async def losing_sta(self):
@@ -622,7 +622,7 @@ class Cat(commands.Cog):
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
 
-        kolor = random.choice(["czarnego",
+        color = random.choice(["czarnego",
                                "szarego",
                                "brązowego"])
 
@@ -630,7 +630,7 @@ class Cat(commands.Cog):
                   "szarego": "grey",
                   "brązowego": "brown"}
 
-        await ctx.send(ctx.lang['adopted_cat'].format(ctx.lang[kolor]))
+        await ctx.send(ctx.lang['adopted_cat'].format(ctx.lang[color]))
 
         try:
             msg = await self.bot.wait_for('message', check=check, timeout=30)
@@ -639,9 +639,9 @@ class Cat(commands.Cog):
 
         name = msg.content
         name = name[:1].upper() + name[1:].lower()
-        k = colors[kolor]
+        c = colors[color]
         await self.bot.db.execute("INSERT INTO cats (owner_id, name, color) VALUES ($1, $2, $3)",
-                                  ctx.author.id, name, k)
+                                  ctx.author.id, name, c)
         return await ctx.send(ctx.lang['cat_will_be_called'].format(name))
 
     @commands.command()
@@ -658,7 +658,7 @@ class Cat(commands.Cog):
         if money == "half":
             money = round(cat.money / 2)  # :)))
 
-        if not money.isdigit():
+        if not str(money).isdigit():
             return await ctx.send(ctx.lang['not_correct_value'])
 
         money = int(money)
@@ -714,10 +714,8 @@ class Cat(commands.Cog):
         if money == "half":
             money = round(cat.money / 2)  # :)))
 
-        if not money.isdigit():
+        if not str(money).isdigit():
             return await ctx.send(ctx.lang['not_correct_value'])
-
-        money = int(money)
 
         if money < 5:
             return await ctx.send(ctx.lang['too_low_value'])
@@ -750,7 +748,7 @@ class Cat(commands.Cog):
         if money == "half":
             money = round(cat.money / 2)  # :)))
 
-        if not money.isdigit():
+        if not str(money).isdigit():
             return await ctx.send(ctx.lang['not_correct_value'])
 
         money = int(money)
@@ -1320,7 +1318,7 @@ class Cat(commands.Cog):
         elif not cat.is_sleeping:
             await self.bot.db.execute('UPDATE cats SET is_sleeping = true, sleeping_time = 0 WHERE owner_id = $1',
                                       ctx.author.id)
-            await ctx.send(ctx.lang['started_restoring'])
+            await ctx.send(ctx.lang['started_restoring'].format(ctx.prefix))
 
     @cat.command()
     @commands.cooldown(1, 1800, commands.BucketType.user)
@@ -1460,9 +1458,12 @@ class Cat(commands.Cog):
         if await self.lvl_up(cat):
 
             language = await get_language(self.bot, message.guild)
-            lang = self.bot.polish if language == "PL" else self.bot.english
+            lang = self.bot.get_language_object(language)
 
-            await message.channel.send(lang['level_up'].format(message.author.mention, cat.level + 1))
+            try:
+                await message.channel.send(lang['level_up'].format(message.author.mention, cat['level'] + 1))
+            except (discord.Forbidden, discord.HTTPException):
+                return
 
 
 def setup(bot):

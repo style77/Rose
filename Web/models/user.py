@@ -1,8 +1,8 @@
 from flask import session
 from requests_oauthlib import OAuth2Session
 
-from Web.models import http
-from Web.utils import get
+from models import http
+from utils import get
 
 class User(object):
     def __init__(self, user, **kwargs):

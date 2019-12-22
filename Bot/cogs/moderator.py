@@ -1,7 +1,7 @@
 import random
 import re
 import shlex
-from collections import Counter
+import json
 
 import discord
 import typing
@@ -9,11 +9,9 @@ from discord.ext import commands, tasks
 
 from datetime import datetime, timedelta
 
-from Bot2.cogs.utils import fuzzy
+from .utils import fuzzy
 from .classes.other import Plugin, Arguments
 from .classes.converters import ModerationReason, VexsTimeConverter, EmojiConverter, ValueRangeFromTo
-
-from .utils import clean_text
 
 from enum import Enum
 
@@ -102,7 +100,7 @@ class Moderator(Plugin):
         for user in temps:
             guild_settings = await self.bot.get_guild_settings(user['guild_id'])
 
-            lang = self.bot.polish if guild_settings.language == "PL" else self.bot.english
+            lang = self.bot.get_language_object(guild_settings.language)
             moderator = self.bot.get_user(user['moderator_id'])
 
             guild = self.bot.get_guild(user['guild_id'])
@@ -222,7 +220,7 @@ class Moderator(Plugin):
 
     async def do_removal(self, ctx, limit, predicate, *, before=None, after=None):
         if limit > 2000:
-            return await ctx.send(f'Too many messages to search given ({limit}/2000)')
+            return await ctx.send(ctx.lang['too_many_messages'].format(limit))
 
         if before is None:
             before = ctx.message
@@ -232,13 +230,8 @@ class Moderator(Plugin):
         if after is not None:
             after = discord.Object(id=after)
 
-        try:
-            deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
-            await ctx.message.delete()
-        except discord.Forbidden as e:
-            return await ctx.send('I do not have permissions to delete messages.')
-        except discord.HTTPException as e:
-            return await ctx.send(f'Error: {e} (try a smaller search?)')
+        deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
+        await ctx.message.delete()
 
         # spammers = Counter(m.author.display_name for m in deleted)
         deleted = len(deleted)
@@ -690,6 +683,87 @@ class Settings(Plugin):
         super().__init__(bot, command_attrs={'not_turnable': True})
         self.bot = bot
 
+    @commands.command()
+    @commands.has_permissions(manage_guild=True)
+    async def settings(self, ctx):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+        e = discord.Embed()
+        for key, value in guild:
+            if key == "stars":
+                stars = json.loads(value)
+                    
+                z = ""
+                for key, value in stars.items():
+                    
+                    if value == "color":
+                        value = str(value).replace("0x", "#")
+                    
+                    try:
+                        channel_value = ctx.guild.get_channel(value)
+                        value = channel_value.mention
+                    except:
+                        pass
+                    
+                    z += f"**{key}**: {value}\n"
+                
+                e.add_field(name="stars", value=z, inline=False)
+            
+            elif key == "security":
+                security = json.loads(value)
+                
+                z = ""
+                for key, value in security.items():
+                    try:
+                        channel_value = ctx.guild.get_channel(value)
+                        value = channel_value.mention
+                    except:
+                        pass
+                    
+                    if key == 'anti':
+                        z += f"**anti**:\n```"
+                        x = ""
+                        for anti_key, anti_value in value.items():
+                            x += f"{anti_key}: {anti_value}\n"
+                        z += f"{x}```"
+                    else:
+                        z += f"{key}: `{value}`\n"
+                
+                e.add_field(name="security", value=z, inline=False)
+            
+            elif key == "stats":
+                stats = json.loads(value)
+                print(stats)
+                
+                z = ""
+                for org_key, value in stats.items():
+                    z += f"**{org_key}**:\n"
+                    for key, value in value.items():
+                        try:
+                            channel_value = ctx.guild.get_channel(value)
+                            value = channel_value.mention
+                        except:
+                            pass
+                        
+                        z += f"{key}: `{value}`\n"
+                    
+                e.add_field(name="stats", value=z, inline=False)
+            
+            else:
+                try:
+                    channel_value = ctx.guild.get_channel(value)
+                    value = channel_value.mention
+                except:
+                    pass
+                
+                try:
+                    role_value = ctx.guild.get_role(value)
+                    value = role_value.mention
+                except:
+                    pass
+                
+                e.add_field(name=key, value=value, inline=False)
+        await ctx.send(embed=e)
+
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_guild=True)
     async def plugin(self, ctx):
@@ -782,6 +856,28 @@ class Settings(Plugin):
 
     @set_.command()
     @commands.has_permissions(manage_guild=True)
+    async def anti_caps(self, ctx, argument: TrueFalseConverter):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_security('caps', str(argument), base='anti')
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('anti_caps', str(argument)))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def anti_nsfw(self, ctx, argument: TrueFalseConverter):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_security('nsfw', str(argument), base='anti')
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('anti_nsfw', str(argument)))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def anti_images(self, ctx, argument: TrueFalseConverter):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -846,6 +942,20 @@ class Settings(Plugin):
         s = await guild.set('welcome_channel', channel.id)
         if s:
             return await ctx.send(ctx.lang['updated_setting'].format('welcome_channel', '#' + str(channel)))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command(aliases=['lang'])
+    @commands.has_permissions(manage_guild=True)
+    async def language(self, ctx, lang: str):
+        if lang.lower() not in ["pl", "eng"]:
+            return await ctx.send(ctx.lang['wrong_language'])
+
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set('language', lang.upper())
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('language', channel))
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
@@ -1030,6 +1140,50 @@ class Settings(Plugin):
         s = await guild.set_stats('members', 'text', text)
         if s:
             return await ctx.send(ctx.lang['updated_setting'].format('members', text))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @stats.command(aliases=['online_top'])
+    @commands.has_permissions(manage_guild=True)
+    async def online_record(self, ctx, channel: discord.VoiceChannel):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_stats('online_top', 'channel_id', channel.id)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('online_top', "\U0001f508 " + channel.name))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @stats.command(aliases=['online_top_text'])
+    @commands.has_permissions(manage_guild=True)
+    async def online_record_text(self, ctx, *, text: commands.clean_content()):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_stats('online_top', 'text', text)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('online_top', text))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @stats.command()
+    @commands.has_permissions(manage_guild=True)
+    async def online_members(self, ctx, channel: discord.VoiceChannel):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_stats('online_members', 'channel_id', channel.id)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('online_members', "\U0001f508 " + channel.name))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @stats.command()
+    @commands.has_permissions(manage_guild=True)
+    async def online_members_text(self, ctx, *, text: commands.clean_content()):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_stats('online_members', 'text', text)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('online_members', text))
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 

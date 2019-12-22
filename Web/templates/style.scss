@@ -1,0 +1,10 @@
+$bg-color: #1f1f1f;
+
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background-color: $bg-color;
+}

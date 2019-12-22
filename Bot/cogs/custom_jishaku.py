@@ -5,6 +5,7 @@ import asyncio
 
 from discord.ext import commands
 from jishaku import cog
+
 from jishaku.exception_handling import attempt_add_reaction, do_after_sleep, send_traceback, ReplResponseReactor
 import subprocess
 
@@ -52,7 +53,3 @@ class Jishaku(cog.Jishaku):
     def __init__(self, bot):
         super().__init__(bot)
         self.start_time = datetime.utcnow()
-
-
-def setup(bot):
-    bot.add_cog(Jishaku(bot))

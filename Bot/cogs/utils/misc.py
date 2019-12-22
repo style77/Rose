@@ -4,6 +4,7 @@ import zlib
 from yaml import load, Loader
 
 from discord.utils import escape_markdown, escape_mentions
+from discord import Guild
 from .DEFAULTS import LANGUAGE
 
 
@@ -34,10 +35,10 @@ def get(thing):
     return cfg[thing]
 
 
-async def get_language(bot, guild, *, only_id=False):
-    if only_id:
+async def get_language(bot, guild):
+    if isinstance(guild, int):
         guild_id = guild
-    else:
+    elif isinstance(guild, Guild):
         guild_id = guild.id
 
     if not guild:

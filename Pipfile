@@ -4,9 +4,36 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pylint = "*"
 
 [packages]
 fortnite-python = "*"
+aiohttp = "*"
+wavelink = "*"
+asyncpg = "*"
+pyyaml = "*"
+selenium = "*"
+pillow = "*"
+tabulate = "*"
+pantheon = "*"
+dataclasses = "*"
+psutil = "*"
+pynite = "*"
+bs4 = "*"
+osuapi = "*"
+aiosqlite = "*"
+aiogtts = "*"
+humanize = "*"
+async-cleverbot = "*"
+jishaku = "*"
+pyqrcode = "*"
+matplotlib = "*"
+pyfiglet = "*"
+flask = "*"
+requests-oauthlib = "*"
+psycopg2 = "*"
+redis = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.6"
