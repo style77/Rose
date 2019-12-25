@@ -1,4 +1,9 @@
+# chce sie kurwa zabic
+
 import json
+import itertools
+
+import pygit2
 
 import discord
 from discord.ext import commands
@@ -74,6 +79,7 @@ class Social(Plugin):
         """❤"""
         owner = str(self.bot.get_user(self.bot.owner_id))
         return await ctx.send(ctx.lang['donate'].format(owner))
+
 
 def setup(bot):
     bot.add_cog(Social(bot))

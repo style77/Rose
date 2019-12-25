@@ -169,6 +169,7 @@
   "added_to_call_queue": "Dodano do kolejki.",
   "found_caller": "Znaleziono rozmówce.",
   "donate": "Jeśli naprawdę chcesz wesprzeć projekt, skontaktuj się z właścicielem **{}**.",
+  "tag_being_made": "Ten tag jest właśnie tworzony przez kogoś innego.",
 
   "yes": "Tak.",
   "no": "Nie.",
@@ -271,6 +272,30 @@
   "cant_resend_mc": "Nie moge ponownie wysłać kontrolera. Proszę nadaj mi odpowiednie permisje `manage_messages`.",
   "command": "Komenda",
   "no_one_found_wait": "Nikogo nie znaleziono, musisz chwilę poczekać.",
+
+  "tag_already_exist": "Tag `{}` już istnieje.",
+  "alias_already_exist": "Alias `{}` już istnieje.",
+  "created_tag": "Tag `{}` został stworzony.",
+  "created_alias": "Alias `{}` do tag-u `{}`, został stworzony.",
+  "tag_doesnt_exist": "Nie znaleziono `{}`.",
+  "tag_doesnt_exist_did_you_mean": "Nie znaleziono `{}`. Może chodziło Ci o...\n{}",
+
+  "deleted_tag": "Usunięto tag/alias `{}`, należący do {}.",
+  "delete_tag_confirmation": "Czy na pewno chcesz usunąć tag/alias `{}`.",
+
+  "tag_creation_info_0": "Czy chcesz teraz przejść do interaktywnego tworzenia tag-u? Odpowiedz `Tak`.",
+  "tag_creation_info_1": "Najpierw podaj nazwe tag-u.",
+  "tag_creation_info_2": "Okej, więc nazwa to `{}`. Podaj teraz treść jaką będzie zawierać twój tag.",
+  "member_has_no_tags": "{} nie posiada żadnego tag-u.",
+  "tag_owner_still_in_server": "Właściciel tag-u `{}` ciągle jest na serwerze.",
+  "transfered_tag": "Pomyślnie zmieniono właściciela tego tag-u na ciebie.",
+  "transfered_alias": "Pomyślnie zmieniono właściciela tego alias-u na ciebie.",
+  "cant_transfer_tag_to_bot": "Bot nie może być właścicielem tag-u.",
+  "transfered_tag_to": "Pomyślnie zmieniono właściciela tego tag-u na {}.",
+  "member_no_tags": "{}, nie ma żadnego tag-u.",
+  "purge_tags_confirmation": "Jesteś pewien? To usunie **{}** tag-ów należących do `{}`.",
+  "purged_tags": "Usunięto **{}** tag-ów należacych do {}.",
+  "too_short_query": "Wyszukiwana fraza musi mieć co najmniej 3 znaki.",
 
   "new_music_info_channel": "Zmieniono kanał do wysyłania informacji o muzyce na `#{}`.",
   "created_music_controller": "Kontroler wysłany.",

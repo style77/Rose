@@ -133,18 +133,18 @@ class Guild:
     async def set_stats(self, base, key, value, *, table="guild_settings"):
         sec = self.stats
 
-        if base == 'online_top':
-            if self.online_top_update == 0:
-                print('updating')
-                for func in self.online_queue:
-                    await func
-                    self.online_queue.remove(func)
-                self.online_top_update = 2
-            else:
-                print('adding to q')
-                self.online_queue.append(self.bot.db.execute(f"UPDATE {table} SET stats = $1 WHERE guild_id = $2", json.dumps(sec), self.id))
-                print(self.online_queue)
-                self.online_top_update -= 1
+        # if base == 'online_top':
+        #     if self.online_top_update == 0:
+        #         print('updating')
+        #         for func in self.online_queue:
+        #             await func
+        #             self.online_queue.remove(func)
+        #         self.online_top_update = 2
+        #     else:
+        #         print('adding to q')
+        #         self.online_queue.append(self.bot.db.execute(f"UPDATE {table} SET stats = $1 WHERE guild_id = $2", json.dumps(sec), self.id))
+        #         print(self.online_queue)
+        #         self.online_top_update -= 1
 
         try:
             sec[base][key] = value

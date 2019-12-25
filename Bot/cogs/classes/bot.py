@@ -113,6 +113,9 @@ class Bot(commands.AutoShardedBot):
                 traceback.print_exc()
 
     async def get_guild_settings(self, guild_id):
+        if not guild_id:
+            return
+
         if guild_id not in self._settings_cache:
             raw_guild_settings = await self.db.fetchrow("SELECT * FROM guild_settings WHERE guild_id = $1", guild_id)
             if raw_guild_settings is None:
@@ -124,6 +127,9 @@ class Bot(commands.AutoShardedBot):
         return g
 
     async def add_guild_to_database(self, guild_id):
+        if not guild_id:
+            return
+
         new_guild = await self.db.fetchrow("INSERT INTO guild_settings (guild_id) VALUES ($1) RETURNING *", guild_id)
         return new_guild
 

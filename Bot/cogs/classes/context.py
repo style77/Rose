@@ -49,7 +49,7 @@ class RoseContext(commands.Context):
             if not prompt:
                 raise ValueError("No prompt.")
 
-            msg = await self.message.send(confirmation)
+            msg = await self.channel.send(confirmation)
 
             def check(m):
                 return m.author == member and m.channel == msg.channel
@@ -59,7 +59,10 @@ class RoseContext(commands.Context):
             except asyncio.TimeoutError:
                 return None
 
-            if message.content.lower() == prompt.lower():
+            if not isinstance(prompt, list):
+                prompt = [prompt]
+
+            if message.content.lower() in prompt:
                 return True
             else:
                 return False

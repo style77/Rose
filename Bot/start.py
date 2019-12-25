@@ -17,7 +17,7 @@ async def context_creator(ctx):
     bot.context = ctx
 
 bot.exts = ['owner', 'eh', 'fun', 'todo', 'social', 'events', 'miscellaneous', 'moderator', 'music', 'logs',
-            'nsfw&sfw', 'streams', 'cat', 'stars', 'gamestats', 'help', 'stats', 'afk']
+            'nsfw&sfw', 'streams', 'cat', 'stars', 'gamestats', 'help', 'stats', 'afk', 'tags']
 
 
 if '__main__' == __name__:
@@ -27,6 +27,7 @@ if '__main__' == __name__:
     except KeyboardInterrupt:
         loop.run_until_complete(bot.logout())
     finally:
+        loop.run_until_complete(bot.db.close())
         loop.run_until_complete(bot.session.close())
         # for task in bot.tasks():
         #     task.close()

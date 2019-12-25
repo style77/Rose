@@ -9,6 +9,9 @@ class Stars(Plugin):
         super().__init__(bot)
         self.bot = bot
 
+    async def cog_check(self, ctx):
+        return ctx.guild is not None
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # todo custom shade
         guild = await self.bot.get_guild_settings(payload.guild_id)

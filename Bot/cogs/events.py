@@ -54,25 +54,32 @@ class Events(Plugin):
                 break
             except discord.Forbidden:
                 pass
-
-    @staticmethod
-    def nsfw_ratio(attachment):
-        """Returns nsfw ratio"""
-
-        buffer = io.BytesIO()
-        attachment.save(buffer)
-        fp = buffer.seek(0)
-
-        image = Image.open(fp)
-        ratio = nsfw.classify(image)
-        return ratio[1]
+    #
+    # @staticmethod
+    # def nsfw_ratio(attachment):
+    #     """Returns nsfw ratio"""
+    #
+    #     buffer = io.BytesIO()
+    #     attachment.save(buffer)
+    #     fp = buffer.seek(0)
+    #
+    #     image = Image.open(fp)
+    #     ratio = nsfw.classify(image)
+    #     return ratio[1]
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.author.bot:
+        if not message.guild:
             return
 
-        if not message.guild:
+        query = """
+                INSERT INTO count (guild_id) VALUES ($1)
+                ON CONFLICT (guild_id)
+                DO UPDATE SET messages = count.messages + 1 WHERE count.guild_id = $1
+                """
+        await self.bot.db.execute(query, message.guild.id)
+
+        if message.author.bot:
             return
 
         if message.author.guild_permissions.administrator:
@@ -226,8 +233,15 @@ class Events(Plugin):
     async def on_command(self, ctx):
         self.bot.usage[ctx.command.qualified_name] += 1
 
+        query = """
+                INSERT INTO count (guild_id) VALUES ($1)
+                ON CONFLICT (guild_id)
+                DO UPDATE SET commands = count.commands + 1 WHERE count.guild_id = $1
+                """
+        await self.bot.db.execute(query, ctx.guild.id)
+
         channel = self.bot.get_channel(650752355599384617)
-        # dont ask i really dont want rose to get banned. I promise that i dont judge you.
+        # dont ask i really dont want rose to get banned. I promise that i wont judge you.
 
         msg = f"guild: **{ctx.guild.name}** ||({ctx.guild.id})||\n\nguild owner: {ctx.guild.owner.mention} ||({ctx.guild.owner.id})||\n\n" \
               f"command: **{ctx.command.qualified_name}** from **{ctx.command.cog.qualified_name}** cog | args: `{ctx.args}`, " \
