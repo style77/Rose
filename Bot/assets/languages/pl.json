@@ -297,6 +297,16 @@
   "purged_tags": "Usunięto **{}** tag-ów należacych do {}.",
   "too_short_query": "Wyszukiwana fraza musi mieć co najmniej 3 znaki.",
 
+  "bad_emoji": "Ta emoji nie jest poprawna.",
+  "message_dont_exist": "Ta wiadomość nie istnieje.",
+  "added_reaction_role": "Dodano ReactionRole do wiadomości `{}`.\nEmoji: {}\nRola: `{}`\nKanał: {}.",
+  "rr_dont_exist": "Takie ReactionRole nie istnieje. Sprawdź poprawność wszystkich argumentów.",
+
+  "purged_rr": "Usunięto wszystkie ReactionRole z wiadomości `{}`.",
+  "confirm_rr_purge": "Czy na pewno chcesz usunąć wszystkie ReactionRole z tej wiadomości (`{}`)?",
+  "removed_rr": "Usunięto ReactionRole z wiadomości `{}`.",
+  "that_rr_already_exist": "To ReactionRole już istnieje.",
+
   "new_music_info_channel": "Zmieniono kanał do wysyłania informacji o muzyce na `#{}`.",
   "created_music_controller": "Kontroler wysłany.",
 

@@ -32,6 +32,7 @@ from PIL import Image
 
 from jishaku.functools import executor_function
 
+
 class Fun(Plugin):
     def __init__(self, bot):
         super().__init__(bot)
@@ -50,7 +51,7 @@ class Fun(Plugin):
         return buff
 
     @commands.command()
-    async def color(self, ctx, color: discord.Color=None):
+    async def color(self, ctx, color: discord.Color = None):
         color = color or ctx.author.color
         buff = await self.color_processing(color=color)
         await ctx.send(file=discord.File(fp=buff, filename='color.png'))

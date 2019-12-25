@@ -80,6 +80,7 @@ class ErrorHandler(Plugin):
             return await ctx.add_react(False)
 
         elif isinstance(error, (commands.BadArgument, )):
+            print(error)
             await ctx.send(str(error))
             return await ctx.add_react(False)
 

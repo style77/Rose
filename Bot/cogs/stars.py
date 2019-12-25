@@ -15,6 +15,8 @@ class Stars(Plugin):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):  # todo custom shade
         guild = await self.bot.get_guild_settings(payload.guild_id)
+        if not guild:
+            return
 
         starboard = guild.get_starboard()
 
@@ -89,6 +91,8 @@ class Stars(Plugin):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         guild = await self.bot.get_guild_settings(payload.guild_id)
+        if not guild:
+            return
 
         starboard = guild.get_starboard()
 

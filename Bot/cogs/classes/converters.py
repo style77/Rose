@@ -5,6 +5,9 @@ import discord
 from discord.ext import commands
 
 
+UNICODE_REGEX = re.compile("\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]")
+
+
 class AmountConverter(commands.Converter):
     async def convert(self, ctx, argument):
         if argument.isdigit() or argument in ['all']:
@@ -59,35 +62,38 @@ class VexsTimeConverter(commands.Converter):
 
 class EmojiConverter(commands.Converter):
     async def convert(self, ctx, argument):
-        em = None
-
         try:
             em = await commands.EmojiConverter().convert(ctx, argument)
+            return str(em)
         except commands.BadArgument:
             pass
 
-        if not em:
-            try:
-                em = await commands.PartialEmojiConverter().convert(ctx, argument)
-            except commands.BadArgument:
-                pass
+        try:
+            em =  await commands.PartialEmojiConverter().convert(ctx, argument)
+            return str(em)
+        except commands.BadArgument:
+            pass
 
-        if not em:
-            with open(r'assets/other/emoji_map.json', 'r') as f:
-                line = json.load(f)
-                if argument in line.values():
-                    return argument
-                else:
-                    raise commands.BadArgument()
+        if re.match(UNICODE_REGEX, argument):
+            return argument
+
         else:
-            if not discord.utils.find(lambda emoji_: emoji_.id == em.id, ctx.bot.emojis):
-                raise commands.BadArgument(f"Emoji \"{argument}\" not found.")
+            raise commands.BadArgument(f"Emoji \"{argument}\" not found.")
 
-            if em.animated:
-                emoji = f"<a:{em.name}:{em.id}>"
-            else:
-                emoji = f"<:{em.name}:{em.id}>"
-            return emoji
+        # with open(r'assets/other/emoji_map.json', 'r') as f:
+        #     line = json.load(f)
+        #     if argument in line.values():
+        #         return argument
+        #     else:
+        #         raise commands.BadArgument("bad emoji")
+        # if not discord.utils.find(lambda emoji_: emoji_.id == em.id, ctx.bot.emojis):
+        #     raise commands.BadArgument(f"Emoji \"{argument}\" not found.")
+        #
+        # if em.animated:
+        #     emoji = f"<a:{em.name}:{em.id}>"
+        # else:
+        #     emoji = f"<:{em.name}:{em.id}>"
+        # return emoji
 
 
 class ValueRangeFromTo(commands.Converter):

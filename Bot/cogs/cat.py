@@ -13,6 +13,7 @@ import typing
 import discord
 from PIL import ImageFont, ImageDraw, ImageOps, Image
 from discord.ext import commands, tasks
+from jishaku.functools import executor_function
 
 from .classes import other
 from .classes.converters import AmountConverter
@@ -485,6 +486,7 @@ class Cat(commands.Cog):
 
         return avatar_bytes
 
+    @executor_function
     def processing(self, avatar_bytes: bytes, cat, image_path, user) -> BytesIO:  # color: tuple,
         with Image.open(BytesIO(avatar_bytes)) as im:
             pic = r"assets/images/profile.png"
@@ -602,12 +604,11 @@ class Cat(commands.Cog):
 
             avatar_bytes = await self.get_avatar(member)
 
-            fn = functools.partial(self.processing, avatar_bytes, cat, image_path, ctx.author)
-            final_buffer = await self.bot.loop.run_in_executor(None, fn)
+            buff = await self.processing(avatar_bytes=avatar_bytes, cat=cat, image_path=image_path, user=ctx.author)
 
             # self._processing_cache[ctx.author.id] = final_buffer
 
-            file = discord.File(filename=f"{ctx.author.id}.png", fp=final_buffer)
+            file = discord.File(filename=f"{ctx.author.id}.png", fp=buff)
 
             end = time.time()
             await ctx.send(f"Done in: {round(end-start, 2)}s", file=file)

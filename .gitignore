@@ -191,3 +191,5 @@ Pipfile
 .idea
 cache.sqlite
 config.yml
+
+Bot/logs

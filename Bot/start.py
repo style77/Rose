@@ -17,7 +17,7 @@ async def context_creator(ctx):
     bot.context = ctx
 
 bot.exts = ['owner', 'eh', 'fun', 'todo', 'social', 'events', 'miscellaneous', 'moderator', 'music', 'logs',
-            'nsfw&sfw', 'streams', 'cat', 'stars', 'gamestats', 'help', 'stats', 'afk', 'tags']
+            'nsfw&sfw', 'streams', 'cat', 'stars', 'gamestats', 'help', 'stats', 'afk', 'tags', 'reaction_role']
 
 
 if '__main__' == __name__:
