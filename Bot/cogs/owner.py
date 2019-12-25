@@ -260,6 +260,24 @@ class Owner(Plugin, command_attrs=dict(hidden=True)):
         z = await self.bot.db.execute(f"UPDATE cats SET {key} = $1 WHERE owner_id = $2", value, cat_owner.id)
         await ctx.send(z)
 
+    @commands.command()
+    async def disable(self, ctx, command):
+        cmd = self.bot.get_command(command)
+        if not cmd:
+            return await ctx.send(f"Command `{command}` not found")
+
+        cmd.enabled = False
+        await ctx.send(":ok_hand:")
+
+    @commands.command()
+    async def enable(self, ctx, command):
+        cmd = self.bot.get_command(command)
+        if not cmd:
+            return await ctx.send(f"Command `{command}` not found")
+
+        cmd.enabled = True
+        await ctx.send(":ok_hand:")
+
 
 def setup(bot):
     bot.add_cog(Jishaku(bot))

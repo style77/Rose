@@ -18,7 +18,9 @@ import typing
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
-from .classes.converters import EmojiConverter
+from . import utils
+from .classes.converters import EmojiConverter, UrlConverter
+from .music import Player
 from .utils import get, get_language
 from .utils.improved_discord import clean_text
 from .classes.other import Plugin, SeleniumPhase
@@ -41,6 +43,67 @@ class Fun(Plugin):
             self.cleverbot.set_context(ac.DictContext(self.cleverbot))
 
         self.calls = dict()
+
+        dank_memer_token = utils.get("dank_token")
+        self.dank_headers = {
+            'Authorization': dank_memer_token
+        }
+
+    @commands.command(aliases=['lyrics'])
+    async def lyric(self, ctx, *, query: str = None):
+        """Zwraca tekst danej piosenki."""
+        if not query:
+            player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+
+            if not ctx.author.voice:
+                await ctx.send(ctx.lang['am_not_on_any_vc'])
+                return await ctx.add_react(False)
+
+            elif not ctx.guild.me.voice:
+                raise commands.UserInputError()
+
+            elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+                await ctx.send(ctx.lang['arent_with_me_on_vc'])
+                return await ctx.add_react(False)
+
+            elif not player.current:
+                await ctx.send(ctx.lang['nothing_plays'])
+                return await ctx.add_react(False)
+
+            elif player.current:
+                query = player.current.title
+            else:
+                raise commands.UserInputError()
+
+
+        ksoft_token = utils.get("ksoft_token")
+        url = "https://api.ksoft.si/lyrics/search"
+        headers = {
+            'Authorization': "Bearer " + ksoft_token
+        }
+        params = {
+            'q': query
+        }
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(url, headers=headers, params=params) as r:
+                r = await r.json()
+
+        if not r['data']:
+            return await ctx.send(ctx.lang['nothing_found'])
+
+        lyric_split = textwrap.wrap(r['data'][0]['lyrics'], 2000, replace_whitespace=False)
+        embeds = []
+
+        e = discord.Embed(
+            title=f"{r['data'][0]['artist']} - {r['data'][0]['name']}", description=lyric_split.pop(0))
+        embeds.append(e)
+
+        for desc in lyric_split:
+            embed = discord.Embed(description=desc)
+            embeds.append(embed)
+
+        for em in embeds:
+            await ctx.send(embed=em)
 
     @executor_function
     def color_processing(self, color: discord.Color):
@@ -495,6 +558,142 @@ class Fun(Plugin):
 
         await channel.send(f"{message.author} >> {clean_text(message.content)}")
         await message.channel.send(f"{message.author} << {clean_text(message.content)}")
+
+    @commands.command()
+    async def bed(self, ctx, url: UrlConverter = None, url2: UrlConverter = None):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+            url2 = url2 or str(ctx.guild.me.avatar_url)
+            params = {
+                'avatar1': url,
+                'avatar2': url2
+            }
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get("https://dankmemer.services/api/bed", headers=self.dank_headers, params=params) as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def hitler(self, ctx, url: UrlConverter = None):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+            params = {
+                'avatar1': url
+            }
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get("https://dankmemer.services/api/hitler", headers=self.dank_headers,
+                                  params=params) as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    @commands.guild_only()
+    async def guild_stats(self, ctx):
+        messages, commands = await self.bot.db.fetchrow("SELECT messages, commands FROM count WHERE guild_id = $1",
+                                                        ctx.guild.id)
+        if not (messages and commands):
+            return await ctx.send("this guild isnt listed.")
+
+        await ctx.send(f"commands: **{commands}**\nmessages: **{messages}**.")  # todo make this better
+
+    @commands.command()
+    async def communism(self, ctx, url: UrlConverter = None):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+            params = {
+                'avatar1': url
+            }
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get("https://dankmemer.services/api/communism", headers=self.dank_headers,
+                                  params=params) as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def gay(self, ctx, url: UrlConverter = None):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+            params = {
+                'avatar1': url
+            }
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get("https://dankmemer.services/api/gay", headers=self.dank_headers, params=params) as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def jail(self, ctx, url: UrlConverter = None):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+            params = {
+                'avatar1': url
+            }
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get("https://dankmemer.services/api/jail", headers=self.dank_headers, params=params) as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def dab(self, ctx, url: UrlConverter = None):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+            params = {
+                'avatar1': url
+            }
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get("https://dankmemer.services/api/dab", headers=self.dank_headers, params=params) as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def brazzers(self, ctx, url: UrlConverter = None):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+            params = {
+                'avatar1': url
+            }
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get("https://dankmemer.services/api/brazzers", headers=self.dank_headers,
+                                  params=params) as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def bongocat(self, ctx, url: UrlConverter = None):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+            params = {
+                'avatar1': url
+            }
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get("https://dankmemer.services/api/bongocat", headers=self.dank_headers,
+                                  params=params) as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
 
 
 def setup(bot):

@@ -96,6 +96,36 @@ class EmojiConverter(commands.Converter):
         # return emoji
 
 
+LINK_REGEX = re.compile(
+    r"((http(s)?(\:\/\/))+(www\.)?([\w\-\.\/])*(\.[a-zA-Z]{2,3}\/?))[^\s\b\n|]*[^.,;:\?\!\@\^\$ -]")
+
+
+class UrlConverter(commands.Converter):
+    async def convert(self, ctx, argument):
+
+        if argument is None:
+            raise commands.UserInputError()
+
+        if argument.lower() in ['^', 'last']:
+            async for message in ctx.channel.history(limit=None):
+                if message.attachments:
+                    return message.attachments[0].url
+                else:
+                    raise commands.BadArgument("nothing found")
+
+        try:
+            member = await commands.MemberConverter().convert(ctx, argument)
+            return str(member.avatar_url_as(format='png'))
+        except commands.BadArgument:
+            pass
+
+        match = re.findall(LINK_REGEX, argument)
+        if match:
+            return argument
+        else:
+            raise commands.BadArgument("bad argument")
+
+
 class ValueRangeFromTo(commands.Converter):
     def __init__(self, from_, to):
         self.from_ = from_
