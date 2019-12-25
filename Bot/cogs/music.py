@@ -460,7 +460,7 @@ class Music(Plugin):
 
             node.set_hook(self.event_hook)
 
-    @tasks.loop(minutes=10)
+    @tasks.loop(minutes=5)
     async def leave_channels(self):
         try:
             for guild_id, player in self.bot.wavelink.players.items():
@@ -476,8 +476,11 @@ class Music(Plugin):
                     continue
 
                 if len(vc.channel.members) == 1:
+                    print('ye')
                     player.queue._queue.clear()
                     await player.disconnect()
+                else:
+                    print('no')
         except Exception as e:
             print(e)
 
