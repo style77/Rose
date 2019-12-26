@@ -20,7 +20,8 @@
   "no_todos": "Nie masz żadnych todo.",
   "added_todo": "Dodano todo",
   "todo_max_lenght": "Opis może mieć maksymalnie 210 znaków.",
-  "TimeoutError": "Czas na odpowiedź minął.",
+  "TimeoutError2": "Czas na odpowiedź minął.",
+  "TimeoutError": "Wybacz to zajęło zbyt długo.",
   "tell_todo_edit": "Wpisz teraz na co chcesz zeedytować",
   "no_todo_with_id": "Nie masz todo, o takim id.",
   "todo_not_found": "Nie znaleziono takiego todo.",
@@ -314,6 +315,22 @@
   "dead_cat": "Twój kot nie żyje. Spróbuj go odrodzić komendą `{}cat revive`.",
   "no_cat": "Nie masz kota. Zaadoptuj jednego komendą `{}cat adopt`.",
   "opening_in": "Otwarcie skrzynki w ciągu",
+
+  "failed_to_add_emoji": "Nie udało się dodać emotki: {}.",
+  "added_emoji": "Dodano {}.",
+  "too_big_image": "Ten obrazek jest za duży.",
+  "could_not_fetch_image": "Nie udało mi się załadować obrazka.",
+  "max_emoji_slots": "Na tym serwerze nie ma już wolnych miejsc na emotki.",
+  "emoji_uses": "{} użyć {} emotek. {} użyć na dzień.",
+  "w_name_emoji_uses": "{}: {} użyć ({}), {} użyć/dzień.",
+  "no_custom_emoji_guild": "Serwer nie ma żadnych własnych emoji.",
+
+  "s_emoji_uses": "{} użyć ({} globalnych użyć), {} użyć/dzień",
+  "s_emoji_uses_2": "{} użyć {} użyć/dzień",
+  "global_stats": "Globalne statystyki",
+
+  "created_new_starboard": "Tworzenie nowego starboard-u.",
+  "thing_is_not_settable": "Taka rzecz nie istnieje.",
 
   "choose_doc": "Wybiera jedną z podnaych opcji.\nAby zaznaczyć wiele opcji, należy użyć podwójnych cudzysłowów.",
   "lenny_doc": "Wyświetla losowego lenny face.",

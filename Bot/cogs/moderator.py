@@ -1,3 +1,4 @@
+import asyncio
 import random
 import re
 import shlex
@@ -11,9 +12,12 @@ from datetime import datetime, timedelta
 
 from .utils import fuzzy
 from .classes.other import Plugin, Arguments
-from .classes.converters import ModerationReason, VexsTimeConverter, EmojiConverter, ValueRangeFromTo
+from .classes.converters import ModerationReason, VexsTimeConverter, EmojiConverter, ValueRangeFromTo, EmojiURL
 
 from enum import Enum
+
+EMOJI_REGEX = re.compile(r'<a?:.+?:([0-9]{15,21})>')
+EMOJI_NAME_REGEX = re.compile(r'[0-9a-zA-Z\_]{2,32}')
 
 
 class RaidEnum(Enum):
@@ -126,6 +130,39 @@ class Moderator(Plugin):
     @temps_checker.before_loop
     async def before_temps(self):
         await self.bot.wait_until_ready()
+
+    @staticmethod
+    def emoji_name(argument, *, regex=EMOJI_NAME_REGEX):
+        m = regex.match(argument)
+        if m is None:
+            raise commands.BadArgument('Invalid emoji name.')
+        return argument
+
+    @commands.command(aliases=['emoji_created', 'emoji_add'])
+    @commands.has_permissions(manage_emoji=True)
+    async def add_emoji(self, ctx, name: emoji_name, *, emoji: EmojiURL):
+        reason = await ModerationReason().convert(ctx, "Added Emoji")
+
+        emoji_count = sum(e.animated == emoji.animated for e in ctx.guild.emojis)
+        if emoji_count >= ctx.guild.emoji_limit:
+            return await ctx.send(ctx.lang['max_emoji_slots'])
+
+        async with self.bot.session.get(emoji.url) as resp:
+            if resp.status >= 400:
+                return await ctx.send(ctx.lang['could_not_fetch_image'])
+            if int(resp.headers['Content-Length']) >= (256 * 1024):
+                return await ctx.send(ctx.lang['too_big_image'])
+            data = await resp.read()
+            coro = ctx.guild.create_custom_emoji(name=name, image=data, reason=reason)
+            async with ctx.typing():
+                try:
+                    created = await asyncio.wait_for(coro, timeout=10.0)
+                except asyncio.TimeoutError:
+                    return await ctx.send(ctx.lang['TimeoutError'])
+                except discord.HTTPException as e:
+                    return await ctx.send(ctx.lang['failed_to_add_emoji'].format(e))
+                else:
+                    return await ctx.send(ctx.lang['added_emoji'].format(created))
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
@@ -810,6 +847,23 @@ class Settings(Plugin):
 
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
+    @set_.command(aliases=['delete', 'remove', 'none'])
+    @commands.has_permissions(manage_guild=True)
+    async def null(self, ctx, option: str):
+
+        options = ['welcome_text', 'welcome_channel', 'logs', 'leave_text', 'leave_channel', 'auto_role',
+                   'stream_notification',]
+
+        if option not in options:
+            return await ctx.send(ctx.lang['thing_is_not_settable'])
+
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+        s = await guild.set(option, None)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format(option, "None"))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
     @set_.command(aliases=['cooldown'])
     @commands.has_permissions(manage_channels=True)
     async def slowmode(self, ctx, channel: typing.Optional[discord.TextChannel] = None, number: float = 3):
@@ -865,7 +919,7 @@ class Settings(Plugin):
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
-    @set_.command()
+    @set_.command(enabled=False)
     @commands.has_permissions(manage_guild=True)
     async def anti_nsfw(self, ctx, argument: TrueFalseConverter):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
@@ -945,6 +999,17 @@ class Settings(Plugin):
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def logs(self, ctx, channel: discord.TextChannel):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set('logs', channel.id)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('logs', '#' + str(channel)))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
     @set_.command(aliases=['lang'])
     @commands.has_permissions(manage_guild=True)
     async def language(self, ctx, lang: str):
@@ -955,7 +1020,7 @@ class Settings(Plugin):
 
         s = await guild.set('language', lang.upper())
         if s:
-            return await ctx.send(ctx.lang['updated_setting'].format('language', channel))
+            return await ctx.send(ctx.lang['updated_setting'].format('language', lang.upper()))
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
@@ -1001,7 +1066,7 @@ class Settings(Plugin):
         if starboard and not channel:
             ch = await ctx.confirm(ctx.lang['confirm_removing_starboard'], ctx.author)
             if ch:
-                await starboard.delete(reason="Created a new starboard.")  # todo translate
+                await starboard.delete(reason=ctx.lang['created_new_starboard'])
 
                 overwrites = {
                     ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False, read_messages=True),

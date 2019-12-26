@@ -154,6 +154,8 @@ class Todo(Plugin):
             value = todo[0][key]
             e.add_field(name=key, value=value, inline=False)
 
+        e.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+
         await ctx.send(embed=e)
 
     @todo.command(aliases=['-'])

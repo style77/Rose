@@ -366,14 +366,14 @@ class Tags(Plugin):
                 return await ctx.send(ctx.lang['tag_doesnt_exist'].format(clean_text(name)))
 
         async with self.bot.db.acquire():
-            async with self.bot.db.transaction():
-                if alias:
-                    query = "UPDATE tags_lookup SET owner_id = $1 WHERE alias = $2 AND guild_id = $3"
-                    name = tag.alias
-                else:
-                    query = "UPDATE tags SET owner_id = $1 WHERE name = $2 AND guild_id = $3"
-                    name = tag.name
-                await ctx.db.execute(query, member.id, name, ctx.guild.id)
+            #async with self.bot.db.transaction():
+            if alias:
+                query = "UPDATE tags_lookup SET owner_id = $1 WHERE alias = $2 AND guild_id = $3"
+                name = tag.alias
+            else:
+                query = "UPDATE tags SET owner_id = $1 WHERE name = $2 AND guild_id = $3"
+                name = tag.name
+            await ctx.db.execute(query, member.id, name, ctx.guild.id)
 
         await ctx.send(ctx.lang['transfered_tag_to'].format(member.mention))
 

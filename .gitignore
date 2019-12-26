@@ -194,3 +194,6 @@ config.yml
 
 Bot/logs
 /home/style/PycharmProjects/Rosie/Bot/logs
+
+Bot/.vscode
+/home/style/PycharmProjects/Rosie/Bot/.vscode
