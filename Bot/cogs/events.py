@@ -1,5 +1,6 @@
 import functools
 import io
+import json
 
 import discord
 from discord.ext import commands
@@ -261,13 +262,41 @@ class Events(Plugin):
         return embed
 
     @commands.Cog.listener()
+    async def on_member_update(self, before, after):
+        if after.nick != before.nick:
+            user = await self.bot.fetch_user_from_database(after.id)
+
+            last_nicknames = user.last_nicknames
+
+            if str(after.guild.id) not in user.last_nicknames:
+                last_nicknames[str(after.guild.id)] = {}
+
+            # if len(last_nicknames[str(after.guild.id)]) >= 5:
+            #     first_elem = list(last_nicknames[str(after.guild.id)].keys())[0]
+            #     del last_nicknames[str(after.guild.id)][first_elem]
+
+            last_nicknames[str(after.guild.id)][after.nick] = {"changed": datetime.timestamp(datetime.utcnow())}
+
+            await user.set('last_nicknames', json.dumps(last_nicknames))
+
+    @commands.Cog.listener()
+    async def on_user_update(self, before, after):
+        if after.name != before.name:
+            user = await self.bot.fetch_user_from_database(after.id)
+
+            last_usernames = user.last_usernames
+
+            last_usernames[after.name] = {"changed": datetime.timestamp(datetime.utcnow())}
+            await user.set('usernames', json.dumps(last_usernames))
+
+    @commands.Cog.listener()
     async def on_member_join(self, member):
         guild = await self.bot.get_guild_settings(member.guild.id)
         if guild.welcome_text and guild.welcome_channel:
             channel = self.bot.get_channel(guild.welcome_channel)
 
             message = transform_arguments(guild.welcome_text, member)
-            e = self._prepare_embed(message, member)  # TODO i have bigger plans with this
+            e = self._prepare_embed(message, member)  # TODO i have bigger plans with this, anti_invite etc
 
             await channel.send(embed=e)
 

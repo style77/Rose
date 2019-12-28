@@ -847,6 +847,17 @@ class Settings(Plugin):
 
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def prefix(self, ctx, *, prefix: commands.clean_content):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set('prefix', prefix)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('prefix', prefix))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
     @set_.command(aliases=['delete', 'remove', 'none'])
     @commands.has_permissions(manage_guild=True)
     async def null(self, ctx, option: str):
@@ -863,6 +874,20 @@ class Settings(Plugin):
             return await ctx.send(ctx.lang['updated_setting'].format(option, "None"))
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command(aliases=['lockdown'])
+    @commands.has_permissions(manage_channels=True)
+    async def lock(self, ctx, channel: typing.Optional[discord.TextChannel] = None):
+        channel = channel or ctx.channel
+        try:
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False)
+            }
+            await channel.edit(overwrites=overwrites)
+            return await ctx.add_react(True)
+        except Exception as e:
+            await ctx.send(e)
+            return await ctx.add_react(False)
 
     @set_.command(aliases=['cooldown'])
     @commands.has_permissions(manage_channels=True)

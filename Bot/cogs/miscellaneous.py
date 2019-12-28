@@ -1,11 +1,13 @@
 import os
 import re
+from datetime import datetime
 
 import aiohttp
 import discord
 import typing
 import functools
 
+import humanize
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from io import StringIO
@@ -75,18 +77,18 @@ class Useful(Plugin):
         """Zwraca informacje o koncie Discord, twoim bądź osoby oznaczonej."""
         if ctx.message.author.bot:
             return
+
         user = user or ctx.author
         userjoinedat = str(user.joined_at).split('.', 1)[0]
         usercreatedat = str(user.created_at).split('.', 1)[0]
         shared = sum(g.get_member(user.id) is not None for g in self.bot.guilds)
 
         userembed = discord.Embed(
-            description=user.name +
-                        ("<:bottag:597838054237011968>" if user.bot else ''),
+            description=user.display_name + ("<:bottag:597838054237011968>" if user.bot else ''),
             color=user.color,
             timestamp=ctx.message.created_at)
         userembed.set_author(
-            name=user.display_name, icon_url=user.avatar_url)
+            name=user.name, icon_url=user.avatar_url)
         userembed.set_thumbnail(url=user.avatar_url)
         userembed.add_field(name=ctx.lang['joined_server'], value=userjoinedat)
         userembed.add_field(name=ctx.lang['created_account'], value=usercreatedat)
@@ -94,11 +96,36 @@ class Useful(Plugin):
             userembed.add_field(name=ctx.lang['playing'], value=user.activity.name)
         userembed.add_field(name=ctx.lang['shared_servers'], value=shared)
         if user.status is not None:
-            userembed.add_field(name="Status", value=user.status)
-        userembed.add_field(name=ctx.lang['rank_color'], value=user.color)
+            userembed.add_field(name="Status", value=f'{user.status}')
+        userembed.add_field(name=ctx.lang['rank_color'], value=f'`{user.color}`')
         userembed.add_field(name="Tag", value=f'`{user.discriminator}`')
-        userembed.add_field(name=ctx.lang['highest_rank'], value=str(user.top_role))
+        userembed.add_field(name=ctx.lang['highest_rank'], value=user.top_role.mention)
         userembed.add_field(name=ctx.lang['ranks'], value=', '.join([r.mention for r in user.roles]))
+
+        user_ = await self.bot.fetch_user_from_database(user.id)
+        if user_:
+            fmt = "{}    {}"
+            z = list()
+
+            if user_.last_nicknames:
+                if str(ctx.guild.id) in user_.last_nicknames:
+                    nicks = user_.last_nicknames[str(ctx.guild.id)]
+                    for nick, data in nicks.items():
+                        date = datetime.fromtimestamp(data['changed'])
+                        t = date.strftime("%d %b %Y %H:%M")
+                        z.append(fmt.format(f"{t} UTC", nick))
+
+                    userembed.add_field(name=ctx.lang['nicks'], value="```" + '\n'.join(z) + "```", inline=False)
+
+            if user_.last_usernames:
+                nicks = user_.last_usernames
+                for nick, data in nicks.items():
+                    date = datetime.fromtimestamp(data['changed'])
+                    t = date.strftime("%d %b %Y %H:%M")
+                    z.append(fmt.format(f"{t} UTC", nick))
+
+                    userembed.add_field(name=ctx.lang['usernames'], value="```" + '\n'.join(z) + "```", inline=False)
+
         userembed.set_footer(text=f'ID: {user.id}')
         await ctx.send(embed=userembed)
 

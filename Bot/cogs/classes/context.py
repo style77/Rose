@@ -9,10 +9,12 @@ from ..utils.paginator import Paginator
 class RoseContext(commands.Context):
     def __init__(self, **attrs):
         super().__init__(**attrs)
+        self.db = self.bot.db
 
     async def add_react(self, type_: bool):
         emoji = '<:checkmark:601123463859535885>' if type_ is True else '<:wrongmark:601124568387551232>'
-        if '<:checkmark:601123463859535885>' in self.message.reactions or '<:wrongmark:601124568387551232>' in self.message.reactions:
+        reacts = [str(react) for react in self.message.reactions]
+        if ('<:checkmark:601123463859535885>' or '<:wrongmark:601124568387551232>') in reacts:
             return
 
         try:

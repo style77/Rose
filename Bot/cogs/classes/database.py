@@ -9,14 +9,14 @@ class Database:
         self._poll_query = list()
 
     @tasks.loop(seconds=1)
-    async def poll_queue_executing(self):
+    async def bulk_inserting(self):
         for query in self._poll_query:
             try:
                 await query
             except Exception as e:
                 print(e)
 
-    @poll_queue_executing.before_loop
+    @bulk_inserting.before_loop
     async def _before(self):
         await self.bot.wait_until_ready()
 

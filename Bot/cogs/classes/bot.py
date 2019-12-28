@@ -13,6 +13,7 @@ import wavelink
 
 from discord.ext import commands, tasks
 
+from .user import User
 from ..utils.misc import get_prefix, get, get_language
 from .guild import Guild
 from .context import RoseContext
@@ -125,6 +126,17 @@ class Bot(commands.AutoShardedBot):
         else:
             g = self._settings_cache.get(guild_id)
         return g
+
+    async def fetch_user_from_database(self, user_id):
+        user = await self.db.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
+        if user:
+            return User(self, user)
+        else:
+            return User(self, await self.add_user(user_id))
+
+    async def add_user(self, user_id):
+        query = "INSERT INTO users (id) VALUES ($1) RETURNING *"
+        return await self.db.fetchrow(query, user_id)
 
     async def add_guild_to_database(self, guild_id):
         if not guild_id:

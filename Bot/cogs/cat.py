@@ -451,18 +451,21 @@ class Cat(commands.Cog):
 
     @tasks.loop(minutes=180)
     async def losing_food(self):  # todo notify about low food,sta
-        await self.bot.db.execute("UPDATE cats SET food = food - 1 WHERE food > 0")
-        await self.bot.db.execute("UPDATE cats SET is_dead = TRUE WHERE food = 0")
+        async with self.bot.db.acquire():
+            await self.bot.db.execute("UPDATE cats SET food = food - 1 WHERE food > 0")
+            await self.bot.db.execute("UPDATE cats SET is_dead = TRUE WHERE food = 0")
 
     @tasks.loop(seconds=60)
     async def sleeping_restore(self):
-        await self.bot.db.execute("UPDATE cats SET sta = sta + 1, sleeping_time = sleeping_time + 1 WHERE sta < 100 AND is_sleeping = true AND is_dead = false")
-        await self.bot.db.execute("UPDATE cats SET sleeping_time = 0, is_sleeping = false WHERE is_sleeping = true AND sta = 100")
+        async with self.bot.db.acquire():
+            await self.bot.db.execute("UPDATE cats SET sta = sta + 1, sleeping_time = sleeping_time + 1 WHERE sta < 100 AND is_sleeping = true AND is_dead = false")
+            await self.bot.db.execute("UPDATE cats SET sleeping_time = 0, is_sleeping = false WHERE is_sleeping = true AND sta = 100")
 
     @tasks.loop(minutes=75)
     async def losing_sta(self):
-        await self.bot.db.execute("UPDATE cats SET sta = sta - 1 WHERE sta > 0 AND is_sleeping = FALSE")
-        await self.bot.db.execute("UPDATE cats SET is_dead = TRUE WHERE sta = 0")
+        async with self.bot.db.acquire():
+            await self.bot.db.execute("UPDATE cats SET sta = sta - 1 WHERE sta > 0 AND is_sleeping = FALSE")
+            await self.bot.db.execute("UPDATE cats SET is_dead = TRUE WHERE sta = 0")
 
     @losing_food.before_loop
     @sleeping_restore.before_loop
@@ -1095,8 +1098,9 @@ class Cat(commands.Cog):
         query_1 = "UPDATE cats SET money = money - $2 WHERE owner_id = $1"
         query_2 = "UPDATE cats SET money = money + $2 WHERE owner_id = $1"
 
-        await self.bot.db.execute(query_1, ctx.author.id, amount)
-        await self.bot.db.execute(query_2, member.id, amount)
+        async with self.bot.db.acquire():
+            await self.bot.db.execute(query_1, ctx.author.id, amount)
+            await self.bot.db.execute(query_2, member.id, amount)
 
         await ctx.send(ctx.lang['transfered_money'].format(ctx.author.mention, f"{amount:,d}", member.mention))
 
@@ -1177,8 +1181,9 @@ class Cat(commands.Cog):
         rating1 = round(rating1)
         rating2 = round(rating2)
 
-        await self.bot.db.execute(query, rating1, ctx.author.id)
-        await self.bot.db.execute(query, rating2, member.id)
+        async with self.bot.db.acquire():
+            await self.bot.db.execute(query, rating1, ctx.author.id)
+            await self.bot.db.execute(query, rating2, member.id)
 
         new_rating = f"\nNowy ranking\n{ctx.author.mention}: **{rating1}**.\n{member.mention}: **{rating2}**"
         await ctx.send(ctx.lang['win_fight'].format(winner.member_object.mention, loser.member_object.mention,
@@ -1335,8 +1340,9 @@ class Cat(commands.Cog):
 
         if robbed:
             amount = int(cat.money) * (ratio / 100)
-            await self.bot.db.execute("UPDATE cats SET money = money - $1 WHERE owner_id = $2", amount, member.id)
-            await self.bot.db.execute("UPDATE cats SET money = money + $1 WHERE owner_id = $2", amount, ctx.author.id)
+            async with self.bot.db.acquire():
+                await self.bot.db.execute("UPDATE cats SET money = money - $1 WHERE owner_id = $2", amount, member.id)
+                await self.bot.db.execute("UPDATE cats SET money = money + $1 WHERE owner_id = $2", amount, ctx.author.id)
             await ctx.send(ctx.lang['robbed'].format(ctx.author.mention, member.mention, amount))
         else:
             amount = int(robber_cat.money) * (ratio / 100)
