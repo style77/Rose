@@ -49,8 +49,6 @@ class Levels(Plugin):
     async def bulk_insert(self):
         await self.bot.wait_until_ready()
 
-        print(self._bulk_data)
-
         async with self._batch_lock:
             async with self.bot.db.acquire():
                 for user_id in self._bulk_data:

@@ -695,6 +695,87 @@ class Fun(Plugin):
             e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
             await ctx.send(file=file, embed=e)
 
+    # alexflipnote
+
+    @commands.command()
+    async def floor(self, ctx, url: UrlConverter = None, *, text):
+        async with ctx.typing():
+            url = url or str(ctx.author.avatar_url)
+
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get(f"https://api.alexflipnote.dev/floor?image={url}&text={text}") as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command(aliases=['ph'])
+    async def pornhub(self, ctx, first_text, *, second_text):
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get(f"https://api.alexflipnote.dev/pornhub?text={first_text}&text2={second_text}") as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def facts(self, ctx, *, text):
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get(f"https://api.alexflipnote.dev/facts?text={text}") as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command(aliases=['dym'])
+    async def didyoumean(self, ctx, top_text, *, bottom_text):
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get(f"https://api.alexflipnote.dev/didyoumean?top={top_text}&bottom={bottom_text}") as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command(aliases=['ach', 'mc_achievement'])
+    async def achievement(self, ctx, *, text):
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get(f"https://api.alexflipnote.dev/achievement?text={text}") as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command(aliases=['ch', 'mc_challange'])
+    async def challange(self, ctx, *, text):
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get(f"https://api.alexflipnote.dev/challenge?text={text}") as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def captcha(self, ctx, *, text):
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as cs:
+                async with cs.get(f"https://api.alexflipnote.dev/captcha?text={text}") as r:
+                    file = discord.File(fp=io.BytesIO(await r.read()), filename="siema.png")
+            e = discord.Embed()
+            e.set_image(url="attachment://siema.png")
+            e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
+            await ctx.send(file=file, embed=e)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
