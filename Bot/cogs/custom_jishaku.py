@@ -8,6 +8,8 @@ from jishaku import cog
 
 from jishaku.exception_handling import attempt_add_reaction, do_after_sleep, send_traceback, ReplResponseReactor
 import subprocess
+from jishaku.cog import JishakuBase, jsk
+from jishaku.metacog import GroupCogMeta
 
 FORWARD = PartialEmoji(animated=False, name="yessir", id=581621730372485131)
 KAZ_HAPPY = PartialEmoji(
@@ -49,7 +51,7 @@ cog.JISHAKU_RETAIN = True
 cog.ReplResponseReactor = AltReplReactor
 
 
-class Jishaku(cog.Jishaku):
+class Jishaku(JishakuBase, metaclass=GroupCogMeta, command_parent=jsk):
     def __init__(self, bot):
         super().__init__(bot)
         self.start_time = datetime.utcnow()
