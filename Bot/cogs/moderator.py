@@ -139,7 +139,7 @@ class Moderator(Plugin):
         return argument
 
     @commands.command(aliases=['emoji_created', 'emoji_add'])
-    @commands.has_permissions(manage_emoji=True)
+    @commands.has_permissions(manage_emojis=True)
     async def add_emoji(self, ctx, name: emoji_name, *, emoji: EmojiURL):
         reason = await ModerationReason().convert(ctx, "Added Emoji")
 
