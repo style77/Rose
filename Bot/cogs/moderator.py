@@ -20,6 +20,13 @@ EMOJI_REGEX = re.compile(r'<a?:.+?:([0-9]{15,21})>')
 EMOJI_NAME_REGEX = re.compile(r'[0-9a-zA-Z\_]{2,32}')
 
 
+def emoji_name(argument, *, regex=EMOJI_NAME_REGEX):
+    m = regex.match(argument)
+    if m is None:
+        raise commands.BadArgument('Invalid emoji name.')
+    return argument
+
+
 class RaidEnum(Enum):
     off      = 0
     basic    = 1
@@ -130,13 +137,6 @@ class Moderator(Plugin):
     @temps_checker.before_loop
     async def before_temps(self):
         await self.bot.wait_until_ready()
-
-    @staticmethod
-    def emoji_name(argument, *, regex=EMOJI_NAME_REGEX):
-        m = regex.match(argument)
-        if m is None:
-            raise commands.BadArgument('Invalid emoji name.')
-        return argument
 
     @commands.command(aliases=['emoji_created', 'emoji_add'])
     @commands.has_permissions(manage_emojis=True)
