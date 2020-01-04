@@ -1,5 +1,6 @@
 import json
 
+import asyncpg
 from discord.ext import commands
 
 from ..utils.misc import get_prefix
@@ -59,6 +60,10 @@ class Guild:
         return self.data['leave_channel']
 
     @property
+    def leveling_type(self):
+        return self.data['leveling_type']
+
+    @property
     def levels(self):
         return self.data['levels']
 
@@ -98,9 +103,13 @@ class Guild:
             self.bot._settings_cache[self.id] = g
 
     async def set(self, key, value, *, table="guild_settings"):
-        z = await self.bot.db.execute(f"UPDATE {table} SET {key} = $1 WHERE guild_id = $2", value, self.id)
-        await self.update_cache()
-        return z
+        try:
+            z = await self.bot.db.execute(f"UPDATE {table} SET {key} = $1 WHERE guild_id = $2", value, self.id)
+        except Exception as e:
+            print(e)
+        else:
+            await self.update_cache()
+            return z
 
     async def set_security(self, key, value, *, base=None, table="guild_settings"):
         sec = self.security

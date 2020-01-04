@@ -266,7 +266,12 @@ class Paginator:
                 page.description = self.formmater(chunk)
 
                 if self.author:
-                    page.set_author(name=self.author, icon_url=self.author.avatar_url)
+                    if isinstance(self.author, discord.Guild):
+                        icon = self.author.icon_url
+                    else:
+                        icon = self.author.avatar_url
+
+                    page.set_author(name=self.author.name, icon_url=icon)
 
                 page.set_footer(text=f"{index + 1}/{len(chunks)} ({len(self.entries)})")
                 self.pages.append(page)

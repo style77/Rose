@@ -332,6 +332,8 @@
   "created_new_starboard": "Tworzenie nowego starboard-u.",
   "thing_is_not_settable": "Taka rzecz nie istnieje.",
 
+  "user_level_up": "{}, awansowałeś na **{}**, masz teraz ({} exp).",
+
   "choose_doc": "Wybiera jedną z podnaych opcji.\nAby zaznaczyć wiele opcji, należy użyć podwójnych cudzysłowów.",
   "lenny_doc": "Wyświetla losowego lenny face.",
   "aesthetic_doc": "ａｅｓｔｈｅｔｉｃ",

@@ -902,6 +902,31 @@ class Settings(Plugin):
 
     @set_.command()
     @commands.has_permissions(manage_guild=True)
+    async def levels(self, ctx, value: TrueFalseConverter):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        s = await guild.set_stars('levels', value)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('levels', value))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
+    async def leveling_type(self, ctx, value: ValueRangeFromTo(1, 3)):
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        if not value:
+            raise commands.BadArgument("Argument `value` has to be in range from 1 to 3, where 3 is the hardest and 1 is the easiest.")
+
+        s = await guild.set_stars('leveling_type', value)
+        if s:
+            return await ctx.send(ctx.lang['updated_setting'].format('leveling_type', value))
+        else:
+            return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
+
+    @set_.command()
+    @commands.has_permissions(manage_guild=True)
     async def anti_link(self, ctx, argument: TrueFalseConverter):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
@@ -1043,7 +1068,7 @@ class Settings(Plugin):
 
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
-        s = await guild.set('language', lang.upper())
+        s = await guild.set('lang', lang.upper())
         if s:
             return await ctx.send(ctx.lang['updated_setting'].format('language', lang.upper()))
         else:

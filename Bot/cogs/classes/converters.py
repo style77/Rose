@@ -158,6 +158,6 @@ class ValueRangeFromTo(commands.Converter):
         self.to = to
 
     async def convert(self, ctx, argument: int):
-        if self.from_ < int(argument) < self.to:
+        if self.from_ <= int(argument) <= self.to:
             return int(argument)
         return None

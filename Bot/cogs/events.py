@@ -287,7 +287,7 @@ class Events(Plugin):
             last_usernames = user.last_usernames
 
             last_usernames[after.name] = {"changed": datetime.timestamp(datetime.utcnow())}
-            await user.set('usernames', json.dumps(last_usernames))
+            await user.set('last_usernames', json.dumps(last_usernames))
 
     @commands.Cog.listener()
     async def on_member_join(self, member):

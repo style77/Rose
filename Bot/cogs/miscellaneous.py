@@ -111,6 +111,8 @@ class Useful(Plugin):
                 if str(ctx.guild.id) in user_.last_nicknames:
                     nicks = user_.last_nicknames[str(ctx.guild.id)]
                     for nick, data in nicks.items():
+                        if nick == "null":
+                            nick = ctx.author.name
                         date = datetime.fromtimestamp(data['changed'])
                         t = date.strftime("%d %b %Y %H:%M")
                         z.append(fmt.format(f"{t} UTC", nick))
@@ -120,6 +122,8 @@ class Useful(Plugin):
             if user_.last_usernames:
                 nicks = user_.last_usernames
                 for nick, data in nicks.items():
+                    if nick == "null":
+                        nick = ctx.author.name
                     date = datetime.fromtimestamp(data['changed'])
                     t = date.strftime("%d %b %Y %H:%M")
                     z.append(fmt.format(f"{t} UTC", nick))
