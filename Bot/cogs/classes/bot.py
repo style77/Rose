@@ -69,6 +69,7 @@ class Bot(commands.AutoShardedBot):
         self.usage = Counter()
 
         self._settings_cache = dict()
+        self._users_cache = dict()  # todo
 
         self.session = aiohttp.ClientSession(loop=self.loop)
 
@@ -128,26 +129,26 @@ class Bot(commands.AutoShardedBot):
         return g
 
     async def fetch_user_from_database(self, user_id):
-        user = await self.db.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
+        user = await self.db.fetchrow("SELECT * FROM users WHERE id = $1;", user_id)
         if user:
             return User(self, user)
         else:
             return User(self, await self.add_user(user_id))
 
     async def add_user(self, user_id):
-        query = "INSERT INTO users (id) VALUES ($1) RETURNING *"
+        query = "INSERT INTO users (id) VALUES ($1) RETURNING *;"
         return await self.db.fetchrow(query, user_id)
 
     async def add_guild_to_database(self, guild_id):
         if not guild_id:
             return
 
-        new_guild = await self.db.fetchrow("INSERT INTO guild_settings (guild_id) VALUES ($1) RETURNING *", guild_id)
+        new_guild = await self.db.fetchrow("INSERT INTO guild_settings (guild_id) VALUES ($1) RETURNING *;", guild_id)
         return new_guild
 
     async def clear_settings(self, guild_id):
-        await self.db.execute("DELETE FROM guild_settings WHERE guild_id = $1", guild_id)
-        await self.db.execute("DELETE FROM streams WHERE guild_id = $1", guild_id)
+        await self.db.execute("DELETE FROM guild_settings WHERE guild_id = $1;", guild_id)
+        await self.db.execute("DELETE FROM streams WHERE guild_id = $1;", guild_id)
 
     @tasks.loop(count=1)
     async def changing(self):

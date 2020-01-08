@@ -211,7 +211,7 @@
   "withdrawed": "Wypłaciłeś **{}$** z banku.",
 
   "minus_work_1": "Zostałeś okradziony przez wrogi twojemu miastu gang. Straciłeś **{}$**",
-  "minus_work_2": "tata cie zostawil. Straciłeś **{}$** // todo change.",
+  "minus_work_2": "upadlo ci mleko i kot cie pogryzl. Straciłeś **{}$** // todo change.",
 
   "plus_work_1": "Wyniosłeś śmieci sąsiadce. Zarobiłeś **{}$**.",
   "plus_work_2": "Wygrałeś konkurs na najładniejszego kota miasta. Zarobiłeś **{}$**.",
@@ -334,10 +334,30 @@
 
   "user_level_up": "{}, awansowałeś na **{}**, masz teraz ({} exp).",
 
+  "already_has_tinder_account": "Masz już konto.",
+  "trying_to_dm": "Wysłanie wiadomości prywatnej.",
+  "failed_to_dm": "Nie udało się wysłać prywatnej wiadomości. {}, sprawdź czy nie nie masz wyłaczonych prywatnych wiadomości od nieznajomych.",
+  "send_dm": "{}, wysłano wiadomość prywatną z pierwszym poleceniem.",
+  "first_tinder_action": "Podaj swoje imię, nie musi być prawdziwe choć tak najłatwiej będzie znaleźć Ci dobrego przyjaciela, a może i miłość ❤.",
+  "second_tinder_action": "Podaj swój wiek.",
+  "third_tinder_action": "Podaj swoją płeć. Wybierz jedną z `{}`.",
+  "fourth_tinder_action": "Podaj swoją orientacje. Wybierz jedną z `{}`.",
+  "fifth_tinder_action": "Napisz teraz coś o sobie, jeśli nie chcesz teraz tego robić napisz `cancel`. Maksymalnie **210** znaków.",
+  "must_be_number": "Wiek musi być liczbą.",
+  "already_creating_account": "Jesteś w trakcie zakładania konta.",
+  "created_tinder_acc": "Konto utworzone.",
+  "created_tinder_acc_for": "Konto {} utworzone.",
+  "wants_to_create_new_tinder": "Na pewno chcesz zrestartowac wszystkie ustawienia i stworzyć konto od nowa?\nJeśli chcesz usunąć konto użyj komendy `{}tinder delete`",
+  "no_more_people": "Nie znaleziono więcej osób podobnych do ciebie.",
+  "no_one_found": "Nie znaleziono nikogo podobnego do ciebie. Jeśli uważasz, że to błąd zgłoś to na serwerze pomocy `{}support`.",
+  "no_tinder_account": "Nie masz konta. Założ je komendą `{}tinder create`",
+  "we_ve_got_a_match": "Ty i {} ({}), daliście sobie nawzajem serce. Napisz do niej/niego!",
+
+
   "choose_doc": "Wybiera jedną z podnaych opcji.\nAby zaznaczyć wiele opcji, należy użyć podwójnych cudzysłowów.",
   "lenny_doc": "Wyświetla losowego lenny face.",
   "aesthetic_doc": "ａｅｓｔｈｅｔｉｃ",
-  "claps_doc": "\\U0001f44f",
+  "claps_doc": "\uD83D\uDC4F",
   "yafud_doc": "Historyjki po Polsku.",
   "irc_doc": "Historyjki po Angielsku.",
   "add_doc": "Tworzy nowe todo.",

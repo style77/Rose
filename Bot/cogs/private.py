@@ -34,6 +34,9 @@ class Private(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if not message.guild:
+            return
+
         if message.guild.id == 538366293921759233:
             replies = {
                 "despacito": "wszystko z toba dobrze?",

@@ -232,6 +232,9 @@ class Events(Plugin):
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
+        if not ctx.guild:
+            return
+
         self.bot.usage[ctx.command.qualified_name] += 1
 
         query = """

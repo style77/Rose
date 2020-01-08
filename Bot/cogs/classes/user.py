@@ -7,6 +7,10 @@ class User:
         self._req = req
 
     @property
+    def _raw(self):
+        return self._req
+
+    @property
     def data(self):
         return self._req
 
@@ -21,6 +25,10 @@ class User:
     @property
     def settings(self):
         return json.loads(self.data['user_settings'])
+
+    @property
+    def tinder(self):
+        return json.loads(self.data['tinder'])
 
     @property
     def id(self):

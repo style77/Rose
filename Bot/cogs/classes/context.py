@@ -11,14 +11,15 @@ class RoseContext(commands.Context):
         super().__init__(**attrs)
         self.db = self.bot.db
 
-    async def add_react(self, type_: bool):
+    async def add_react(self, type_: bool, *, message=None):
+        message = message or self.message
         emoji = '<:checkmark:601123463859535885>' if type_ is True else '<:wrongmark:601124568387551232>'
-        reacts = [str(react) for react in self.message.reactions]
+        reacts = [str(react) for react in message.reactions]
         if ('<:checkmark:601123463859535885>' or '<:wrongmark:601124568387551232>') in reacts:
             return
 
         try:
-            await self.message.add_reaction(emoji)
+            await message.add_reaction(emoji)
         except discord.HTTPException:
             return
 
