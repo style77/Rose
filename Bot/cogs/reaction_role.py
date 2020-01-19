@@ -21,11 +21,7 @@ class ReactionRole(Plugin):
 
     @rr.command()
     @commands.has_permissions(manage_guild=True)
-    async def add(self,
-                  ctx,
-                  message: discord.Message,
-                  role: discord.Role,
-                  emoji: EmojiConverter):
+    async def add(self, ctx, message: discord.Message, role: discord.Role, emoji: EmojiConverter):
 
         if not emoji:
             return await ctx.send(ctx.lang['bad_emoji'])

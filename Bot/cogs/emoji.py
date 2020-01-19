@@ -172,10 +172,6 @@ class Emoji(Plugin):
     @commands.group(invoke_without_command=True, aliases=['emoji_stats'])
     @commands.guild_only()
     async def emojistats(self, ctx, *, emoji: partial_emoji = None):
-        """Shows you statistics about the emoji usage in this server.
-        If no emoji is given, then it gives you the top 10 emoji used.
-        """
-
         if emoji is None:
             await self.get_guild_stats(ctx)
         else:
@@ -197,7 +193,6 @@ class Emoji(Plugin):
     @emojistats.command(name='server', aliases=['guild'])
     @commands.guild_only()
     async def emojistats_guild(self, ctx):
-        """Shows you statistics about the local server emojis in this server."""
         emoji_ids = [e.id for e in ctx.guild.emojis]
 
         if not emoji_ids:

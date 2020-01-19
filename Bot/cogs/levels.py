@@ -45,7 +45,7 @@ class Levels(Plugin):
         if task.exception():
             task.print_stack()
 
-    @tasks.loop(seconds=15.0)
+    @tasks.loop(seconds=5.0)
     async def bulk_insert(self):
         await self.bot.wait_until_ready()
 

@@ -3,6 +3,7 @@ import itertools
 import math
 import random
 import re
+import secrets
 
 import aiohttp
 import typing
@@ -24,6 +25,34 @@ RURL = re.compile("https?:\/\/(?:www\.)?.+")
 SPOTIFY_URI_playlists = re.compile("^(https:\/\/open.spotify.com\/playlist\/|spotify:user:spotify:playlist:)([a-zA-Z0-9]+)(.*)$")
 SPOTIFY_URI_tracks = re.compile("^(https:\/\/open.spotify.com\/track\/|spotify:track:)([a-zA-Z0-9]+)(.*)$")
 SPOTIFY_URI_albums = re.compile("^(https:\/\/open.spotify.com\/album\/|spotify:track:)([a-zA-Z0-9]+)(.*)$")
+
+
+class SavedQueue:
+    """
+    123XYZ: ["https://youtube.com/123", "https://youtube.com/1234"]
+    """
+    def __init__(self, bot):
+        self._tracks = list()
+        self.bot = bot
+
+    @classmethod
+    async def from_tracks(cls, bot, tracks):
+        queue = cls(bot)
+        queue._tracks.extend(tracks)
+        code = await queue.save()
+        return code
+
+    async def save(self):
+        code = secrets.token_hex(8)
+        for track in self._tracks:
+            print(track.uri)
+            z = await self.bot.redis.lpush(code, track.uri)
+            print(z)
+        return code
+
+    @property
+    def tracks(self):
+        return self._tracks
 
 
 class Spotify:
@@ -80,7 +109,7 @@ class Spotify:
         return res
 
     async def get_playlist_from_url(self, url):
-        find = SPOTIFY_URI_albums.findall(url)
+        find = SPOTIFY_URI_playlists.findall(url)
         if not find:
             raise commands.BadArgument("This is not correct url.")
 
@@ -604,7 +633,7 @@ class Music(Plugin):
 
         ch = await self.connection_check(ctx)
         if not ch:
-            return
+            return print('s')
 
         await player.disconnect()
         await player.stop()
@@ -613,6 +642,67 @@ class Music(Plugin):
         player.current = None
 
         await ctx.send(ctx.lang['disconnected'])
+
+    @commands.command(aliases=['play_saved_queue', 'psq'])
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def play_from_queue(self, ctx, *, code: str):
+        async with ctx.typing():
+
+            player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+
+            if not player.is_connected or not ctx.guild.me.voice:
+                await ctx.invoke(self.connect)
+
+            if (ctx.guild.me.voice and ctx.author.voice) and ctx.guild.me.voice.channel != ctx.author.voice.channel:
+                await ctx.invoke(self.connect)
+
+            warn_msg = None
+
+            if not ctx.author.voice:
+                warn_msg = await ctx.send(ctx.lang['arent_with_me_on_vc'])
+
+            elif not ctx.guild.me.voice:
+                warn_msg = await ctx.send(ctx.lang['am_not_on_any_vc'])
+
+            elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+                warn_msg = await ctx.send(ctx.lang['arent_with_me_on_vc'])
+
+            if warn_msg:
+                if (player.is_connected or ctx.guild.me.voice) and ctx.author.voice and \
+                        ctx.guild.me.voice.channel == ctx.author.voice.channel:
+                    try:
+                        await warn_msg.delete()
+                    except discord.HTTPException:
+                        return
+                else:
+                    return
+
+            if not player.dj:
+                player.dj = ctx.author
+
+            queue = await self.bot.redis.lrange(code, 0, -1)
+
+            if not queue:
+                await ctx.send(ctx.lang['queue_not_found'].format(code))
+
+            tracks = list()
+            for query in queue:
+                track = await self.bot.wavelink.get_tracks(f"ytsearch: {query.decode('utf-8')}")
+                if not track:
+                    continue
+                tracks.append(track[0])
+
+            for t in tracks:
+                print(tracks)
+                print(t)
+                await player.queue.put(Track(t.id, t.info, ctx=ctx))
+
+            if not player.entries:
+                current = player.current = queue[0]
+                player.last_track = player.entries.index(player.current)
+                # return await ctx.send(ctx.lang['playing_now'].format(current))
+            else:
+                return await ctx.send(ctx.lang['added_to_queue_from_code'].format(code))
 
     @commands.command(aliases=['p', '>'])
     @commands.cooldown(1, 2, commands.BucketType.user)
@@ -641,7 +731,8 @@ class Music(Plugin):
                 warn_msg = await ctx.send(ctx.lang['arent_with_me_on_vc'])
                 
             if warn_msg:
-                if (player.is_connected or ctx.guild.me.voice) and ctx.author.voice and ctx.guild.me.voice.channel == ctx.author.voice.channel:
+                if (player.is_connected or ctx.guild.me.voice) and ctx.author.voice and \
+                        ctx.guild.me.voice.channel == ctx.author.voice.channel:
                     try:
                         await warn_msg.delete()
                     except discord.HTTPException:
@@ -916,6 +1007,22 @@ class Music(Plugin):
         await player.set_volume(value)
         await ctx.send(ctx.lang['set_volume_to'].format(value))
 
+    @commands.command(aliases=['s_q', 'save_que', 's_queue'])
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def save_queue(self, ctx):
+        player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+
+        ch = await self.connection_check(ctx)
+        if not ch:
+            print('sr')
+            return
+
+        if not player.entries:
+            return await ctx.send(ctx.lang['nothing_in_queue'])
+
+        code = await SavedQueue.from_tracks(self.bot, player.entries)
+        await ctx.send(ctx.lang['saved_queue'].format(code))
+
     @commands.command(name='queue', aliases=['q', 'que'])
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def queue_(self, ctx):
@@ -925,12 +1032,10 @@ class Music(Plugin):
         if not ch:
             return
 
-        upcoming = list(itertools.islice(player.entries, 0, 10))
-
-        if not player.entries or not upcoming:
+        if not player.entries:
             return await ctx.send(ctx.lang['nothing_in_queue'])
 
-        entries = [f'`{str(song)}`' for song in upcoming]
+        entries = [f'`{str(song)}`' for song in player.entries]
 
         await ctx.paginate(entries=entries, colour=3553598, author=ctx.author, title=f"{ctx.lang['now_playing']}: {player.current}")
 
@@ -1011,34 +1116,34 @@ class Music(Plugin):
 
         await player.seek(position)
 
-    @commands.command(enabled=False)
-    @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def save_queue(self, ctx):
-        """Zapisuje pozostałe piosenki z playlisty na następne włączenie muzyki."""
-        player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
-    
-        if not await self.has_perms(ctx, manage_guild=True):
-            return await ctx.send(_(ctx.lang, "Nie masz odpowiednich uprawnień do zapisania kolejki."))
-    
-        # player and member instances check
-        if not ctx.author.voice:
-            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
-            return await add_react(ctx.message, False)
-    
-        elif not ctx.guild.me.voice:
-            await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
-            return await add_react(ctx.message, False)
-    
-        elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
-            await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
-            return await add_react(ctx.message, False)
-    
-        c = player._save_queue = not player._save_queue
-    
-        if c is True:
-            return await ctx.send(_(ctx.lang, "{} włączył zapisywanie playlisty.").format(ctx.author.mention))
-        else:
-            return await ctx.send(_(ctx.lang, "{} wyłączył zapisywanie playlisty.").format(ctx.author.mention))
+    # @commands.command(enabled=False)
+    # @commands.cooldown(1, 10, commands.BucketType.guild)
+    # async def save_queue(self, ctx):
+    #     """Zapisuje pozostałe piosenki z playlisty na następne włączenie muzyki."""
+    #     player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
+    #
+    #     if not await self.has_perms(ctx, manage_guild=True):
+    #         return await ctx.send(_(ctx.lang, "Nie masz odpowiednich uprawnień do zapisania kolejki."))
+    #
+    #     # player and member instances check
+    #     if not ctx.author.voice:
+    #         await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+    #         return await add_react(ctx.message, False)
+    #
+    #     elif not ctx.guild.me.voice:
+    #         await ctx.send(_(ctx.lang, "Nie jestem na żadnym kanale."))
+    #         return await add_react(ctx.message, False)
+    #
+    #     elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+    #         await ctx.send(_(ctx.lang, "Nie jesteś ze mną na kanale."))
+    #         return await add_react(ctx.message, False)
+    #
+    #     c = player._save_queue = not player._save_queue
+    #
+    #     if c is True:
+    #         return await ctx.send(_(ctx.lang, "{} włączył zapisywanie playlisty.").format(ctx.author.mention))
+    #     else:
+    #         return await ctx.send(_(ctx.lang, "{} wyłączył zapisywanie playlisty.").format(ctx.author.mention))
 
     @commands.command(aliases=['loop_queue', 'lq'])
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -1046,7 +1151,9 @@ class Music(Plugin):
         """Włącza powtarzanie kolejki."""
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        await self.connection_check(ctx)
+        ch = await self.connection_check(ctx)
+        if not ch:
+            return
 
         c = player.queue_loop = not player.queue_loop
 
@@ -1080,16 +1187,21 @@ class Music(Plugin):
     async def connection_check(self, ctx):
         # player and member instances check
         if not ctx.author.voice:
+            print('1')
             msg = await ctx.send(ctx.lang['arent_with_me_on_vc'])
             return False
 
         elif not ctx.guild.me.voice:
+            print('2')
             msg = await ctx.send(ctx.lang['am_not_on_any_vc'])
             return False
         
         elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
+            print('3')
             msg = await ctx.send(ctx.lang['arent_with_me_on_vc'])
             return False
+        else:
+            return True
 
     @commands.group(enabled=False, name='mc', aliases=['music_controller', 'controller', 'invoke_controller'])
     async def mc_(self, ctx):

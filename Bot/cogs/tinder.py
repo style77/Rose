@@ -52,6 +52,7 @@ class Tinder(Plugin):
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @tinder.command()
+    @commands.cooldown(1, 150, commands.BucketType.user)
     async def create(self, ctx):
         if ctx.author.id in self._creating_account:
             return await ctx.send(ctx.lang['already_creating_account'])
@@ -95,6 +96,7 @@ class Tinder(Plugin):
             return await ch.send(ctx.lang['TimeoutError2'])
 
         if not str(age.content).isdigit():
+            self._creating_account.remove(ctx.author.id)
             return await ch.send(f"{ctx.lang['must_be_number']}\n{ctx.lang['abort']}")
 
         data['age'] = int(age.content)
@@ -111,6 +113,7 @@ class Tinder(Plugin):
                 data['sex'] = key
 
         if 'sex' not in data:
+            self._creating_account.remove(ctx.author.id)
             return await ch.send(ctx.lang['not_correct_choose'].format(', '.join(SEX_MAP.values())))
 
         await ch.send(ctx.lang['fourth_tinder_action'].format(', '.join(ORIENTATION_MAP.values())))
@@ -125,6 +128,7 @@ class Tinder(Plugin):
                 data['orientation'] = key
 
         if 'orientation' not in data:
+            self._creating_account.remove(ctx.author.id)
             return await ch.send(ctx.lang['not_correct_choose'].format(', '.join(ORIENTATION_MAP.values())))
 
         await ch.send(ctx.lang['fifth_tinder_action'])
@@ -144,7 +148,6 @@ class Tinder(Plugin):
         data['data'] = {"skipped": [],
                         "hearted": []}
 
-        print(data)
         self._creating_account.remove(ctx.author.id)
         await self.bot.db.execute("UPDATE users SET tinder = $1 WHERE id = $2", json.dumps(data), ctx.author.id)
         await ctx.send(ctx.lang['created_tinder_acc_for'].format(ctx.author.mention))

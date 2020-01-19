@@ -22,13 +22,28 @@ class NewHelpCommand(commands.HelpCommand):
     def __init__(self):
         super().__init__()
 
+    def get_text(self, text):
+        translated_text = self.context.lang[text]
+
+        print(translated_text)
+
+        if text == translated_text:
+            return None
+        return translated_text
+
     async def _get_blocked_cogs(self):
+        if not self.context.guild:
+            return []
+
         guild = await self.context.bot.get_guild_settings(self.context.guild.id)
         plugins_off = await guild.get_blocked_cogs()
 
         return plugins_off
 
     async def _get_blocked_commands(self):
+        if not self.context.guild:
+            return []
+
         guild = await self.context.bot.get_guild_settings(self.context.guild.id)
         commands_off = await guild.get_blocked_commands()
 
@@ -36,7 +51,7 @@ class NewHelpCommand(commands.HelpCommand):
 
     async def send_command_help(self, command):
         if command.name in await self._get_blocked_commands():
-            return await self.context.send(self.context.lang['command_locked'])
+            return await self.context.send(self.get_text('command_locked'))
 
         e = discord.Embed(color=self.context.bot.color)
         e.set_author(name=command.name, icon_url=self.context.bot.user.avatar_url)
@@ -46,10 +61,10 @@ class NewHelpCommand(commands.HelpCommand):
         for param in command.clean_params:
             params.append(f"[{param}]")
 
-        e.add_field(name=self.context.lang['usage'], value=f"`{command.name} {' '.join(params)}`",
+        e.add_field(name=self.get_text('usage'), value=f"`{command.name} {' '.join(params)}`",
                     inline=False)
         try:
-            e.add_field(name=self.context.lang['you_need_permissions'],
+            e.add_field(name=self.get_text('you_need_permissions'),
                         value=f"`{', '.join(command.callback.required_permissions)}`", inline=False)
         except AttributeError:
             pass
@@ -68,33 +83,51 @@ class NewHelpCommand(commands.HelpCommand):
 
     async def send_group_help(self, group):
         e = discord.Embed(color=self.context.bot.color)
-        e.set_author(name=group.qualified_name,
+
+        params = list()
+        for param in group.clean_params:
+            params.append(f"[{param}]")
+        params = ' '.join(params)  # i hate repeating myself
+
+        e.set_author(name=f"{group.qualified_name} {params}",
                      icon_url=self.context.bot.user.avatar_url)
 
+        commands_without_desc = list()
+
         for command in group.commands:
-            params = []
-
-            for param in command.clean_params:
-                params.append(f"[{param}]")
-
-            params = ' '.join(params)
-
-            cmd_name = f"{command.name} {params if command.clean_params else ''}"
-
-            try:
-                cmd_desc = self.context.lang[f"{group.name}_doc"]
-            except KeyError:
-                cmd_desc = self.context.lang['empty_desc']
-
             if command.name in await self._get_blocked_commands():
                 continue
 
+            cmd_desc = self.get_text(f"{command.qualified_name.replace(' ', '_')}_doc")
+            if not cmd_desc:
+                commands_without_desc.append(command)
+                continue
+
+            params = list()
+            for param in command.clean_params:
+                params.append(f"[{param}]")
+            params = ' '.join(params)  # i hate repeating myself
+
+            cmd_name = f"{command.name} {params}"
+
             e.add_field(name=cmd_name, value=cmd_desc, inline=False)
 
-        try:
-            e.set_footer(text=self.context.lang[f"{group.name}_doc"])
-        except KeyError:
-            pass
+        if commands_without_desc:
+            z = []
+            for command in commands_without_desc:
+                params = list()
+                for param in command.clean_params:
+                    params.append(f"[{param}]")
+                params = ' '.join(params)  # i hate repeating myself
+
+                z.append(f"{command.name} {params}")
+
+            x = '\n'.join(z)
+            e.description = f"{self.get_text('commands_without_description')}\n`{x}`"
+
+        group_doc = self.get_text(f'{group.qualified_name}_doc')
+        if group_doc:
+            e.set_footer(text=group_doc)
 
         await self.context.send(embed=e)
 
@@ -105,55 +138,47 @@ class NewHelpCommand(commands.HelpCommand):
 
         filtered = await self.filter_commands(cog.get_commands(), sort=True)
         blocked_commands = await self._get_blocked_commands()
+
+        commands_without_desc = list()
+
         if filtered:
             for command in cog.get_commands():
 
-                params = []
+                print(command)
+
+                if command.qualified_name in blocked_commands:
+                    continue
+
+                cmd_desc = self.get_text(f"{command.qualified_name.replace(' ', '_')}_doc")
+                if not cmd_desc:
+                    commands_without_desc.append(command)
+                    continue
+
+                params = list()
                 for param in command.clean_params:
                     params.append(f"[{param}]")
-                params = ' '.join(params)
+                params = ' '.join(params)  # i hate repeating myself
 
-                cmd_name = f"{command.name} {params if command.clean_params else ''}"
+                cmd_name = f"{command.name} {params}"
 
-                try:
-                    cmd_desc = self.context.lang[f"{command.name}_doc"]
-                except KeyError:
-                    cmd_desc = self.context.lang['empty_desc']
+                e.add_field(name=cmd_name, value=cmd_desc, inline=False)
 
-                if self.context.guild is not None:
-                    if command.name in blocked_commands:
-                        continue
+            if commands_without_desc:
+                z = []
+                for command in commands_without_desc:
+                    params = list()
+                    for param in command.clean_params:
+                        params.append(f"[{param}]")
+                    params = ' '.join(params)  # i hate repeating myself
 
-                e.add_field(
-                    name=cmd_name, value=cmd_desc, inline=False)
+                    z.append(f"{command.name} {params}")
 
-                if isinstance(command, commands.Group):
-                    for cmd in command.commands:
-                        params = []
+                x = '\n'.join(z)
+                e.description = f"{self.get_text('commands_without_description')}\n`{x}`"
 
-                        for param in cmd.clean_params:
-                            params.append(f"[{param}]")
-
-                        params = ' '.join(params)
-
-                        cmd_name = f"{command.name} {cmd.name} {params if cmd.clean_params else ''}"
-
-                        try:
-                            cmd_desc = self.context.lang[f"{cmd.name}_doc"]
-                        except KeyError:
-                            cmd_desc = self.context.lang['empty_desc']
-
-                        if self.context.guild is not None:
-                            if cmd.name in blocked_commands:
-                                continue
-
-                        e.add_field(
-                            name=cmd_name, value=cmd_desc, inline=False)
-
-        try:
-            e.set_footer(text=self.context.lang[f"{cog.name}_doc"])
-        except KeyError:
-            pass
+            cog_doc = self.get_text(f"{cog.qualified_name}_doc")
+            if cog_doc:
+                e.set_footer(text=cog_doc)
 
         await self.context.send(embed=e)
 
@@ -188,17 +213,12 @@ class NewHelpCommand(commands.HelpCommand):
                     if command.name in blocked_commands:
                         continue
 
-                    lines.append('`' + command.name + '`')
+                    lines.append('`' + command.qualified_name + '`')
                     if isinstance(command, commands.Group):
                         for cmd in command.commands:
-                            if f"`{command.name} {cmd.name}`" in lines:
+                            if f"`{cmd.qualified_name}`" in lines:
                                 return
-                            lines.append(f"`{command.name} {cmd.name}`")
-                            # if isinstance(cmd, commands.Group):
-                            # for cmd2 in command.commands:
-                            # if f"{command.name} {cmd.name} {cmd2.name}" in lines:
-                            # return
-                            # lines.append(f"{command.name} {cmd.name} {cmd2.name}")
+                            lines.append(f"`{cmd.qualified_name}`")
 
             if len(lines) > 0:
                 e.add_field(name=cog_name, value=', '.join(lines), inline=False)

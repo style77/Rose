@@ -193,11 +193,11 @@
 
   "no_theme_like_this": "Nie ma takiego tła. Spróbuj jedno z `{}`.",
   "avalaible_themes": "Dostępne tła `{}`.",
-  "need_more_money_theme": "Nie masz wystarczająco pieniędzy na zmiane tła na profilu. Potrzebujesz **100000$**",
+  "need_more_money_theme": "Nie masz wystarczająco pieniędzy na zmiane tła na profilu. Potrzebujesz **100,000$**.",
   "no_color_like_this": "Nie ma takiego koloru. Spróbuj jeden z `{}`.",
   "avalaible_colors": "Dostępne kolory `{}`.",
-  "need_more_money_color": "Nie masz wystarczająco pieniędzy na zmiane koloru zwierzaka. Potrzebujesz **15000*$*",
-  "need_more_money_name": "Nie masz wystarczająco pieniędzy na zmiane imienia zwierzaka. Potrzebujesz **1000$**",
+  "need_more_money_color": "Nie masz wystarczająco pieniędzy na zmiane koloru zwierzaka. Potrzebujesz **15,000$**.",
+  "need_more_money_name": "Nie masz wystarczająco pieniędzy na zmiane imienia zwierzaka. Potrzebujesz **1,000$**.",
   "fuel_drink": "`{}` odnowione do pełna.",
   "bought_food": "Zakupiłeś **{}** karmy.",
   "no_weapon_like": "Nie ma takiej broni.",
@@ -353,6 +353,12 @@
   "no_tinder_account": "Nie masz konta. Założ je komendą `{}tinder create`",
   "we_ve_got_a_match": "Ty i {} ({}), daliście sobie nawzajem serce. Napisz do niej/niego!",
 
+  "commands_without_description": "Komendy bez opisu:",
+  "no_thing_in_inventory": "Nie masz `{}` w ekwipunku.",
+
+  "saved_queue": "Zapisano kolejke. Kod to **{}**.",
+  "queue_not_found": "Kolejka z kodem **{}**, nie istnieje.",
+  "added_to_queue_from_code": "Dodano do kolejki zapisaną playliste z kodu **{}**.",
 
   "choose_doc": "Wybiera jedną z podnaych opcji.\nAby zaznaczyć wiele opcji, należy użyć podwójnych cudzysłowów.",
   "lenny_doc": "Wyświetla losowego lenny face.",
@@ -362,5 +368,11 @@
   "irc_doc": "Historyjki po Angielsku.",
   "add_doc": "Tworzy nowe todo.",
   "nitro_doc": "Wysyła pierwszą znalezioną emotke z podaną nazwą.",
-  "rtfm_doc": "Szuka podanego obiektu w dokumentacji."
+  "rtfm_doc": "Szuka podanego obiektu w dokumentacji.",
+  "tinder_create": "Tworzy konto.",
+  "tinder_matchme": "Wyszukuje osoby podobnej na podstawie wieku i zainteresowań.",
+  "Levels_doc": "Poziomy, zbieranie expa, każdemu dobrze znane.",
+  "servertop_doc": "Pokazuje topke osób z największym levelem na serwerze.",
+  "emojistats_doc": "Pokazuje informacje o emotce.",
+  "emojistats_server_doc": "Pokazuje informacje o emotkach używanych na serwerze."
 }

@@ -1154,7 +1154,7 @@ class Settings(Plugin):
     @commands.has_permissions(manage_guild=True)
     async def stars_color(self, ctx, color):
 
-        hex_ = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
+        hex_ = re.search(r'^#?(?:[0-9a-fA-F]{3}){1,2}$', color)
 
         if not hex_:
             return await ctx.send(ctx.lang['color_has_to_be_hex'])

@@ -7,6 +7,7 @@ from datetime import datetime
 from collections import Counter
 
 import aiohttp
+import aioredis
 import asyncpg
 import discord
 import wavelink
@@ -42,7 +43,7 @@ class Bot(commands.AutoShardedBot):
         super(Bot, self).__init__(**OPTS)
 
         # tasks
-        self._connect_database.start()
+        self._connect_databases.start()
         self._load_extensions.start()
         self.changing.start()
 
@@ -91,10 +92,11 @@ class Bot(commands.AutoShardedBot):
 
     # noinspection PyCallingNonCallable
     @tasks.loop(count=1)
-    async def _connect_database(self):
+    async def _connect_databases(self):
         self.db = await asyncpg.create_pool(
             dsn=f"postgresql://{get('dbip')}/{get('dbname')}", user="style",
             password=get("password"))
+        self.redis = await aioredis.create_redis_pool('redis://localhost:6379')
 
         # self.db = Database(self, poll)
 

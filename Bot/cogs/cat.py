@@ -208,6 +208,8 @@ class Box:
 
 ALL_BOXES = ['common_box', 'rare_box', 'epic_box', 'legendary_box', 'pretty_box']
 
+USEABLE_ITEMS = ['karma', 'energy drink', 'health drink', 'food drink']
+
 
 class ItemsConverter(commands.Converter):
     def __init__(self, type_):
@@ -236,6 +238,16 @@ class ItemsConverter(commands.Converter):
 
         elif self.type == 'item':
             item = fuzzy.extract_one(argument, ALL_ITEMS, score_cutoff=60)
+
+            if not item:
+                return None
+
+            item = item[0]
+
+            return item
+
+        elif self.type == 'useable':
+            item = fuzzy.extract_one(argument, USEABLE_ITEMS, score_cutoff=60)
 
             if not item:
                 return None
@@ -417,7 +429,7 @@ class Cat(commands.Cog):
 
     async def lvl_up(self, cat):
         if cat['exp'] > round(9222 * cat['level']):
-            await self.bot.db.execute("UPDATE cats SET level = level + 1, money = money + 65  WHERE owner_id = $1",
+            await self.bot.db.execute("UPDATE cats SET level = level + 1, money = money + 1000  WHERE owner_id = $1",
                                       cat['owner_id'])
             return True
         else:
@@ -923,38 +935,23 @@ class Cat(commands.Cog):
             if not item:
                 return await ctx.send(ctx.lang['no_item_like'])
 
-        drinks_map = {
-            "energy drink": "sta",
-            "health drink": "hp",
-            "food drink": "food"
-        }
-
-        if orginal_item in drinks_map:
-            if cat.money < item:
-                return await ctx.send(ctx.lang['no_money_for'].format(orginal_item, item - cat.money))
-
-            await self.bot.db.execute(f"UPDATE cats SET {drinks_map[orginal_item]} = 100, money = $1 WHERE owner_id = $2",
-                                      cat.money - item, ctx.author.id)
-            return await ctx.send(ctx.lang['fuel_drink'].format(drinks_map[orginal_item]))
+        if cat.money < item * amount:
+            return await ctx.send(ctx.lang['no_money_for'].format(orginal_item, (item * amount) - cat.money))
 
         if orginal_item == 'karma':
-            if cat.money < item * amount:
-                return await ctx.send(ctx.lang['no_money_for'].format(orginal_item, (item * amount) - cat.money))
             money = cat.money - (item * amount)
             karma = cat.karma + amount
             await self.bot.db.execute("UPDATE cats SET money = $1, karma = $2 WHERE owner_id = $3", money,
                                       karma, ctx.author.id)
             return await ctx.send(ctx.lang['bought_food'].format(amount))
 
-        if cat.money < item * amount:
-            return await ctx.send(ctx.lang['no_money_for'].format(orginal_item, (item * amount) - cat.money))
-
         x = await ctx.confirm(ctx.lang['confirm_buying'].format(orginal_item, amount, item * amount), ctx.author)
 
         if x:
             for _ in range(0, amount):
                 new_balance = await cat.buy(orginal_item)
-            await ctx.send(ctx.lang['bought'].format(orginal_item, amount, item * amount, new_balance))
+            else:
+                await ctx.send(ctx.lang['bought'].format(orginal_item, amount, item * amount, new_balance))
         else:
             await ctx.send(ctx.lang['abort'])
 
@@ -1181,9 +1178,14 @@ class Cat(commands.Cog):
         rating1 = round(rating1)
         rating2 = round(rating2)
 
-        async with self.bot.db.acquire():
+        new_hp_query = "UPDATE cats SET hp = $1 WHERE owner_id = $2"
+
+        async with self.bot.db.acquire():  # todo
             await self.bot.db.execute(query, rating1, ctx.author.id)
             await self.bot.db.execute(query, rating2, member.id)
+
+            await self.bot.db.execute(new_hp_query, winner.cat.hp - 5, winner.id)
+            await self.bot.db.execute(new_hp_query, loser.cat.hp - 5, loser.id)
 
         new_rating = f"\nNowy ranking\n{ctx.author.mention}: **{rating1}**.\n{member.mention}: **{rating2}**"
         await ctx.send(ctx.lang['win_fight'].format(winner.member_object.mention, loser.member_object.mention,
@@ -1298,7 +1300,11 @@ class Cat(commands.Cog):
     @cat.command()
     async def revive(self, ctx):
         cat = await self.bot.db.fetchrow("SELECT * FROM cats WHERE owner_id = $1", ctx.author.id)
+        if not cat:
+            raise commands.BadArgument(f"{ctx.author.mention}, {ctx.lang['no_cat'].format(ctx.prefix)}")
+
         cat = DefaultCat(self.bot, cat)
+
         if not cat.is_dead:
             return await ctx.send(ctx.lang['cat_alive'])
         n_money = round(cat.money / 2)
@@ -1448,6 +1454,33 @@ class Cat(commands.Cog):
 
         e = discord.Embed(description=desc, color=self.bot.color)
         await ctx.send(embed=e)
+
+    @cat.command()
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def use(self, ctx, *, item: ItemsConverter('useable')):
+        cat = await self.get_cat(ctx.author)
+
+        drinks_map = {
+            "energy drink": "sta",
+            "health drink": "hp",
+            "food drink": "food"
+        }
+
+        if not cat.inventory:
+            return await ctx.send(ctx.lang['empty_inventory'])
+
+        if item not in self.cat.inventory:
+            return await ctx.send(ctx.lang['no_thing_in_inventory'].format(item))
+
+        if item in drinks_map:
+            cat.inventory.remove(item)
+            await self.bot.db.execute(f"UPDATE cats SET {drinks_map[item]} = 100, inventory = $1 WHERE owner_id = $2", cat.inventory, ctx.author.id)
+            return await ctx.send(ctx.lang['fuel_drink'].format(drinks_map[item]))
+
+        elif item in ['karma', 'food']:
+            cat.inventory.remove(item)
+            await self.bot.db.execute(f"UPDATE cats SET food = food + 15, karma = karma - 1 WHERE owner_id = $2", cat.inventory, ctx.author.id)
+            return await ctx.send(ctx.lang['feed_cat_with_karma'].format(cat.food))
 
     @commands.Cog.listener()
     async def on_message(self, message):

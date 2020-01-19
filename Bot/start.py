@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 
 from cogs.classes.bot import Bot
@@ -10,6 +11,13 @@ os.environ["JISHAKU_NO_UNDERSCORE"] = "1"
 os.environ["JISHAKU_RETAIN"] = "1"
 
 bot = Bot()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('discord')
+if bot.development:
+    logger.setLevel(logging.INFO)
+else:
+    logger.setLevel(logging.WARN)
 
 
 @bot.before_invoke
@@ -29,6 +37,7 @@ if '__main__' == __name__:
         loop.run_until_complete(bot.logout())
     finally:
         loop.run_until_complete(bot.db.close())
+        loop.run_until_complete(bot.redis.close())
         loop.run_until_complete(bot.session.close())
         # for task in bot.tasks():
         #     task.close()
