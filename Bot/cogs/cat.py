@@ -1349,7 +1349,7 @@ class Cat(commands.Cog):
             async with self.bot.db.acquire():
                 await self.bot.db.execute("UPDATE cats SET money = money - $1 WHERE owner_id = $2", amount, member.id)
                 await self.bot.db.execute("UPDATE cats SET money = money + $1 WHERE owner_id = $2", amount, ctx.author.id)
-            await ctx.send(ctx.lang['robbed'].format(ctx.author.mention, member.mention, amount))
+            await ctx.send(ctx.lang['robbed'].format(ctx.author.mention, member.mention, amount, ctx.prefix))
         else:
             amount = int(robber_cat.money) * (ratio / 100)
             await self.bot.db.execute("UPDATE cats SET money = money - $1 WHERE owner_id = $2", amount, ctx.author.id)
@@ -1410,7 +1410,7 @@ class Cat(commands.Cog):
         e = discord.Embed(description=desc, timestamp=ctx.message.created_at, color=self.bot.color)
         await ctx.send(embed=e)
 
-    @cat.command()
+    @cat.command(enabled=False)
     @commands.cooldown(1, 600, commands.BucketType.user)
     async def work(self, ctx):
         plus_sentences = [ctx.lang['plus_work_1'], ctx.lang['plus_work_2']]

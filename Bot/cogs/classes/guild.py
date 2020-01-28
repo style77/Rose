@@ -106,10 +106,9 @@ class Guild:
         try:
             z = await self.bot.db.execute(f"UPDATE {table} SET {key} = $1 WHERE guild_id = $2", value, self.id)
         except Exception as e:
-            print(e)
-        else:
-            await self.update_cache()
-            return z
+            return print(e)
+        await self.update_cache()
+        return z
 
     async def set_security(self, key, value, *, base=None, table="guild_settings"):
         sec = self.security

@@ -443,9 +443,10 @@ class Player(wavelink.Player):
                             await self.last_play_info.delete()
                         except (discord.HTTPException, discord.Forbidden):
                             pass
-                    
-                    self.last_play_info = await self.text_channel.send(lang['playing_now'].format(
-                        clean_text(self.current.title)))
+
+                    if self.text_channel:
+                        self.last_play_info = await self.text_channel.send(lang['playing_now'].format(
+                            clean_text(self.current.title)))
                     self.pauses.clear()
                     self.resumes.clear()
                     self.stops.clear()
@@ -687,7 +688,7 @@ class Music(Plugin):
 
             tracks = list()
             for query in queue:
-                track = await self.bot.wavelink.get_tracks(f"ytsearch: {query.decode('utf-8')}")
+                track = await self.bot.wavelink.get_tracks(query.decode('utf-8').replace('<', '').replace('>', ''))
                 if not track:
                     continue
                 tracks.append(track[0])

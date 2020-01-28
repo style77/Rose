@@ -24,10 +24,10 @@ else:
 async def context_creator(ctx):
     bot.context = ctx
 
+
 bot.exts = ['owner', 'eh', 'fun', 'todo', 'social', 'events', 'miscellaneous', 'moderator', 'music', 'logs',
             'nsfw&sfw', 'streams', 'cat', 'stars', 'gamestats', 'help', 'stats', 'afk', 'tags', 'reaction_role',
-            'private', 'emoji', 'levels', 'tinder']
-
+            'private', 'emoji', 'tinder']
 
 if '__main__' == __name__:
     loop = asyncio.get_event_loop()
@@ -37,7 +37,7 @@ if '__main__' == __name__:
         loop.run_until_complete(bot.logout())
     finally:
         loop.run_until_complete(bot.db.close())
-        loop.run_until_complete(bot.redis.close())
+        bot.redis.close()
         loop.run_until_complete(bot.session.close())
         # for task in bot.tasks():
         #     task.close()

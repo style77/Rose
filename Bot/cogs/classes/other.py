@@ -1,6 +1,8 @@
 import argparse
+import asyncio
 import functools
 
+import aiohttp
 from discord.ext import commands
 
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -93,6 +95,15 @@ class Plugin(commands.Cog):
     async def turn_on(self, guild_id):
         guild = await self.bot.get_guild_settings(guild_id)
         await guild.set_plugin(self, True)
+
+
+async def get_avatar_bytes(avatar_url):
+    session = aiohttp.ClientSession()
+
+    async with session as s:
+        async with s.get(avatar_url) as response:
+            image_bytes = await response.read()
+    return image_bytes
 
 
 # ELO SYSTEM

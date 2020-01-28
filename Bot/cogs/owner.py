@@ -25,12 +25,12 @@ from tabulate import tabulate
 # import matplotlib.pyplot as plt
 
 
-class Owner(Plugin, command_attrs=dict(hidden=True)):
+class Owner(Plugin):  # , command_attrs=dict(hidden=True)
 
     async def cog_check(self, ctx):
         return await self.bot.is_owner(ctx.author)
 
-    @commands.command(name="eval")
+    @commands.command(name="eval", aliases=['e'])
     async def eval_(self, ctx, *, body: codeblock_converter):
         return await ctx.invoke(self.bot.get_command("jishaku python"), argument=body)
 
@@ -111,7 +111,7 @@ class Owner(Plugin, command_attrs=dict(hidden=True)):
 
     @commands.command()
     async def reload_languages(self, ctx):
-        with open(r"assets/languages/eng.json") as f:
+        with open(r"assets/languages/_eng.json") as f:
             self.bot.english = json.load(f)
 
         with open(r"assets/languages/pl.json") as f:
@@ -150,9 +150,10 @@ class Owner(Plugin, command_attrs=dict(hidden=True)):
             query = query.replace("_guild.id", str(ctx.guild.id))
         try:
             e = await self.bot.db.fetch(query)
+            print(e)
         except Exception as er:
             e = f"{type(er)} - {er}"
-        await ctx.send(e)
+        await ctx.send(f"```{e}```")
 
     @commands.group(invoke_without_command=True)
     async def rose(self, ctx):

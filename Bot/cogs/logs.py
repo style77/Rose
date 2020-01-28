@@ -5,6 +5,7 @@ import functools
 
 from discord.ext import commands
 
+from .classes import other
 from .classes.other import Plugin
 from .utils import get_language
 
@@ -14,15 +15,32 @@ class Logs(Plugin):
         super().__init__(bot)
         self.bot = bot
 
-    async def get_logs_webhook(self, url):
-        webhook = discord.Webhook.from_url(url, adapter=discord.AsyncWebhookAdapter(aiohttp.ClientSession(loop=self.bot.loop)))
+    async def get_logs_webhook(self, webhook_id):
+        try:
+            webhook = await self.bot.fetch_webhook(webhook_id)
+        except discord.NotFound:
+            return None
         return webhook
 
     async def get_logs_channel(self, guild_id):
         guild = await self.bot.get_guild_settings(guild_id)
-        if guild['logs'] and guild['logs_webhook']:
-            channel = await self.get_logs_webhook(guild['logs_webhook'])
-            return channel
+        if guild['logs']:
+            logs_webhook = guild['logs_webhook']
+            channel = await self.get_logs_webhook(logs_webhook)
+
+            if not channel:
+                channel = self.bot.get_channel(guild['logs'])
+
+                url = f"https://cdn.discordapp.com/avatars/{self.bot.user.id}/{self.bot.user.avatar}.png"
+                avatar = await other.get_avatar_bytes(url)
+
+                logs_webhook = await channel.create_webhook(name="Rose logging", avatar=avatar)
+                logs_webhook = logs_webhook.id
+                await guild.set('logs_webhook', logs_webhook)
+
+            channel = await self.get_logs_webhook(logs_webhook)
+            if channel:
+                return channel
         return None
 
     @commands.Cog.listener()

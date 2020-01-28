@@ -54,14 +54,19 @@ class NewHelpCommand(commands.HelpCommand):
             return await self.context.send(self.get_text('command_locked'))
 
         e = discord.Embed(color=self.context.bot.color)
-        e.set_author(name=command.name, icon_url=self.context.bot.user.avatar_url)
+        e.set_author(name=command.qualified_name, icon_url=self.context.bot.user.avatar_url)
 
-        params = []
-
+        params = list()
         for param in command.clean_params:
-            params.append(f"[{param}]")
+            if len(params) > len(command.clean_params):
+                break
 
-        e.add_field(name=self.get_text('usage'), value=f"`{command.name} {' '.join(params)}`",
+            if str(command.clean_params[param])[-4:] == "None":
+                params.append(f"<{param}=None>")
+            else:
+                params.append(f"[{param}]")
+
+        e.add_field(name=self.get_text('usage'), value=f"`{command.qualified_name} {' '.join(params)}`",
                     inline=False)
         try:
             e.add_field(name=self.get_text('you_need_permissions'),
@@ -72,12 +77,10 @@ class NewHelpCommand(commands.HelpCommand):
         if command.aliases:
             e.add_field(name="Aliases", value=f"`{', '.join(command.aliases)}`", inline=False)
 
-        #e.add_field(name=_(self.context.lang, "Wymagane uprawnienia bota"), value=f"{command.name} {' '.join(params)}")
+        # e.add_field(name=_(self.context.lang, "Wymagane uprawnienia bota"), value=f"{command.name} {' '.join(params)}")
 
-        try:
-            e.set_footer(text=self.context.lang[f'{command.name}_doc'])
-        except KeyError:
-            pass
+        if self.get_text(f'{command.qualified_name}_doc'):
+            e.set_footer(text=self.get_text(f'{command.qualified_name}_doc'))
 
         await self.context.send(embed=e)
 
@@ -86,7 +89,14 @@ class NewHelpCommand(commands.HelpCommand):
 
         params = list()
         for param in group.clean_params:
-            params.append(f"[{param}]")
+            if len(params) > len(group.clean_params):
+                break
+
+            if str(group.clean_params[param])[-4:] == "None":
+                params.append(f"<{param}=None>")
+            else:
+                params.append(f"[{param}]")
+
         params = ' '.join(params)  # i hate repeating myself
 
         e.set_author(name=f"{group.qualified_name} {params}",
@@ -104,9 +114,16 @@ class NewHelpCommand(commands.HelpCommand):
                 continue
 
             params = list()
-            for param in command.clean_params:
-                params.append(f"[{param}]")
-            params = ' '.join(params)  # i hate repeating myself
+            for param in group.clean_params:
+                if len(params) > len(group.clean_params):
+                    break
+
+                if str(group.clean_params[param])[-4:] == "None":
+                    params.append(f"<{param}=None>")
+                else:
+                    params.append(f"[{param}]")
+
+            params = ' '.join(params)
 
             cmd_name = f"{command.name} {params}"
 
@@ -116,10 +133,16 @@ class NewHelpCommand(commands.HelpCommand):
             z = []
             for command in commands_without_desc:
                 params = list()
-                for param in command.clean_params:
-                    params.append(f"[{param}]")
-                params = ' '.join(params)  # i hate repeating myself
+                for param in group.clean_params:
+                    if len(params) > len(group.clean_params):
+                        break
 
+                    if str(group.clean_params[param])[-4:] == "None":
+                        params.append(f"<{param}=None>")
+                    else:
+                        params.append(f"[{param}]")
+
+                params = ' '.join(params)
                 z.append(f"{command.name} {params}")
 
             x = '\n'.join(z)
@@ -156,9 +179,15 @@ class NewHelpCommand(commands.HelpCommand):
 
                 params = list()
                 for param in command.clean_params:
-                    params.append(f"[{param}]")
-                params = ' '.join(params)  # i hate repeating myself
+                    if len(params) > len(command.clean_params):
+                        break
 
+                    if str(command.clean_params[param])[-4:] == "None":
+                        params.append(f"<{param}=None>")
+                    else:
+                        params.append(f"[{param}]")
+
+                params = ' '.join(params)
                 cmd_name = f"{command.name} {params}"
 
                 e.add_field(name=cmd_name, value=cmd_desc, inline=False)
@@ -168,9 +197,15 @@ class NewHelpCommand(commands.HelpCommand):
                 for command in commands_without_desc:
                     params = list()
                     for param in command.clean_params:
-                        params.append(f"[{param}]")
-                    params = ' '.join(params)  # i hate repeating myself
+                        if len(params) > len(command.clean_params):
+                            break
 
+                        if str(command.clean_params[param])[-4:] == "None":
+                            params.append(f"<{param}=None>")
+                        else:
+                            params.append(f"[{param}]")
+
+                    params = ' '.join(params)
                     z.append(f"{command.name} {params}")
 
                 x = '\n'.join(z)

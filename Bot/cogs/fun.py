@@ -1,10 +1,12 @@
 import asyncio
 import io
+import os
 import random
 import textwrap
 import time
 import unicodedata
 import urllib
+from datetime import timedelta
 from functools import partial
 
 import aiogtts
@@ -12,6 +14,7 @@ import aiohttp
 
 import async_cleverbot as ac
 import discord
+import psutil
 import pyqrcode
 import typing
 
@@ -20,6 +23,7 @@ from discord.ext.commands import BucketType
 
 from . import utils
 from .classes.converters import EmojiConverter, UrlConverter
+from .classes.menus import Switcher
 from .music import Player
 from .utils import get, get_language
 from .utils.improved_discord import clean_text
@@ -766,6 +770,13 @@ class Fun(Plugin):
             await ctx.send(file=file, embed=e)
 
     @commands.command()
+    async def uptime(self, ctx):
+        def uptime_():
+            p = psutil.Process(os.getpid())
+            return int(time.time() - p.create_time())
+        await ctx.send(f"`{str(timedelta(seconds=uptime_()))}`")
+
+    @commands.command()
     async def captcha(self, ctx, *, text):
         async with ctx.typing():
             async with aiohttp.ClientSession() as cs:
@@ -775,6 +786,13 @@ class Fun(Plugin):
             e.set_image(url="attachment://siema.png")
             e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
             await ctx.send(file=file, embed=e)
+
+    @commands.command()
+    async def see_emojis(self, ctx):
+        if not ctx.guild.emojis:
+            return await ctx.send(ctx.lang['no_custom_emoji_guild'])
+        m = Switcher()
+        await m.start(ctx)
 
 
 def setup(bot):

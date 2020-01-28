@@ -83,12 +83,25 @@ class Events(Plugin):
         if message.author.bot:
             return
 
-        if message.author.guild_permissions.administrator:
-            return
-
         guild = await self.bot.get_guild_settings(message.guild.id)
 
         language = self.bot.get_language_object(guild.language)
+
+        if message.guild.me in message.mentions:
+
+            prefix = await get_prefix(self.bot, message)  # its more exact
+
+            text = language['my_prefix_is']
+
+            z = []
+            for pre in prefix:
+                z.append(f"`{pre}`")
+            msg = f"{text} {', '.join(z)}"
+
+            await message.channel.send(msg)
+
+        if message.author.guild_permissions.administrator:
+            return
 
         mod = self.bot.get_cog("Moderator")
         if not mod:
@@ -203,20 +216,6 @@ class Events(Plugin):
                     await ctx.send(language['warned_member'].format(message.author.mention, message.author, reason))
                 else:
                     return await ctx.send(language['cant_warn'])
-
-        if message.content.lower() in [message.guild.me.mention]:
-
-            prefix = await get_prefix(self.bot, message)  # its more exact
-
-            lang = self.bot.get_language_object(guild.language)
-            text = lang['my_prefix_is']
-
-            z = []
-            for pre in prefix:
-                z.append(f"`{pre}`")
-            msg = f"{text} {', '.join(z)}"
-
-            await message.channel.send(msg)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):

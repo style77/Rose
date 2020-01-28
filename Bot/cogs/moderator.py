@@ -10,6 +10,7 @@ from discord.ext import commands, tasks
 
 from datetime import datetime, timedelta
 
+from .classes import other
 from .utils import fuzzy
 from .classes.other import Plugin, Arguments
 from .classes.converters import ModerationReason, VexsTimeConverter, EmojiConverter, ValueRangeFromTo, EmojiURL
@@ -1054,8 +1055,17 @@ class Settings(Plugin):
     async def logs(self, ctx, channel: discord.TextChannel):
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
+        url = f"https://cdn.discordapp.com/avatars/{self.bot.user.id}/{self.bot.user.avatar}.png"
+        avatar = await other.get_avatar_bytes(url)
+        webhook = await channel.create_webhook(name="Rose logging", avatar=avatar)
+
+        old_webhook = await self.bot.cogs['Logs'].get_logs_webhook(guild['logs_webhook'])
+        if old_webhook:
+            await old_webhook.delete()
+
         s = await guild.set('logs', channel.id)
-        if s:
+        ls = await guild.set('logs_webhook', webhook.id)
+        if s and ls:
             return await ctx.send(ctx.lang['updated_setting'].format('logs', '#' + str(channel)))
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
@@ -1182,7 +1192,7 @@ class Settings(Plugin):
 
     @set_.command()
     @commands.has_permissions(manage_guild=True)
-    async def stars_count(self, ctx, value: ValueRangeFromTo(0, 13)):  # 1 to 12
+    async def stars_count(self, ctx, value: ValueRangeFromTo(1, 13)):  # 1 to 12
         guild = await self.bot.get_guild_settings(ctx.guild.id)
 
         if not value:

@@ -256,7 +256,7 @@
   "turn_on_plugin": "Włączono plugin.",
   "revive_story": "**{}** *nagle powstał z martwych jako kot widmo i przeteleportował się pod okno* **{}** *jego złego pana, tak naprawdę nikt nie wie czemu do niego wrócił, ale kogo to obchodzi.*",
   "cat_alive": "Twój kot żyje.",
-  "robbed": "{}, okradł {} na **{}$**.\n*Nastepnym razem lepiej trzymaj pieniądze w banku *`/cat deposit all`*.*",
+  "robbed": "{}, okradł {} na **{}$**.\n*Nastepnym razem lepiej trzymaj pieniądze w banku *`{}cat deposit all`*.*",
   "robbed_wrong": "{}, został złapany podczas okradania {}. Stracił **{}$**.",
   "cat_woke_up": "Twój kot odpoczywał **{}**min i ma teraz **{}** energii.",
   "max_energy": "Twój kot ma już maksymalną ilość energii.",
@@ -332,7 +332,7 @@
   "created_new_starboard": "Tworzenie nowego starboard-u.",
   "thing_is_not_settable": "Taka rzecz nie istnieje.",
 
-  "user_level_up": "{}, awansowałeś na **{}**, masz teraz ({} exp).",
+  "user_level_up": "{}, awansowałeś na **{}**, masz teraz {} exp.",
 
   "already_has_tinder_account": "Masz już konto.",
   "trying_to_dm": "Wysłanie wiadomości prywatnej.",
@@ -347,7 +347,7 @@
   "already_creating_account": "Jesteś w trakcie zakładania konta.",
   "created_tinder_acc": "Konto utworzone.",
   "created_tinder_acc_for": "Konto {} utworzone.",
-  "wants_to_create_new_tinder": "Na pewno chcesz zrestartowac wszystkie ustawienia i stworzyć konto od nowa?\nJeśli chcesz usunąć konto użyj komendy `{}tinder delete`",
+  "wants_to_create_new_tinder": "Na pewno chcesz zrestartowac wszystkie ustawienia i stworzyć konto od nowa?\nJeśli chcesz usunąć konto użyj komendy `{}tinder delete`.",
   "no_more_people": "Nie znaleziono więcej osób podobnych do ciebie.",
   "no_one_found": "Nie znaleziono nikogo podobnego do ciebie. Jeśli uważasz, że to błąd zgłoś to na serwerze pomocy `{}support`.",
   "no_tinder_account": "Nie masz konta. Założ je komendą `{}tinder create`",

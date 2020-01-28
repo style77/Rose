@@ -137,6 +137,5 @@ class Levels(Plugin):
 
         await ctx.paginate(title="Server Top", author=ctx.guild, entries=z, footer=f"Guild: {ctx.guild.name}")
 
-
 def setup(bot):
     bot.add_cog(Levels(bot))

@@ -90,12 +90,26 @@ class Bot(commands.AutoShardedBot):
         raw_lang = self.polish if lang == "PL" else self.english
         return raw_lang
 
+    def __validate_languages(self):
+        z = list()
+        i = 1
+
+        for key in self.polish.keys():
+            i += 1
+            if key not in self.english.keys():
+                z.append(f"LINE {i} | {key} not found in _eng.json")
+            elif self.polish[key] == self.english[key]:
+                z.append(f"LINE {i} | {key} not translated.")
+
+        return z
+
     # noinspection PyCallingNonCallable
     @tasks.loop(count=1)
     async def _connect_databases(self):
         self.db = await asyncpg.create_pool(
             dsn=f"postgresql://{get('dbip')}/{get('dbname')}", user="style",
             password=get("password"))
+
         self.redis = await aioredis.create_redis_pool('redis://localhost:6379')
 
         # self.db = Database(self, poll)
@@ -199,3 +213,4 @@ class Bot(commands.AutoShardedBot):
 
     async def on_ready(self):
         print(f'Logged in as {self.user.name} | {self.user.id}')
+        print('\n'.join(self.__validate_languages()))
