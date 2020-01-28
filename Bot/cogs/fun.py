@@ -42,9 +42,9 @@ from jishaku.functools import executor_function
 class Fun(Plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        if not self.bot.development:
-            self.cleverbot = ac.Cleverbot(get("cleverbot_api"))
-            self.cleverbot.set_context(ac.DictContext(self.cleverbot))
+        # if not self.bot.development:
+        #     self.cleverbot = ac.Cleverbot(get("cleverbot_api"))
+        #     self.cleverbot.set_context(ac.DictContext(self.cleverbot))
 
         self.calls = dict()
 

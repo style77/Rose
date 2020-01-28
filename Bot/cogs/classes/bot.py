@@ -166,7 +166,7 @@ class Bot(commands.AutoShardedBot):
         await self.db.execute("DELETE FROM guild_settings WHERE guild_id = $1;", guild_id)
         await self.db.execute("DELETE FROM streams WHERE guild_id = $1;", guild_id)
 
-    @tasks.loop(count=1)
+    @tasks.loop(seconds=150)
     async def changing(self):
         if self.development:
             hearts = ['❤', '💛', '💚', '💜', '💖', '💙', '💞']
@@ -175,14 +175,16 @@ class Bot(commands.AutoShardedBot):
                                                                  name=f"Style {random.choice(hearts)}"))
             await asyncio.sleep(150)
         else:
-            count = await self.db.fetchrow("SELECT * FROM bot_count")
+            count = await self.db.fetchrow("SELECT * FROM count")
 
-            all_messages = count['messages']
-            all_commands = count['commands']
+            all_messages = 0
+            all_commands = 0
+
+            for g in count:
+                all_messages += g['messages']
+                all_commands += g['commands']
 
             total_commands = [i for i in self.walk_commands()]
-
-            all_tags = await self.db.fetch("SELECT * FROM tags")
 
             stats = [
                 "You.",
@@ -194,7 +196,7 @@ class Bot(commands.AutoShardedBot):
                 f"Add me! /invite",
                 f"Join! /support",
                 "people usually forget about this bot in 5minutes.",
-                f"{len(all_tags)} tags."
+                f"V2."
             ]
 
             status = random.choice(stats)
