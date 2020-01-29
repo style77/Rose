@@ -73,7 +73,7 @@ class GameStats(Plugin):
 
         self.riot_key = get('riot_api')
 
-        self.fortnite = pynite.Client(get('fortnite_api'), timeout=5)
+        self.fortnite = pynite.Client(get('fortnite_api'))
         self.osu = OsuApi(get('osu_api'), connector=AHConnector())
 
     async def get_premium(self, user_id):

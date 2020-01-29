@@ -23,7 +23,7 @@ class Arguments(argparse.ArgumentParser):
 
 class SeleniumPhase:
     EXECUTOR = ThreadPoolExecutor(10)
-    FIREFOX_DRIVER = "/home/style/PycharmProjects/Rosie/Bot/assets/other/geckodriver"
+    FIREFOX_DRIVER = "/assets/other/geckodriver"
     FIREFOX_BINARY = "/usr/bin/firefox"
     WINDOW_SIZE = "1920,1080"
 

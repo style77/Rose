@@ -16,6 +16,9 @@ class Logs(Plugin):
         self.bot = bot
 
     async def get_logs_webhook(self, webhook_id):
+        if not webhook_id:
+            return None
+
         try:
             webhook = await self.bot.fetch_webhook(webhook_id)
         except discord.NotFound:

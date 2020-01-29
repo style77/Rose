@@ -175,7 +175,7 @@ class Bot(commands.AutoShardedBot):
                                                                  name=f"Style {random.choice(hearts)}"))
             await asyncio.sleep(150)
         else:
-            count = await self.db.fetchrow("SELECT * FROM count")
+            count = await self.db.fetch("SELECT * FROM count")
 
             all_messages = 0
             all_commands = 0

@@ -1,17 +1,9 @@
-import collections
-import textwrap
-import importlib
-import sys
-import time
-from io import BytesIO
-
+import platform
 import json
 
-from psutil import Process
-from os import getpid
+import psutil
 from datetime import datetime
 
-import discord
 from discord.ext import commands
 
 from jishaku.codeblocks import codeblock_converter
@@ -60,9 +52,18 @@ class Owner(Plugin):  # , command_attrs=dict(hidden=True)
 
     @commands.command(aliases=['machine_stats', 'usage'])
     async def machinestats(self, ctx):
-        text = f"Used RAM: {round(Process(getpid()).memory_info().rss/1024/1024, 2)} MB.\n" \
+        cpu_per = psutil.cpu_percent()
+        cores = psutil.cpu_count()
+        memory = psutil.virtual_memory().total >> 20
+        mem_usage = psutil.virtual_memory().used >> 20
+        storage_free = psutil.disk_usage('/').free >> 30
+
+        text = f"RAM: {mem_usage}/{memory} MB.\n" \
                f"Guilds: {len(self.bot.guilds)}.\n" \
-               f"Users: {len(self.bot.users)}.\n"
+               f"Users: {len(self.bot.users)}.\n" \
+               f"CPU: {cpu_per}%; Cores: {cores}\n" \
+               f"Sorage free: {storage_free}GB\n" \
+               f"System OS: {platform.platform()}"
 
         await ctx.send('```\n' + text + '```')
 
