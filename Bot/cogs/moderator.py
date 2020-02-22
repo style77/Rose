@@ -1002,7 +1002,7 @@ class Settings(Plugin):
 
         for i in RaidEnum:
             if i.value == mode:
-                mode = mode
+                mode = i
 
         s = await guild.set_security("raid_mode", mode.value)
         if s:
