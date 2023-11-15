@@ -10,10 +10,7 @@ class Database:
 
     @staticmethod
     def dict_factory(cursor, row):
-        d = {}
-        for idx, col in enumerate(cursor.description):
-            d[col[0]] = row[idx]
-        return d
+        return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
 
     @classmethod
     async def connect_pool(cls):
@@ -141,11 +138,5 @@ class OnlineStreamsSaver(CacheService):
         fetch = await self._get(guild_id)
         list_ = fetch[1].split(',')
 
-        if str(streamer) not in list_:
-            # list_.append(str(streamer))
-            # streamers = ','.join(list_)
-            return False
-
-        elif str(streamer) in list_:
-            return True
+        return str(streamer) in list_
 

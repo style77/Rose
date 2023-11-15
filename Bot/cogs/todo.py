@@ -19,15 +19,11 @@ class TodoFinder(commands.Converter):
         if argument.isdigit():  # because in discord everything is string
             q = query.format(ctx.author.id, 'id', argument)
             first = await ctx.bot.db.fetchrow(q)
-            if not first:
-                return None
-            return first
+            return None if not first else first
         elif isinstance(argument, str):
             q = query.format(ctx.author.id, 'description', f"'{argument}'")
             second = await ctx.bot.db.fetchrow(q)
-            if not second:
-                return None
-            return second
+            return None if not second else second
         else:
             return None
 
@@ -58,7 +54,12 @@ class Todo(Plugin):
     async def add_todo(self, data: TodoObject):
         data = data.to_dict()
 
-        await self.bot.db.execute(f"INSERT INTO todo (id, description, user_id) VALUES ($1, $2, $3)", data['id'], data['description'], data['user_id'])
+        await self.bot.db.execute(
+            "INSERT INTO todo (id, description, user_id) VALUES ($1, $2, $3)",
+            data['id'],
+            data['description'],
+            data['user_id'],
+        )
 
     async def get_todo(self, user_id, *, id_=None, order="ASC"):
 
@@ -71,22 +72,16 @@ class Todo(Plugin):
         else:
             todo = await self.bot.db.fetch(f"SELECT * FROM todo WHERE user_id = $1 ORDER BY id {order}", user_id)
 
-        if not todo:
-            return None
-        return todo
+        return None if not todo else todo
 
     @commands.group(invoke_without_command=True)
     async def todo(self, ctx):
         todos = await self.get_todo(ctx.author.id)
 
-        entries = []
-
         if not todos:
             return await ctx.send(ctx.lang['no_todos'])
 
-        for t in todos:
-            entries.append(f"#{t['id']}  {t['description']}")
-
+        entries = [f"#{t['id']}  {t['description']}" for t in todos]
         await ctx.paginate(entries=entries, colour=3553598, author=ctx.author)
 
     @todo.command(aliases=['all'])
@@ -100,11 +95,7 @@ class Todo(Plugin):
 
         # wszystkie id z bazy, ponizej dodaje do nich "1" i wyjdzie mi nastepne id
         _id = await self.get_todo(ctx.author.id, order="DESC")
-        if not _id:
-            _id = 1
-        else:
-            _id = _id[0]['id'] + 1
-
+        _id = 1 if not _id else _id[0]['id'] + 1
         todo = TodoObject({'id': _id, 'user_id': ctx.author.id, 'description': desc})
 
         await self.add_todo(todo)
@@ -170,14 +161,13 @@ class Todo(Plugin):
         confirmation = await ctx.confirm(ctx.lang['confirm_deleting_todo'], ctx.author)
         if confirmation is False:
             return await ctx.send(ctx.lang['abort'])
-        else:
-            query_1 = "DELETE FROM todo WHERE user_id = $1 AND id = $2"
-            query_2 = "UPDATE todo SET id = id - 1 WHERE user_id = $1 AND id > $2"
+        query_1 = "DELETE FROM todo WHERE user_id = $1 AND id = $2"
+        query_2 = "UPDATE todo SET id = id - 1 WHERE user_id = $1 AND id > $2"
 
-            await self.bot.db.execute(query_1, ctx.author.id, catch['id'])
-            await self.bot.db.execute(query_2, ctx.author.id, catch['id'])
+        await self.bot.db.execute(query_1, ctx.author.id, catch['id'])
+        await self.bot.db.execute(query_2, ctx.author.id, catch['id'])
 
-            await ctx.send(ctx.lang['removed_todo'])
+        await ctx.send(ctx.lang['removed_todo'])
 
     @todo.command(name="clear", aliases=['c'])
     async def clear_(self, ctx):
@@ -189,12 +179,9 @@ class Todo(Plugin):
 
         if confirmation is False:
             return await ctx.send(ctx.lang['abort'])
-        else:
-            query = "DELETE FROM todo WHERE user_id = $1"
+        await self.bot.db.execute("DELETE FROM todo WHERE user_id = $1", ctx.author.id)
 
-            await self.bot.db.execute(query, ctx.author.id)
-
-            await ctx.send(ctx.lang['cleared_todo'])
+        await ctx.send(ctx.lang['cleared_todo'])
 
 
 def setup(bot):

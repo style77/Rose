@@ -24,15 +24,11 @@ class NewHelpCommand(commands.HelpCommand):
 
     async def _get_blocked_cogs(self):
         guild = await self.context.bot.get_guild_settings(self.context.guild.id)
-        plugins_off = await guild.get_blocked_cogs()
-
-        return plugins_off
+        return await guild.get_blocked_cogs()
 
     async def _get_blocked_commands(self):
         guild = await self.context.bot.get_guild_settings(self.context.guild.id)
-        commands_off = await guild.get_blocked_commands()
-
-        return commands_off
+        return await guild.get_blocked_commands()
 
     async def send_command_help(self, command):
         if command.name in await self._get_blocked_commands():
@@ -108,9 +104,7 @@ class NewHelpCommand(commands.HelpCommand):
         if filtered:
             for command in cog.get_commands():
 
-                params = []
-                for param in command.clean_params:
-                    params.append(f"[{param}]")
+                params = [f"[{param}]" for param in command.clean_params]
                 params = ' '.join(params)
 
                 cmd_name = f"{command.name} {params if command.clean_params else ''}"
@@ -120,8 +114,8 @@ class NewHelpCommand(commands.HelpCommand):
                 except KeyError:
                     cmd_desc = self.context.lang['empty_desc']
 
-                if self.context.guild is not None:
-                    if command.name in blocked_commands:
+                if command.name in blocked_commands:
+                    if self.context.guild is not None:
                         continue
 
                 e.add_field(
@@ -129,11 +123,7 @@ class NewHelpCommand(commands.HelpCommand):
 
                 if isinstance(command, commands.Group):
                     for cmd in command.commands:
-                        params = []
-
-                        for param in cmd.clean_params:
-                            params.append(f"[{param}]")
-
+                        params = [f"[{param}]" for param in cmd.clean_params]
                         params = ' '.join(params)
 
                         cmd_name = f"{command.name} {cmd.name} {params if cmd.clean_params else ''}"
@@ -143,8 +133,8 @@ class NewHelpCommand(commands.HelpCommand):
                         except KeyError:
                             cmd_desc = self.context.lang['empty_desc']
 
-                        if self.context.guild is not None:
-                            if cmd.name in blocked_commands:
+                        if cmd.name in blocked_commands:
+                            if self.context.guild is not None:
                                 continue
 
                         e.add_field(
@@ -188,7 +178,7 @@ class NewHelpCommand(commands.HelpCommand):
                     if command.name in blocked_commands:
                         continue
 
-                    lines.append('`' + command.name + '`')
+                    lines.append(f'`{command.name}`')
                     if isinstance(command, commands.Group):
                         for cmd in command.commands:
                             if f"`{command.name} {cmd.name}`" in lines:
@@ -200,7 +190,7 @@ class NewHelpCommand(commands.HelpCommand):
                             # return
                             # lines.append(f"{command.name} {cmd.name} {cmd2.name}")
 
-            if len(lines) > 0:
+            if lines:
                 e.add_field(name=cog_name, value=', '.join(lines), inline=False)
                 lines.clear()
 

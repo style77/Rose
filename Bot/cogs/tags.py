@@ -93,9 +93,8 @@ class Tags(Plugin):
             alias = True
             if not tag:
                 return await self.get_tag_suggest_box(ctx.guild.id, name)
-            else:
-                alias_name = tag.alias
-                tag = await self.get_tag(ctx.guild.id, tag.orginal)
+            alias_name = tag.alias
+            tag = await self.get_tag(ctx.guild.id, tag.orginal)
 
         await ctx.send(tag.content)
 
@@ -116,9 +115,8 @@ class Tags(Plugin):
             alias = True
             if not tag:
                 return await self.get_tag_suggest_box(ctx.guild.id, name)
-            else:
-                alias_name = tag.alias
-                tag = await self.get_tag(ctx.guild.id, tag.orginal)
+            alias_name = tag.alias
+            tag = await self.get_tag(ctx.guild.id, tag.orginal)
 
         first_step = discord.utils.escape_markdown(tag.content)
         await ctx.send(first_step.replace('<', '\\<'))
@@ -185,7 +183,7 @@ class Tags(Plugin):
                 if m:
                     name = m.content
                     if ctx.guild.id not in self._reserved_tags:
-                        self._reserved_tags[ctx.guild.id] = list()
+                        self._reserved_tags[ctx.guild.id] = []
                     self._reserved_tags[ctx.guild.id].append(name)
                 else:
                     return None, None
@@ -210,16 +208,11 @@ class Tags(Plugin):
             query = "SELECT * FROM tags_lookup WHERE guild_id = $1 AND lower(alias) = $2"
 
         t = await self.bot.db.fetchrow(query, guild_id, name.lower())
-        if not t:
-            return None
-        return TagObject(t)
+        return None if not t else TagObject(t)
 
     async def tag_exist(self, name, guild_id, *, alias=False):
         tag = await self.get_tag(guild_id, name, alias=alias)
-        if tag:
-            return True
-        else:
-            return False
+        return bool(tag)
 
     @tag.command(alias=['make'])
     async def create(self, ctx, *, content=None):
@@ -274,7 +267,6 @@ class Tags(Plugin):
 
             e.add_field(name='Owner', value=f"<@{record['owner_id']}>")
             e.add_field(name='Original', value=record['orginal'])
-            e.add_field(name='Uses', value=record['uses'])
         else:
             e.title = record['name']
             e.timestamp = record['created_at']
@@ -306,7 +298,7 @@ class Tags(Plugin):
             if aliases:
                 z = ', '.join(f"`{alias['alias']}`" for alias in aliases)
                 e.add_field(name='Aliases', value=z)
-            e.add_field(name='Uses', value=record['uses'])
+        e.add_field(name='Uses', value=record['uses'])
         await ctx.send(embed=e)
 
     @tag.command()
@@ -317,8 +309,8 @@ class Tags(Plugin):
         if not tag:
             tag = await self.get_tag(ctx.guild.id, name, alias=True)
             alias = True
-            if not tag:
-                return await self.get_tag_suggest_box(ctx.guild.id, name)
+        if not tag:
+            return await self.get_tag_suggest_box(ctx.guild.id, name)
 
         await self._send_info(ctx, tag.data, alias=alias)
 
@@ -330,8 +322,8 @@ class Tags(Plugin):
         if not tag:
             tag = await self.get_tag(ctx.guild.id, name, alias=True)
             alias = True
-            if not tag:
-                return await self.get_tag_suggest_box(ctx.guild.id, name)
+        if not tag:
+            return await self.get_tag_suggest_box(ctx.guild.id, name)
 
         try:
             member = ctx.guild.get_member(tag.owner_id) or await ctx.guild.fetch_member(tag.owner_id)
@@ -362,8 +354,8 @@ class Tags(Plugin):
         if not tag:
             tag = await self.get_tag(ctx.guild.id, name, alias=True)
             alias = True
-            if not tag:
-                return await ctx.send(ctx.lang['tag_doesnt_exist'].format(clean_text(name)))
+        if not tag:
+            return await ctx.send(ctx.lang['tag_doesnt_exist'].format(clean_text(name)))
 
         async with self.bot.db.acquire():
             #async with self.bot.db.transaction():
@@ -405,8 +397,8 @@ class Tags(Plugin):
         if not tag:
             tag = await self.get_tag(ctx.guild.id, name, alias=True)
             alias = True
-            if not tag:
-                return await ctx.send(ctx.lang['tag_doesnt_exist'].format(clean_text(name)))
+        if not tag:
+            return await ctx.send(ctx.lang['tag_doesnt_exist'].format(clean_text(name)))
 
         confirm = await ctx.confirm(ctx.lang['delete_tag_confirmation'].format(clean_text(name)), ctx.author)
         if not confirm:

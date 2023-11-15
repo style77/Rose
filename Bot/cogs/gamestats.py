@@ -78,9 +78,7 @@ class GameStats(Plugin):
 
     async def get_premium(self, user_id):
         member = await self.bot.db.fetchrow("SELECT * FROM members WHERE id = $1", user_id)
-        if member:
-            return member
-        return None
+        return member if member else None
 
     async def _get_connected_nick(self, ctx):
         user = await self.get_premium(ctx.author.id)
@@ -106,9 +104,7 @@ class GameStats(Plugin):
     @checks.has_premium()
     async def link_account(self, ctx):
         """Podłącza konto danej gry do twojego konta premium."""
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @link_account.command(name="fortnite")
@@ -262,12 +258,7 @@ class GameStats(Plugin):
             return await ctx.send(ctx.lang['not_found_recent'].format(results[0].username))
 
         s = await self.osu.get_scores(recent[0].beatmap_id, username=results[0].username, limit=100)
-        score = None
-        for score_ in s:
-            if score_.date == recent[0].date:
-                score = score_
-                break
-
+        score = next((score_ for score_ in s if score_.date == recent[0].date), None)
         if score is None:
             return await ctx.send(ctx.lang['not_found_recent'].format(results[0].username))
 
@@ -278,12 +269,12 @@ class GameStats(Plugin):
         icon_url = f'https://a.ppy.sh/{results[0].user_id}'
 
         z = f"**PP**: {round(score.pp)}\n" \
-            f"**{ctx.lang['score']}**: {recent[0].score}\n" \
-            f"**Combo**: x{recent[0].maxcombo}\n" \
-            f"**Misses**: {recent[0].countmiss}, " \
-            f"**x50**: {recent[0].count50}, " \
-            f"**x100**: {recent[0].count100}, " \
-            f"**x300**: {recent[0].count300}"
+                f"**{ctx.lang['score']}**: {recent[0].score}\n" \
+                f"**Combo**: x{recent[0].maxcombo}\n" \
+                f"**Misses**: {recent[0].countmiss}, " \
+                f"**x50**: {recent[0].count50}, " \
+                f"**x100**: {recent[0].count100}, " \
+                f"**x300**: {recent[0].count300}"
 
         e = Embed(description=z, color=self.bot.color, timestamp=recent[0].date)
         e.set_author(name=beatmap[0].title, url=f"https://osu.ppy.sh/b/{recent[0].beatmap_id}", icon_url=icon_url)

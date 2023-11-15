@@ -14,10 +14,7 @@ class Switcher(menus.Menu):
         return await channel.send(self._update_message(ctx.guild.emojis))
 
     def _update_message(self, emojis):
-        z = ""
-        for i in range(EMOJIS_NUMBER):
-            z += str(emojis[self.number + i])
-        return z
+        return "".join(str(emojis[self.number + i]) for i in range(EMOJIS_NUMBER))
 
     @menus.button('\U000025c0')
     async def on_back(self, payload):

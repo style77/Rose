@@ -13,10 +13,7 @@ class ReactionRole(Plugin):
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_guild=True)
     async def rr(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @rr.command()

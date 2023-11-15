@@ -41,13 +41,10 @@ class Owner(Plugin):  # , command_attrs=dict(hidden=True)
         total = sum(self.bot.socket_stats.values())
         cpm = total / minutes
 
-        # stats = [f"{event}: {x}" for event, x in self.bot.socket_stats.most_common()]
-        # z = '\n'.join(stats)
-
-        z = ""
-        for event, x in self.bot.socket_stats.most_common():
-            z += f"{event}:{' ' * int(21 - len(str(event)))}{x}\n"
-
+        z = "".join(
+            f"{event}:{' ' * int(21 - len(str(event)))}{x}\n"
+            for event, x in self.bot.socket_stats.most_common()
+        )
         await ctx.send(f"{total} {ctx.lang['sockets_observed']} ({cpm:.2f}/minute):\n```{z}```")
 
     @commands.command(aliases=['machine_stats', 'usage'])
@@ -121,10 +118,7 @@ class Owner(Plugin):  # , command_attrs=dict(hidden=True)
 
     @commands.group(invoke_without_command=True)
     async def sql(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @sql.command(hidden=True)
@@ -158,26 +152,17 @@ class Owner(Plugin):  # , command_attrs=dict(hidden=True)
 
     @commands.group(invoke_without_command=True)
     async def rose(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @rose.group(invoke_without_command=True)
     async def get(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @rose.group(invoke_without_command=True)
     async def update(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @get.command()
@@ -189,12 +174,9 @@ class Owner(Plugin):  # , command_attrs=dict(hidden=True)
 
         g = await self.bot.get_guild_settings(guild.id)
 
-        table = []
         keys = ["guild", "data"]
 
-        for key, value in g.data.items():
-            table.append([key, value])
-
+        table = [[key, value] for key, value in g.data.items()]
         p = commands.Paginator()
 
         z = f"{tabulate(table, keys, tablefmt='github')}"
@@ -210,14 +192,11 @@ class Owner(Plugin):  # , command_attrs=dict(hidden=True)
         if cat in ["this", "self"]:
             cat = ctx.author.id
 
-        table = []
         keys = ["cat_owner", "data"]
 
         cat_ = await self.bot.db.fetchrow("SELECT * FROM cats WHERE owner_id = $1", cat)
 
-        for key, value in cat_.items():
-            table.append([key, value])
-
+        table = [[key, value] for key, value in cat_.items()]
         p = commands.Paginator()
 
         z = f"{tabulate(table, keys, tablefmt='github')}"
@@ -235,11 +214,7 @@ class Owner(Plugin):  # , command_attrs=dict(hidden=True)
         else:
             guild = self.bot.get_guild(int(guild))
 
-        if value.isdigit():
-            value = int(value)
-        else:
-            value = value
-
+        value = int(value) if value.isdigit() else value
         g = await self.bot.get_guild_settings(guild.id)
         z = await g.set(key, value)
 

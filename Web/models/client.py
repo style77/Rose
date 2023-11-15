@@ -10,14 +10,12 @@ class Client(object):
 
     @property
     def guilds(self):
-        headers = {'Authorization': 'Bot ' + self.client_token}
-        r = http.get(self.base_api_link + '/users/@me/guilds', headers=headers)
-        return r
+        headers = {'Authorization': f'Bot {self.client_token}'}
+        return http.get(f'{self.base_api_link}/users/@me/guilds', headers=headers)
 
     @property
     def guilds_ids(self):
-        c = [str(g['id']) for g in self.guilds]
-        return c
+        return [str(g['id']) for g in self.guilds]
 
     @staticmethod
     def get_user_managed_servers(guilds):
@@ -43,7 +41,7 @@ class Client(object):
         if not self.client_token:
             return None
 
-        server = http.get(f"{self.base_api_link}/guilds/{server_id}",
-                          headers={'Authorization': f'Bot {self.client_token}'})
-
-        return server
+        return http.get(
+            f"{self.base_api_link}/guilds/{server_id}",
+            headers={'Authorization': f'Bot {self.client_token}'},
+        )

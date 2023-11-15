@@ -27,27 +27,21 @@ class NewHelpCommand(commands.HelpCommand):
 
         print(translated_text)
 
-        if text == translated_text:
-            return None
-        return translated_text
+        return None if text == translated_text else translated_text
 
     async def _get_blocked_cogs(self):
         if not self.context.guild:
             return []
 
         guild = await self.context.bot.get_guild_settings(self.context.guild.id)
-        plugins_off = await guild.get_blocked_cogs()
-
-        return plugins_off
+        return await guild.get_blocked_cogs()
 
     async def _get_blocked_commands(self):
         if not self.context.guild:
             return []
 
         guild = await self.context.bot.get_guild_settings(self.context.guild.id)
-        commands_off = await guild.get_blocked_commands()
-
-        return commands_off
+        return await guild.get_blocked_commands()
 
     async def send_command_help(self, command):
         if command.name in await self._get_blocked_commands():
@@ -162,9 +156,9 @@ class NewHelpCommand(commands.HelpCommand):
         filtered = await self.filter_commands(cog.get_commands(), sort=True)
         blocked_commands = await self._get_blocked_commands()
 
-        commands_without_desc = list()
-
         if filtered:
+            commands_without_desc = []
+
             for command in cog.get_commands():
 
                 print(command)
@@ -177,12 +171,12 @@ class NewHelpCommand(commands.HelpCommand):
                     commands_without_desc.append(command)
                     continue
 
-                params = list()
+                params = []
                 for param in command.clean_params:
                     if len(params) > len(command.clean_params):
                         break
 
-                    if str(command.clean_params[param])[-4:] == "None":
+                    if str(command.clean_params[param]).endswith("None"):
                         params.append(f"<{param}=None>")
                     else:
                         params.append(f"[{param}]")
@@ -195,12 +189,12 @@ class NewHelpCommand(commands.HelpCommand):
             if commands_without_desc:
                 z = []
                 for command in commands_without_desc:
-                    params = list()
+                    params = []
                     for param in command.clean_params:
                         if len(params) > len(command.clean_params):
                             break
 
-                        if str(command.clean_params[param])[-4:] == "None":
+                        if str(command.clean_params[param]).endswith("None"):
                             params.append(f"<{param}=None>")
                         else:
                             params.append(f"[{param}]")
@@ -211,8 +205,7 @@ class NewHelpCommand(commands.HelpCommand):
                 x = '\n'.join(z)
                 e.description = f"{self.get_text('commands_without_description')}\n`{x}`"
 
-            cog_doc = self.get_text(f"{cog.qualified_name}_doc")
-            if cog_doc:
+            if cog_doc := self.get_text(f"{cog.qualified_name}_doc"):
                 e.set_footer(text=cog_doc)
 
         await self.context.send(embed=e)
@@ -248,14 +241,14 @@ class NewHelpCommand(commands.HelpCommand):
                     if command.name in blocked_commands:
                         continue
 
-                    lines.append('`' + command.qualified_name + '`')
+                    lines.append(f'`{command.qualified_name}`')
                     if isinstance(command, commands.Group):
                         for cmd in command.commands:
                             if f"`{cmd.qualified_name}`" in lines:
                                 return
                             lines.append(f"`{cmd.qualified_name}`")
 
-            if len(lines) > 0:
+            if lines:
                 e.add_field(name=cog_name, value=', '.join(lines), inline=False)
                 lines.clear()
 

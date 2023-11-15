@@ -6,7 +6,7 @@ class Database:
         self.bot = bot
         self.poll = poll
 
-        self._poll_query = list()
+        self._poll_query = []
 
     @tasks.loop(seconds=1)
     async def bulk_inserting(self):

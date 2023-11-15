@@ -74,17 +74,11 @@ class Fun(Plugin):
                 await ctx.send(ctx.lang['nothing_plays'])
                 return await ctx.add_react(False)
 
-            elif player.current:
-                query = player.current.title
             else:
-                raise commands.UserInputError()
-
-
+                query = player.current.title
         ksoft_token = utils.get("ksoft_token")
         url = "https://api.ksoft.si/lyrics/search"
-        headers = {
-            'Authorization': "Bearer " + ksoft_token
-        }
+        headers = {'Authorization': f"Bearer {ksoft_token}"}
         params = {
             'q': query
         }
@@ -96,12 +90,9 @@ class Fun(Plugin):
             return await ctx.send(ctx.lang['nothing_found'])
 
         lyric_split = textwrap.wrap(r['data'][0]['lyrics'], 2000, replace_whitespace=False)
-        embeds = []
-
         e = discord.Embed(
             title=f"{r['data'][0]['artist']} - {r['data'][0]['name']}", description=lyric_split.pop(0))
-        embeds.append(e)
-
+        embeds = [e]
         for desc in lyric_split:
             embed = discord.Embed(description=desc)
             embeds.append(embed)
@@ -132,25 +123,20 @@ class Fun(Plugin):
 
     @commands.command()
     async def claps(self, ctx, *, text):
-        i = 1
         p = []
-        for _ in text:
-            i += 1
+        for i, _ in enumerate(text, start=2):
             if i % 2:
                 p.append(_.upper())
             else:
                 p.append(_.lower())
         p = ''.join(p)
         _str = p.split()
-        claps = '\U0001f44f'.join([i for i in _str])
+        claps = '\U0001f44f'.join(list(_str))
         await ctx.send(claps)
 
     @commands.group(invoke_without_command=True)
     async def random(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @random.command()
@@ -176,11 +162,7 @@ class Fun(Plugin):
     def simple_get(self, url):
         try:
             with closing(get(url, stream=True)) as resp:
-                if self.is_good_response(resp):
-                    return resp.content
-                else:
-                    return None
-
+                return resp.content if self.is_good_response(resp) else None
         except RequestException as e:
             print('Error during requests to {0} : {1}'.format(url, str(e)))
             return None
@@ -194,7 +176,7 @@ class Fun(Plugin):
 
     @commands.command()
     async def yafud(self, ctx):
-        raw_html = self.simple_get(f'http://www.yafud.pl/losowe/')
+        raw_html = self.simple_get('http://www.yafud.pl/losowe/')
         html = BeautifulSoup(raw_html, 'html.parser')
         qt = html.find('span', attrs={'class': 'wpis-tresc'})
         qtrating = html.find('div', attrs={'class': 'wpis-box rating'})
@@ -224,7 +206,7 @@ class Fun(Plugin):
 
     @commands.command()
     async def irc(self, ctx):
-        raw_html = self.simple_get(f'http://bash.org/?random')
+        raw_html = self.simple_get('http://bash.org/?random')
         html = BeautifulSoup(raw_html, 'html.parser')
         qt = html.find('p', attrs={'class': 'qt'})
         text = qt.text
@@ -256,15 +238,21 @@ class Fun(Plugin):
     @commands.cooldown(1, 30, BucketType.channel)
     async def who(self, ctx):
         try:
-            member = random.choice(list(m.author for m in self.bot._connection._messages if m.guild == ctx.guild))
+            member = random.choice(
+                [
+                    m.author
+                    for m in self.bot._connection._messages
+                    if m.guild == ctx.guild
+                ]
+            )
             e = discord.Embed(title=ctx.lang['who_is_that'], color=3553598)
             e.set_image(url=member.avatar_url)
             await ctx.send(embed=e)
 
             def check(m):
                 return m.channel == ctx.channel and m.content == member.name or \
-                       m.content.lower() == member.name.lower() or m.content == member.mention or \
-                       m.content.lower() == member.display_name.lower()
+                           m.content.lower() == member.name.lower() or m.content == member.mention or \
+                           m.content.lower() == member.display_name.lower()
 
             msg = await self.bot.wait_for('message', check=check, timeout=30)
             await ctx.send(f"{msg.author.mention}, {ctx.lang['it_was']} {member}.")
@@ -294,9 +282,9 @@ class Fun(Plugin):
             buffer.seek(0)
         end = time.time()
 
-        f = discord.File(fp=buffer, filename=f"ss.png")
+        f = discord.File(fp=buffer, filename="ss.png")
         e = discord.Embed(title=page, color=3553598, timestamp=ctx.message.created_at)
-        e.set_image(url=f"attachment://ss.png")
+        e.set_image(url="attachment://ss.png")
         e.set_footer(text=f"\U0001f339 {ctx.lang['done_by']} {ctx.author.id}.")
         await ctx.send(content=f"Done in {round(end-start)}s.", file=f, embed=e)
 
@@ -387,18 +375,20 @@ class Fun(Plugin):
     @commands.command()
     async def nitro(self, ctx, *, rest):
         rest = rest.lower()
-        found_emojis = [emoji for emoji in ctx.bot.emojis
-                        if emoji.name.lower() == rest and emoji.require_colons]
-        if found_emojis:
+        if found_emojis := [
+            emoji
+            for emoji in ctx.bot.emojis
+            if emoji.name.lower() == rest and emoji.require_colons
+        ]:
             await ctx.send(str(random.choice(found_emojis)))
         else:
             await ctx.send(ctx.lang['not_found'])
 
     @commands.command(aliases=['google', 'g'])
     async def lmgtfy(self, ctx, *, query):
-        await ctx.send("{}{}".format(
-            random.choice(["https://google.com/search?q=", "https://lmgtfy.com/?q="]),
-            urllib.parse.quote_plus(query)))
+        await ctx.send(
+            f'{random.choice(["https://google.com/search?q=", "https://lmgtfy.com/?q="])}{urllib.parse.quote_plus(query)}'
+        )
 
     @commands.command()
     async def ascii(self, ctx, *, text):
@@ -507,9 +497,11 @@ class Fun(Plugin):
     async def nitro(self, ctx, *, rest):
         """Wysyła pierwszą znalezioną emotke z podaną nazwą."""
         rest = rest.lower()
-        found_emojis = [emoji for emoji in ctx.bot.emojis
-                        if emoji.name.lower() == rest and emoji.require_colons]
-        if found_emojis:
+        if found_emojis := [
+            emoji
+            for emoji in ctx.bot.emojis
+            if emoji.name.lower() == rest and emoji.require_colons
+        ]:
             await ctx.send(str(random.choice(found_emojis)))
         else:
             await ctx.send(ctx.lang['nothing_found'])

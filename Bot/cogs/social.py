@@ -36,10 +36,7 @@ class Social(Plugin):
         with open('assets/other/faq.json', 'r') as f:
             data = json.load(f)
 
-            self.faq_entries = {}
-
-            self.faq_entries['pl'] = data['pl']
-            self.faq_entries['eng'] = data['eng']
+            self.faq_entries = {'pl': data['pl'], 'eng': data['eng']}
 
     @commands.command()
     async def faq(self, ctx, *, query: str):

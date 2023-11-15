@@ -28,7 +28,7 @@ class Stars(Plugin):
 
         emoji = guild.stars['emoji']
 
-        if emoji == str(payload.emoji) or emoji == payload.emoji.name:
+        if emoji in [str(payload.emoji), payload.emoji.name]:
 
             color = int(guild.stars['color'], 16)
 
@@ -169,31 +169,29 @@ class Stars(Plugin):
         query = "SELECT * FROM stars WHERE guild_id = $1 AND message_id = $2 OR bot_message_id = $2"
         star = await self.bot.db.fetchrow(query, ctx.guild.id, message.id)
 
-        if star:
-            channel = self.bot.get_channel(star['channel_id'])
-            msg = await channel.fetch_message(star['message_id'])
-            author = await self.bot.fetch_user(star['author_id'])
-
-            guild = await self.bot.get_guild_settings(ctx.guild.id)
-
-            color = int(guild.stars['color'], 16)
-
-            embed = discord.Embed(
-                description=ctx.lang['star_info'].format(author, msg.content if msg.content else 'none',
-                                                         channel.mention, len(star['reactions']), ctx.guild.id,
-                                                         channel.id, msg.id), color=color, timestamp=msg.created_at)
-
-            if msg.attachments:
-                embed.set_image(url=msg.attachments[0].url)
-            elif msg.embeds:
-                embed.set_image(url=msg.embeds[0].image.url)
-
-            embed.set_footer(text=author.name, icon_url=author.avatar_url)
-
-            await ctx.send(embed=embed)
-
-        else:
+        if not star:
             return await ctx.send(ctx.lang['not_found'])
+        channel = self.bot.get_channel(star['channel_id'])
+        msg = await channel.fetch_message(star['message_id'])
+        author = await self.bot.fetch_user(star['author_id'])
+
+        guild = await self.bot.get_guild_settings(ctx.guild.id)
+
+        color = int(guild.stars['color'], 16)
+
+        embed = discord.Embed(
+            description=ctx.lang['star_info'].format(author, msg.content if msg.content else 'none',
+                                                     channel.mention, len(star['reactions']), ctx.guild.id,
+                                                     channel.id, msg.id), color=color, timestamp=msg.created_at)
+
+        if msg.attachments:
+            embed.set_image(url=msg.attachments[0].url)
+        elif msg.embeds:
+            embed.set_image(url=msg.embeds[0].image.url)
+
+        embed.set_footer(text=author.name, icon_url=author.avatar_url)
+
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

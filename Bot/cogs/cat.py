@@ -62,8 +62,7 @@ class DefaultCat:
 
     @property
     def _owner(self):
-        user = self.bot.get_user(self.cat['owner_id'])
-        return user
+        return self.bot.get_user(self.cat['owner_id'])
 
     async def buy(self, item):
         try:
@@ -324,7 +323,7 @@ class Cat(commands.Cog):
 
         self.rose_team = [185712375628824577, 403600724342079490]
 
-        self._fights = list()
+        self._fights = []
 
     def cog_unload(self):
         self.losing_food.cancel()
@@ -456,10 +455,7 @@ class Cat(commands.Cog):
                                       member.id)
             return True
 
-        if cat.is_dead:
-            return True
-
-        return False
+        return bool(cat.is_dead)
 
     @tasks.loop(minutes=180)
     async def losing_food(self):  # todo notify about low food,sta
@@ -515,10 +511,8 @@ class Cat(commands.Cog):
                 with Image.open(pic) as profile:
                     bg = Image.new('RGBA', (700, 800))
                     if theme:
-                        end = ".png"
-                        if theme == 'jungle1':
-                            end = '.jpg'
-                        theme = Image.open(r"assets/images/themes/" + theme + end)
+                        end = '.jpg' if theme == 'jungle1' else ".png"
+                        theme = Image.open(f"assets/images/themes/{theme}{end}")
                         bg.paste(theme)
 
                     bg.paste(profile, (0, 0), profile)
@@ -534,9 +528,9 @@ class Cat(commands.Cog):
                     bg.paste(caty, (44, 105), caty)
                     bg.paste(rgb_avatar, (35, 10), rgb_avatar)
 
-                    PISTOLS = ['glock_17', 'glock-6', 'glock-9']
-
                     if cat.wore_gun:
+                        PISTOLS = ['glock_17', 'glock-6', 'glock-9']
+
                         if cat.wore_gun in PISTOLS:
                             x, y = 80, 200
                             size = (10, 10)
@@ -557,7 +551,7 @@ class Cat(commands.Cog):
 
                     name = cat.name
                     if len(name) > 12:
-                        name = name[:12] + "..."
+                        name = f"{name[:12]}..."
 
                     self.write(d, name, (330, 100), font=font, color=(255, 255, 255))
 
@@ -576,7 +570,7 @@ class Cat(commands.Cog):
 
                     member_name = user.name
                     if len(member_name) > 18:
-                        member_name = member_name[:18] + "..."
+                        member_name = f"{member_name[:18]}..."
                     self.write(d, member_name, (10, 765), font=ImageFont.truetype(r"assets/images/fonts/medium.otf", 15))
 
                     self.progress_bar(d, 441, (52, 152, 219), cat.stamina)
@@ -599,9 +593,6 @@ class Cat(commands.Cog):
 
         if cat.is_sleeping:
             return await ctx.send(ctx.lang['cat_is_sleeping'])
-
-        if cat.is_sleeping and cat.stamina == 100:
-            return await ctx.send(ctx.lang['full_sta_sleeping_cat'])
 
         async with ctx.typing():
             start = time.time()
@@ -665,7 +656,7 @@ class Cat(commands.Cog):
         cat = await self.get_cat(ctx.author)
 
         z = ['green', 'red', 'black']
-        if not pick.lower() in z:
+        if pick.lower() not in z:
             return await ctx.send(ctx.lang['not_correct_choose'].format(', '.join(z)))
 
         if money == "all":
@@ -852,11 +843,7 @@ class Cat(commands.Cog):
             else:
                 inv_map[item] += 1
 
-        text = []
-
-        for key, value in inv_map.items():
-            text.append(f"{key} x{value}")
-
+        text = [f"{key} x{value}" for key, value in inv_map.items()]
         fmt = '\n'.join(text)
 
         return await ctx.send(f"```\n{fmt}\n```")
@@ -891,7 +878,7 @@ class Cat(commands.Cog):
 
         for _ in range(0, amount):
             won_item = random.choice(BOX_MAP[box])
-            won_items.append('`' + won_item + '`')
+            won_items.append(f'`{won_item}`')
 
             cat.inventory.append(won_item)
             cat.inventory.remove(box)
@@ -915,7 +902,11 @@ class Cat(commands.Cog):
             e.add_field(name=item, value=f'{int(COST[item]):,d}$', inline=True)
 
         e.add_field(name='premium', value='1,5$ pp')
-        e.set_footer(text=ctx.lang['buy_example'].format(ctx.prefix, random.choice([x for x in COST])))
+        e.set_footer(
+            text=ctx.lang['buy_example'].format(
+                ctx.prefix, random.choice(list(COST))
+            )
+        )
         return await ctx.send(embed=e)
 
     @cat.command()
@@ -999,10 +990,7 @@ class Cat(commands.Cog):
 
     @cat.group(invoke_without_command=True, aliases=['change'])
     async def edit(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @edit.command()
@@ -1027,9 +1015,9 @@ class Cat(commands.Cog):
             return await ctx.send(ctx.lang['need_more_money_color'])
 
         colors = ['black', 'brown', 'grey', 'yellow', 'pink']
-        premium_colors = ['gold', 'plamablue', 'plama_sea', 'plama_pretty_pink',
-                          'plama_mint', 'light_green']
         if cat.premium:
+            premium_colors = ['gold', 'plamablue', 'plama_sea', 'plama_pretty_pink',
+                              'plama_mint', 'light_green']
             colors.extend(premium_colors)
         if await self.bot.is_owner(ctx.author):
             colors.append('owner_cat')
@@ -1052,9 +1040,9 @@ class Cat(commands.Cog):
             return await ctx.send(ctx.lang['need_more_money_theme'])
 
         themes = ["weed1", "weed2", "weed3", "sky3", "landscape2"]
-        premium_themes = ["sky1", "sky2", "sky4", "sky5", "colors1", "jungle1", "void1", "space1", "landscape1",
-                          "landscape3", "landscape4", "night_sky1"]
         if cat.premium:
+            premium_themes = ["sky1", "sky2", "sky4", "sky5", "colors1", "jungle1", "void1", "space1", "landscape1",
+                              "landscape3", "landscape4", "night_sky1"]
             themes.extend(premium_themes)
 
         if not new_theme:
@@ -1308,26 +1296,29 @@ class Cat(commands.Cog):
         if not cat.is_dead:
             return await ctx.send(ctx.lang['cat_alive'])
         n_money = round(cat.money / 2)
-        await self.bot.db.execute(f"UPDATE cats SET food = 10, karma = 0, sta = 15, hp = 50, is_dead = false, "
-                                  f"money = $1 WHERE owner_id = $2", n_money, ctx.author.id)
+        await self.bot.db.execute(
+            'UPDATE cats SET food = 10, karma = 0, sta = 15, hp = 50, is_dead = false, money = $1 WHERE owner_id = $2',
+            n_money,
+            ctx.author.id,
+        )
         await ctx.send(ctx.lang['revive_story'].format(cat.name, ctx.author))
 
     @cat.command()
     async def sleep(self, ctx):
         cat = await self.get_cat(ctx.author)
-        if cat.stamina == 100 and cat.is_sleeping:
+        if cat.stamina == 100:
+            if not cat.is_sleeping:
+                return await ctx.send(ctx.lang['max_energy'])
+
             await ctx.send(ctx.lang['regenered_sta'])
             await self.bot.db.execute('UPDATE cats SET is_sleeping = false, sleeping_time = 0 WHERE owner_id = $1',
                                       ctx.author.id)
-        elif cat.stamina == 100 and not cat.is_sleeping:
-            return await ctx.send(ctx.lang['max_energy'])
-
         if cat.is_sleeping:
             await ctx.send(ctx.lang['cat_woke_up'].format(cat.sleeping_time, cat.stamina))
             await self.bot.db.execute("UPDATE cats SET is_sleeping = false, sleeping_time = 0 WHERE owner_id = $1",
                                       ctx.author.id)
 
-        elif not cat.is_sleeping:
+        else:
             await self.bot.db.execute('UPDATE cats SET is_sleeping = true, sleeping_time = 0 WHERE owner_id = $1',
                                       ctx.author.id)
             await ctx.send(ctx.lang['started_restoring'].format(ctx.prefix))
@@ -1342,9 +1333,7 @@ class Cat(commands.Cog):
             return await ctx.send(ctx.lang['need_more_money_to_rob'])
 
         ratio = random.randint(10, 45)
-        robbed = random.choice([True, False])
-
-        if robbed:
+        if robbed := random.choice([True, False]):
             amount = int(cat.money) * (ratio / 100)
             async with self.bot.db.acquire():
                 await self.bot.db.execute("UPDATE cats SET money = money - $1 WHERE owner_id = $2", amount, member.id)
@@ -1416,9 +1405,7 @@ class Cat(commands.Cog):
         plus_sentences = [ctx.lang['plus_work_1'], ctx.lang['plus_work_2']]
         minus_sentences = [ctx.lang['minus_work_1'], ctx.lang['minus_work_2']]
 
-        choice = random.choice([True, False])
-
-        if choice:
+        if choice := random.choice([True, False]):
             amount = random.randint(55, 170)
             sentence = random.choice(plus_sentences)
             query = "UPDATE cats SET money = money + $1 WHERE owner_id = $2"
@@ -1441,8 +1428,7 @@ class Cat(commands.Cog):
 
         cats = await self.bot.db.fetch(f"SELECT * FROM cats ORDER BY {sort.lower()} DESC LIMIT 10")
 
-        for i, cat in enumerate(cats):
-
+        for cat in cats:
             ads_map = {
                 "money": "$",
                 "bank": "$",
@@ -1479,7 +1465,11 @@ class Cat(commands.Cog):
 
         elif item in ['karma', 'food']:
             cat.inventory.remove(item)
-            await self.bot.db.execute(f"UPDATE cats SET food = food + 15, karma = karma - 1 WHERE owner_id = $2", cat.inventory, ctx.author.id)
+            await self.bot.db.execute(
+                "UPDATE cats SET food = food + 15, karma = karma - 1 WHERE owner_id = $2",
+                cat.inventory,
+                ctx.author.id,
+            )
             return await ctx.send(ctx.lang['feed_cat_with_karma'].format(cat.food))
 
     @commands.Cog.listener()
