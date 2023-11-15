@@ -12,9 +12,7 @@ UNICODE_REGEX = re.compile("\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|
 
 class AmountConverter(commands.Converter):
     async def convert(self, ctx, argument):
-        if argument.isdigit() or argument in ['all']:
-            return argument
-        return 1
+        return argument if argument.isdigit() or argument in ['all'] else 1
 
 
 class ModerationReason(commands.Converter):
@@ -56,9 +54,9 @@ class VexsTimeConverter(commands.Converter):
             try:
                 time += time_dict[k]*float(v)
             except KeyError:
-                raise commands.BadArgument("{} is an invalid time-key! h/m/s/d are valid!".format(k))
+                raise commands.BadArgument(f"{k} is an invalid time-key! h/m/s/d are valid!")
             except ValueError:
-                raise commands.BadArgument("{} is not a number!".format(v))
+                raise commands.BadArgument(f"{v} is not a number!")
         return time
 
 
@@ -121,8 +119,7 @@ class UrlConverter(commands.Converter):
         except commands.BadArgument:
             pass
 
-        match = re.findall(LINK_REGEX, argument)
-        if match:
+        if match := re.findall(LINK_REGEX, argument):
             return argument
         else:
             raise commands.BadArgument("bad argument")
@@ -158,6 +155,4 @@ class ValueRangeFromTo(commands.Converter):
         self.to = to
 
     async def convert(self, ctx, argument: int):
-        if self.from_ <= int(argument) <= self.to:
-            return int(argument)
-        return None
+        return argument if self.from_ <= argument <= self.to else None

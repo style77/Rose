@@ -17,18 +17,22 @@ class User(object):
             return None
 
     def get_user_managed_servers(self, guilds):
-        z = list(filter(lambda g: (g['owner'] is True) or bool((int(g['permissions']) >> 5) & 1), guilds))
-        return z
+        return list(
+            filter(
+                lambda g: (g['owner'] is True)
+                or bool((int(g['permissions']) >> 5) & 1),
+                guilds,
+            )
+        )
 
 
     @property
     def managed_guilds(self):
         g = self.guilds
-        user_guilds = self.get_user_managed_servers(g)
-        return user_guilds
+        return self.get_user_managed_servers(g)
 
     @property
     def guilds(self):
         discord = OAuth2Session(get("client_id"), token=session['discord_token'])
-        r = discord.get(self.base_api_link + '/users/@me/guilds')
+        r = discord.get(f'{self.base_api_link}/users/@me/guilds')
         return r.json()

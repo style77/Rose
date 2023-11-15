@@ -45,10 +45,7 @@ async def get_language(bot, guild):
         return LANGUAGE
 
     guild_settings = await bot.get_guild_settings(guild_id)
-    if not guild_settings:
-        return LANGUAGE
-
-    return guild_settings.lang
+    return LANGUAGE if not guild_settings else guild_settings.lang
 
 
 def transform_arguments(text, member):

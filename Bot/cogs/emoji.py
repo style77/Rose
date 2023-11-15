@@ -75,12 +75,12 @@ class Emoji(Plugin):
             ]
 
             async with self.bot.db.acquire():
-                # async with self.bot.db.transaction():
-                for guild in transformed:
-                    query = f"""INSERT INTO emoji_stats (guild_id, emoji_id, total) VALUES ($1, $2, $3)
+                query = """INSERT INTO emoji_stats (guild_id, emoji_id, total) VALUES ($1, $2, $3)
                                 ON CONFLICT (guild_id, emoji_id) DO UPDATE
                                 SET total = emoji_stats.total + excluded.total;
                              """
+                # async with self.bot.db.transaction():
+                for guild in transformed:
                     await self.bot.db.execute(query, guild['guild'], guild['emoji'], guild['added'])
 
             self._batch_of_data.clear()
@@ -149,7 +149,7 @@ class Emoji(Plugin):
                 """
 
         records = await self.bot.db.fetch(query, emoji_id)
-        transformed = {k: v for k, v in records}
+        transformed = dict(records)
         total = sum(transformed.values())
 
         dt = discord.utils.snowflake_time(emoji_id)
@@ -180,15 +180,9 @@ class Emoji(Plugin):
     def usage_per_day(self, dt, usages):
         tracking_started = datetime(2019, 12, 26)
         now = datetime.utcnow()
-        if dt < tracking_started:
-            base = tracking_started
-        else:
-            base = dt
-
+        base = max(dt, tracking_started)
         days = (now - base).total_seconds() / 86400  # 86400 seconds in a day
-        if int(days) == 0:
-            return usages
-        return usages / days
+        return usages if int(days) == 0 else usages / days
 
     @emojistats.command(name='server', aliases=['guild'])
     @commands.guild_only()

@@ -29,7 +29,7 @@ bot.exts = ['owner', 'eh', 'fun', 'todo', 'social', 'events', 'miscellaneous', '
             'nsfw&sfw', 'streams', 'cat', 'stars', 'gamestats', 'help', 'stats', 'afk', 'tags', 'reaction_role',
             'private', 'emoji', 'tinder']
 
-if '__main__' == __name__:
+if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     try:
         loop.run_until_complete(bot.start(bot._config['token']))

@@ -105,7 +105,7 @@ class Useful(Plugin):
         user_ = await self.bot.fetch_user_from_database(user.id)
         if user_:
             fmt = "{}    {}"
-            z = list()
+            z = []
 
             if user_.last_nicknames:
                 if str(ctx.guild.id) in user_.last_nicknames:
@@ -191,14 +191,12 @@ class Useful(Plugin):
     @commands.command()
     async def poll(self, ctx, *options: SafeConverter):
         """Tworzy głosowanie z max 10 opcjami."""
-        if len(options) == 0:
+        if not options:
             return commands.UserInputError()
         if len(options) == 1:
             return await ctx.invoke(self.bot.get_command("yn"), option=''.join(options))
         elif len(options) <= 10:
             i = len(options)
-            c = 0
-            reactions = []
             numbers = [
                 '1\N{combining enclosing keycap}',
                 '2\N{combining enclosing keycap}',
@@ -211,14 +209,8 @@ class Useful(Plugin):
                 '9\N{combining enclosing keycap}',
                 '\N{keycap ten}'
                     ]
-            while c < i:
-                reactions.append(numbers[c])
-                c += 1
-            index = 0
-            msg = []
-            for _ in options:
-                msg.append(f"{index+1}. {options[index]}")
-                index += 1
+            reactions = [numbers[c] for c in range(i)]
+            msg = [f"{index + 1}. {options[index]}" for index, _ in enumerate(options)]
             msg = '\n'.join(msg)
         else:
             return await ctx.send(ctx.lang['max_options_10'])
@@ -306,7 +298,7 @@ class Useful(Plugin):
         cache = {}
         for key, page in page_types.items():
             cache[key] = {}
-            async with self.bot.session.get(page + '/objects.inv') as resp:
+            async with self.bot.session.get(f'{page}/objects.inv') as resp:
                 if resp.status != 200:
                     raise RuntimeError(
                         'Cannot build rtfm lookup table, try again later.')
@@ -329,9 +321,7 @@ class Useful(Plugin):
                 suggestions.append((len(r.group()), r.start(), item))
 
         def sort_key(tup):
-            if key:
-                return tup[0], tup[1], key(tup[2])
-            return tup
+            return (tup[0], tup[1], key(tup[2])) if key else tup
 
         if lazy:
             return (z for _, _, z in sorted(suggestions, key=sort_key))

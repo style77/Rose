@@ -13,7 +13,11 @@ class RoseContext(commands.Context):
 
     async def add_react(self, type_: bool, *, message=None):
         message = message or self.message
-        emoji = '<:checkmark:601123463859535885>' if type_ is True else '<:wrongmark:601124568387551232>'
+        emoji = (
+            '<:checkmark:601123463859535885>'
+            if type_
+            else '<:wrongmark:601124568387551232>'
+        )
         reacts = [str(react) for react in message.reactions]
         if ('<:checkmark:601123463859535885>' or '<:wrongmark:601124568387551232>') in reacts:
             return
@@ -65,11 +69,7 @@ class RoseContext(commands.Context):
             if not isinstance(prompt, list):
                 prompt = [prompt]
 
-            if message.content.lower() in prompt:
-                return True
-            else:
-                return False
-
+            return message.content.lower() in prompt
         else:
             raise NotImplemented("This type of confirmation is not implemented.\nFeel free to suggest adding stuff on "
                                  f"support server (discord.gg/{self.bot._config['support_server']}) on "

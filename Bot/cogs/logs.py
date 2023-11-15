@@ -138,7 +138,7 @@ class Logs(Plugin):
             e.set_image(url=after.attachments[0].url)
 
         e.set_author(name=after.author, icon_url=after.author.avatar_url)
-        e.set_footer(text="ID: {}".format(after.author.id))
+        e.set_footer(text=f"ID: {after.author.id}")
 
         await ch.send(embed=e)
 
@@ -156,7 +156,7 @@ class Logs(Plugin):
                           timestamp=ctx.message.created_at)
 
         e.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-        e.set_footer(text="ID: {}".format(ctx.author.id))
+        e.set_footer(text=f"ID: {ctx.author.id}")
 
         await ch.send(embed=e)
 
@@ -174,7 +174,7 @@ class Logs(Plugin):
                           timestamp=ctx.message.created_at)
 
         e.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon_url)
-        e.set_footer(text="ID: {}".format(ctx.author.id))
+        e.set_footer(text=f"ID: {ctx.author.id}")
 
         await ch.send(embed=e)
 
@@ -240,7 +240,7 @@ class Logs(Plugin):
                           timestamp=user.created_at)
 
         e.set_author(name=user, icon_url=user.avatar_url)
-        e.set_footer(text="ID: {}".format(user.id))
+        e.set_footer(text=f"ID: {user.id}")
 
         await ch.send(embed=e)
 
@@ -271,7 +271,7 @@ class Logs(Plugin):
                           timestamp=user.created_at)
 
         e.set_author(name=user, icon_url=user.avatar_url)
-        e.set_footer(text="ID: {}".format(user.id))
+        e.set_footer(text=f"ID: {user.id}")
 
         await ch.send(embed=e)
 
@@ -305,7 +305,7 @@ class Logs(Plugin):
                           timestamp=role.created_at)
 
         e.set_author(name=role.guild, icon_url=role.guild.icon_url)
-        e.set_footer(text="ID: {}".format(role.id))
+        e.set_footer(text=f"ID: {role.id}")
 
         await ch.send(embed=e)
 
@@ -335,7 +335,7 @@ class Logs(Plugin):
                           timestamp=role.created_at)
 
         e.set_author(name=role.guild, icon_url=role.guild.icon_url)
-        e.set_footer(text="ID: {}".format(role.id))
+        e.set_footer(text=f"ID: {role.id}")
 
         await ch.send(embed=e)
 
@@ -396,13 +396,7 @@ class Logs(Plugin):
         if not ch:
             return
 
-        emote = None
-
-        for emoji in before:
-            if emoji not in after:
-                emote = emoji
-                break
-
+        emote = next((emoji for emoji in before if emoji not in after), None)
         if not emote:
             return
 

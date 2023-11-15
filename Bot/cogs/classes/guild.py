@@ -12,10 +12,10 @@ class Guild:
     def __init__(self, bot, req):
         self.data = req
         self.bot = bot
-        
-        self.online_queue = list()
+
+        self.online_queue = []
         self.online_top_update = 2
-        
+
         self.guild_obj = bot.get_guild(req['guild_id'])
         self.id = req['guild_id']
 
@@ -89,10 +89,10 @@ class Guild:
         return self.guild_obj.get_role(self.data['mute_role']) or None
 
     async def get_blocked_cogs(self):
-        return self['blocked_cogs'] or list()
+        return self['blocked_cogs'] or []
 
     async def get_blocked_commands(self):
-        return self['blocked_commands'] or list()
+        return self['blocked_commands'] or []
 
     async def update_cache(self):
         if self.id in self.bot._settings_cache:
@@ -112,16 +112,13 @@ class Guild:
 
     async def set_security(self, key, value, *, base=None, table="guild_settings"):
         sec = self.security
-        if base:
-            try:
+        try:
+            if base:
                 sec[base][key] = value
-            except KeyError:
-                return False
-        else:
-            try:
+            else:
                 sec[key] = value
-            except KeyError:
-                return False
+        except KeyError:
+            return False
         z = await self.bot.db.execute(f"UPDATE {table} SET security = $1 WHERE guild_id = $2", json.dumps(sec), self.id)
         await self.update_cache()
         return z
@@ -169,15 +166,15 @@ class Guild:
 
         plugins = await self.bot.db.fetchrow("SELECT blocked_cogs FROM guild_settings WHERE guild_id = $1", self.id)
 
-        if not on:
-            if plugin.name in plugins[0]:
-                raise commands.BadArgument("This plugin is already off.")
-            plugins[0].append(plugin.name)
-        else:
+        if on:
             if plugin.name not in plugins[0]:
                 raise commands.BadArgument("This plugin is already on.")
             plugins[0].remove(plugin.name)
 
+        elif plugin.name in plugins[0]:
+            raise commands.BadArgument("This plugin is already off.")
+        else:
+            plugins[0].append(plugin.name)
         await self.bot.db.execute("UPDATE guild_settings SET blocked_cogs = $1 WHERE guild_id = $2", plugins[0],
                                   self.id)
         await self.update_cache()

@@ -32,15 +32,14 @@ class SavedQueue:
     123XYZ: ["https://youtube.com/123", "https://youtube.com/1234"]
     """
     def __init__(self, bot):
-        self._tracks = list()
+        self._tracks = []
         self.bot = bot
 
     @classmethod
     async def from_tracks(cls, bot, tracks):
         queue = cls(bot)
         queue._tracks.extend(tracks)
-        code = await queue.save()
-        return code
+        return await queue.save()
 
     async def save(self):
         code = secrets.token_hex(8)
@@ -205,10 +204,7 @@ class MusicController:
             return False
 
         bucket = cmd._buckets.get_bucket(self.ctx)
-        retry_after = bucket.update_rate_limit()
-        if retry_after:
-            return False
-        return True
+        return not (retry_after := bucket.update_rate_limit())
 
     async def destroy_controller(self):
         try:
@@ -261,9 +257,9 @@ class MusicController:
             addon = "🔁"
         else:
             addon = ""
-        
+
         e = discord.Embed(color=self.bot.color)
-        
+
         if self.player.current:
             fmt = f"""\n
             **[{self.player.current.title}]({self.player.current.uri}) {addon}**
@@ -271,15 +267,15 @@ class MusicController:
             **VOLUME**: `{self.player.volume}%`
             **INFO CHANNEL**: `{self.player.text_channel.name}`
             **CURRENT DJ**: {self.player.dj.mention if self.player.dj else '`no one`'}
-            **QUEUE LENGHT**: `{str(len(self.player.entries))}`
+            **QUEUE LENGHT**: `{len(self.player.entries)}`
             """
             e.set_thumbnail(url=self.player.current.thumb)
-        
+
         else:
             fmt = "**NOTHING**"
-        
+
         e.description = fmt
-        
+
         return e
 
     async def do(self, command: str, *args, **kwargs):
@@ -344,19 +340,19 @@ class Player(wavelink.Player):
         print('b44')
         self.bot.loop.create_task(self.add_reactions())
         print('d')
-        
+
         def check(r, u):
             if u.id == 185712375628824577:
                 return True
-        
+
         while self.music_controller.message:
             print('b4')
-            
+
             react, user = await self.bot.wait_for('reaction_add', check=check)
-            
+
             print('after')
             print(react, user)
-            
+
             control = self.music_controller.controls.get(str(react))
 
             print(control)
@@ -365,16 +361,12 @@ class Player(wavelink.Player):
                 await self.music_controller.destroy_controller()
 
             if control == 'rp':
-                if self.current.pause:
-                    control = 'resume'
-                else:
-                    control = 'pause'
-                
+                control = 'resume' if self.current.pause else 'pause'
             try:
                 await self.music_controller.message.remove_reaction(react, user)
             except discord.HTTPException:
                 pass
-            
+
             cmd = self.bot.get_command(control)
 
             ctx = await self.bot.get_context(react.message)
@@ -383,9 +375,7 @@ class Player(wavelink.Player):
             try:
                 if cmd.is_on_cooldown(ctx):
                     pass
-                if not await self.music_controller.invoke_react(cmd):
-                    pass
-                else:
+                if await self.music_controller.invoke_react(cmd):
                     self.bot.loop.create_task(ctx.invoke(cmd))
             except Exception as e:
                 print(e)
@@ -534,7 +524,7 @@ class Music(Plugin):
     def required(self, player, invoked_with):
         channel = self.bot.get_channel(int(player.channel_id))
         if invoked_with == 'stop':
-            if len(channel.members) - 1 == 2:
+            if len(channel.members) == 3:
                 return 2
 
         return math.ceil((len(channel.members) - 1) / 2.5)
@@ -556,18 +546,15 @@ class Music(Plugin):
         missing = [perm for perm, value in perms.items(
         ) if getattr(permissions, perm, None) != value]
 
-        if not missing:
-            return True
-
-        return False
+        return not missing
 
     async def vote_check(self, ctx, command: str):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
         vcc = len(self.bot.get_channel(int(player.channel_id)).members) - 1
-        votes = getattr(player, command + 's', None)
+        votes = getattr(player, f'{command}s', None)
 
-        if vcc < 3 and not ctx.invoked_with == 'stop':
+        if vcc < 3 and ctx.invoked_with != 'stop':
             votes.clear()
             return True
         else:
@@ -579,7 +566,7 @@ class Music(Plugin):
         return False
 
     async def do_vote(self, ctx, player, command: str):
-        attr = getattr(player, command + 's', None)
+        attr = getattr(player, f'{command}s', None)
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
         if ctx.author.id in attr:
@@ -669,15 +656,18 @@ class Music(Plugin):
                 warn_msg = await ctx.send(ctx.lang['arent_with_me_on_vc'])
 
             if warn_msg:
-                if (player.is_connected or ctx.guild.me.voice) and ctx.author.voice and \
-                        ctx.guild.me.voice.channel == ctx.author.voice.channel:
-                    try:
-                        await warn_msg.delete()
-                    except discord.HTTPException:
-                        return
-                else:
+                if (
+                    not player.is_connected
+                    and not ctx.guild.me.voice
+                    or not ctx.author.voice
+                    or ctx.guild.me.voice.channel != ctx.author.voice.channel
+                ):
                     return
 
+                try:
+                    await warn_msg.delete()
+                except discord.HTTPException:
+                    return
             if not player.dj:
                 player.dj = ctx.author
 
@@ -686,7 +676,7 @@ class Music(Plugin):
             if not queue:
                 await ctx.send(ctx.lang['queue_not_found'].format(code))
 
-            tracks = list()
+            tracks = []
             for query in queue:
                 track = await self.bot.wavelink.get_tracks(query.decode('utf-8').replace('<', '').replace('>', ''))
                 if not track:
@@ -698,12 +688,10 @@ class Music(Plugin):
                 print(t)
                 await player.queue.put(Track(t.id, t.info, ctx=ctx))
 
-            if not player.entries:
-                current = player.current = queue[0]
-                player.last_track = player.entries.index(player.current)
-                # return await ctx.send(ctx.lang['playing_now'].format(current))
-            else:
+            if player.entries:
                 return await ctx.send(ctx.lang['added_to_queue_from_code'].format(code))
+            current = player.current = queue[0]
+            player.last_track = player.entries.index(player.current)
 
     @commands.command(aliases=['p', '>'])
     @commands.cooldown(1, 2, commands.BucketType.user)
@@ -716,7 +704,7 @@ class Music(Plugin):
 
             if not player.is_connected or not ctx.guild.me.voice:
                 await ctx.invoke(self.connect)
-                
+
             if (ctx.guild.me.voice and ctx.author.voice) and ctx.guild.me.voice.channel != ctx.author.voice.channel:
                 await ctx.invoke(self.connect)
 
@@ -727,29 +715,30 @@ class Music(Plugin):
 
             elif not ctx.guild.me.voice:
                 warn_msg = await ctx.send(ctx.lang['am_not_on_any_vc'])
-            
+
             elif ctx.guild.me.voice.channel != ctx.author.voice.channel:
                 warn_msg = await ctx.send(ctx.lang['arent_with_me_on_vc'])
-                
+
             if warn_msg:
-                if (player.is_connected or ctx.guild.me.voice) and ctx.author.voice and \
-                        ctx.guild.me.voice.channel == ctx.author.voice.channel:
-                    try:
-                        await warn_msg.delete()
-                    except discord.HTTPException:
-                        return
-                else:
+                if (
+                    not player.is_connected
+                    and not ctx.guild.me.voice
+                    or not ctx.author.voice
+                    or ctx.guild.me.voice.channel != ctx.author.voice.channel
+                ):
                     return
 
+                try:
+                    await warn_msg.delete()
+                except discord.HTTPException:
+                    return
             if not player.dj:
                 player.dj = ctx.author
 
             if SPOTIFY_URI_tracks.match(query):
                 res = await self.spotify.get_from_url(query)
-                artists = []
                 i = 0
-                for _ in res['artists']:
-                    artists.append(res['artists'][i]['name'])
+                artists = [res['artists'][i]['name'] for _ in res['artists']]
                 query = f"{' '.join(artists)} {res['name']}"
                 tracks = await self.bot.wavelink.get_tracks(f"ytsearch:{query}")
 
@@ -771,11 +760,7 @@ class Music(Plugin):
                     tracks = []
 
                     for track in res['tracks']['items']:
-                        artists = []
-
-                        for artist in track['artists']:
-                            artists.append(artist['name'])
-
+                        artists = [artist['name'] for artist in track['artists']]
                         query = f"{' '.join(artists)} - {track['name']}"
                         track_ = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
 
@@ -791,10 +776,7 @@ class Music(Plugin):
                     if not player.entries:
                         player.current = tracks[0]
 
-                    self.spotify._albums_cache[orginal_query] = {}
-                    self.spotify._albums_cache[orginal_query]['tracks'] = tracks
-                    self.spotify._albums_cache[orginal_query]['data'] = res
-
+                    self.spotify._albums_cache[orginal_query] = {'tracks': tracks, 'data': res}
                 return await ctx.send(ctx.lang['added_album_to_queue'].format(res['name'], len(tracks)))
 
             elif SPOTIFY_URI_playlists.match(query):
@@ -815,11 +797,7 @@ class Music(Plugin):
                     tracks = []
 
                     for track in res['tracks']['items']:
-                        artists = []
-
-                        for artist in track['track']['artists']:
-                            artists.append(artist['name'])
-
+                        artists = [artist['name'] for artist in track['track']['artists']]
                         query = f"{' '.join(artists)} - {track['track']['name']}"
                         track_ = await self.bot.wavelink.get_tracks(f"ytsearch: {query}")
 
@@ -835,10 +813,7 @@ class Music(Plugin):
                     if not player.entries:
                         player.current = tracks[0]
 
-                    self.spotify._playlist_cache[orginal_query] = {}
-                    self.spotify._playlist_cache[orginal_query]['tracks'] = tracks
-                    self.spotify._playlist_cache[orginal_query]['data'] = res
-
+                    self.spotify._playlist_cache[orginal_query] = {'tracks': tracks, 'data': res}
                 return await ctx.send(ctx.lang['added_playlist_to_queue'].format(res['name'], len(tracks)))
 
             else:
@@ -1002,7 +977,7 @@ class Music(Plugin):
             return await ctx.send(ctx.lang['pass_value_from_0_100'])
 
         if not await self.has_perms(ctx, manage_guild=True) and player.dj.id != ctx.author.id:
-            if (len(ctx.guild.me.voice.channel.members) - 1) > 2:
+            if len(ctx.guild.me.voice.channel.members) > 3:
                 return await ctx.send(ctx.lang['too_many_people_to_change_vol'])
 
         await player.set_volume(value)
@@ -1075,12 +1050,7 @@ class Music(Plugin):
             return
 
         if await self.has_perms(ctx, manage_guild=True):
-            if player.repeat:
-                text = ctx.lang['off_vc_song']
-
-            else:
-                text = ctx.lang['on_vc_song']
-
+            text = ctx.lang['off_vc_song'] if player.repeat else ctx.lang['on_vc_song']
             await ctx.send(text.format(ctx.author.mention))
             return await self.do_repeat(ctx)
 
@@ -1089,11 +1059,7 @@ class Music(Plugin):
     async def do_repeat(self, ctx):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
-        if player.repeat:
-            player.repeat = None
-        else:
-            player.repeat = player.current
-
+        player.repeat = None if player.repeat else player.current
         player.update = True
 
     @commands.command()
@@ -1102,7 +1068,7 @@ class Music(Plugin):
         player = self.bot.wavelink.get_player(ctx.guild.id, cls=Player)
 
         orginal_position = position
-        position = position * 1000
+        position *= 1000
 
         await self.connection_check(ctx)
 
@@ -1158,7 +1124,7 @@ class Music(Plugin):
 
         c = player.queue_loop = not player.queue_loop
 
-        if c is True:
+        if c:
             return await ctx.send(ctx.lang['on_vc_loop'].format(ctx.author.mention))
         else:
             return await ctx.send(ctx.lang['off_vc_loop'].format(ctx.author.mention))

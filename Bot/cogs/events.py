@@ -93,9 +93,7 @@ class Events(Plugin):
 
             text = language['my_prefix_is']
 
-            z = []
-            for pre in prefix:
-                z.append(f"`{pre}`")
+            z = [f"`{pre}`" for pre in prefix]
             msg = f"{text} {', '.join(z)}"
 
             await message.channel.send(msg)
@@ -110,17 +108,8 @@ class Events(Plugin):
 
         ctx = await self.bot.get_context(message, cls=RoseContext)
 
-        # if message.attachments:
-        #     if guild.security['anti']['nsfw']:
-        #         nsfw_check = functools.partial(self.nsfw_ratio)
-        #         check = await self.bot.loop.run_in_executor(None, nsfw_check)
-        #
-        #         print(check)
-
-        if guild.security['anti']['invites']:  # todo on_member_join check if member nick is not invite
-            match = re.fullmatch(INVITE_REGEX, message.content)
-            if match:
-
+        if match := re.fullmatch(INVITE_REGEX, message.content):
+            if guild.security['anti']['invites']:
                 try:
                     await message.delete()
                 except discord.HTTPException:
@@ -135,10 +124,8 @@ class Events(Plugin):
                 else:
                     return await ctx.send(language['cant_warn'])
 
-        if guild.security['anti']['link']:
-            match = re.fullmatch(LINK_REGEX, message.content)
-            if match:
-
+        if match := re.fullmatch(LINK_REGEX, message.content):
+            if guild.security['anti']['link']:
                 try:
                     await message.delete()
                 except discord.HTTPException:
@@ -154,7 +141,6 @@ class Events(Plugin):
                     return await ctx.send(language['cant_warn'])
 
         if guild.security['anti']['spam']:
-
             if message.author.id in self._message_cache:
                 last = self._message_cache[message.author.id][-1]  # last component of list
 

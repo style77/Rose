@@ -112,17 +112,16 @@ class Stats(Plugin):
     async def on_member_update(self, before, after):
         guild = await self.bot.get_guild_settings(after.guild.id)
 
-        online_members = guild.stats['online_members']['channel_id']
         online_record = guild.stats['online_top']['channel_id']
         online = [m for m in after.guild.members if m.status != discord.Status.offline]
 
-        if online_members:
+        if online_members := guild.stats['online_members']['channel_id']:
             if self.member_queue_update == 0:
                 try:
                     channel = self.bot.get_channel(online_members)
                     await channel.edit(name=guild.stats['online_members']['text'].format(len(online)))
                 except (discord.Forbidden, discord.HTTPException):
-                    pass   
+                    pass
                 self.member_queue_update = DEFAULT_QUEUE_LIMIT
             else:
                 self.member_queue_update -= 1

@@ -58,24 +58,25 @@ class DataBase:
     def fetch(self, query, *args, **kwargs):
         """kwarg one means that fetch will return only first row."""
         self.cur.execute(query)
-        if kwargs.get('one'):
-            return self.cur.fetchone()
-        return self.cur.fetchall()
+        return self.cur.fetchone() if kwargs.get('one') else self.cur.fetchall()
 
     def get_guild_settings(self, guild_id: int, **kwargs):
-        one = kwargs.get('one') if 'one' in kwargs else False
-        f = self.fetch("SELECT * FROM guild_settings WHERE guild_id = {}".format(guild_id), one=one)
-        return f
+        one = kwargs.get('one', False)
+        return self.fetch(
+            f"SELECT * FROM guild_settings WHERE guild_id = {guild_id}", one=one
+        )
 
     def update(self, guild_id: int, key, value):
         if not self.get_guild_settings(guild_id):
             self.insert_new(guild_id)
-        self.cur.execute("UPDATE guild_settings SET {} = {} WHERE guild_id = {}".format(key, value, guild_id))
+        self.cur.execute(
+            f"UPDATE guild_settings SET {key} = {value} WHERE guild_id = {guild_id}"
+        )
         self.conn.commit()
         return True
 
     def insert_new(self, guild_id):
-        self.cur.execute("INSERT INTO guild_settings (guild_id) VALUES ({})".format(guild_id))
+        self.cur.execute(f"INSERT INTO guild_settings (guild_id) VALUES ({guild_id})")
         self.conn.commit()
 
 
@@ -224,11 +225,8 @@ class App(ErrorsHandler):
     @staticmethod
     def get_acronym(guild_name):
         name = guild_name.split()
-        x = []
-        for word in name:
-            x.append(word[0])
-        new_name = ''.join(x)
-        return new_name
+        x = [word[0] for word in name]
+        return ''.join(x)
 
     @staticmethod
     def get_server_icon(guild):
@@ -244,7 +242,7 @@ class App(ErrorsHandler):
         except KeyError:
             lang = 'pl'
 
-        with open(r'lang/{}.json'.format(lang), encoding="utf-8") as file:
+        with open(f'lang/{lang}.json', encoding="utf-8") as file:
             f = json.load(file)
 
         try:

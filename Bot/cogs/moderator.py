@@ -119,8 +119,7 @@ class Moderator(Plugin):
             member = guild.get_member(user['user_id'])
 
             try:
-                role = guild_settings.get_mute_role()
-                if role:
+                if role := guild_settings.get_mute_role():
                     try:
                         await member.remove_roles(role)
                         await self.bot.db.execute("DELETE FROM temps WHERE user_id = $1 AND guild_id = $2 AND type = $3", member.id, guild.id, 'temp_mute')
@@ -170,8 +169,8 @@ class Moderator(Plugin):
     @commands.bot_has_permissions(kick_members=True)
     async def kick(self, ctx, members: commands.Greedy[discord.Member], *, reason: commands.clean_content):
 
-        could_not_kick = list()
-        kicked = list()
+        could_not_kick = []
+        kicked = []
 
         for member in members:
             if member.id == self.bot.user.id:
@@ -204,7 +203,7 @@ class Moderator(Plugin):
 
         msg = f"{ctx.lang['kicked_member']}: {', '.join([f'{member.mention} ({member})' for member in kicked])} {ctx.lang['for']} `{reason}`."
 
-        if len(could_not_kick) > 0:
+        if could_not_kick:
             msg += f"\n{ctx.lang['could_not_kick']}: {', '.join([f'{member.mention} ({member})' for member in could_not_kick])}"
         await ctx.send(msg)
         self.bot.dispatch('mod_command_use', ctx)
@@ -214,8 +213,8 @@ class Moderator(Plugin):
     @commands.bot_has_permissions(ban_members=True)
     async def ban(self, ctx, members: commands.Greedy[discord.Member], purge_days: typing.Optional[int] = 0, *, reason: commands.clean_content):
 
-        could_not_ban = list()
-        banned = list()
+        could_not_ban = []
+        banned = []
 
         for member in members:
             if member.id == self.bot.user.id:
@@ -248,10 +247,10 @@ class Moderator(Plugin):
 
         msg = ""
 
-        if len(banned) > 0:
+        if banned:
             msg += f"{ctx.lang['banned_member']}: {', '.join([f'{member.mention} ({member})' for member in banned])} {ctx.lang['for']} `{reason}` {ctx.lang['purged_msgs_ban'].format(purge_days)}."
 
-        if len(could_not_ban) > 0:
+        if could_not_ban:
             could_not_ban_msg = f"\n{ctx.lang['could_not_ban']}: {', '.join([f'{member.mention} ({member})' for member in could_not_ban])}"
             msg += could_not_ban_msg
         await ctx.send(msg)
@@ -260,11 +259,7 @@ class Moderator(Plugin):
         if limit > 2000:
             return await ctx.send(ctx.lang['too_many_messages'].format(limit))
 
-        if before is None:
-            before = ctx.message
-        else:
-            before = discord.Object(id=before)
-
+        before = ctx.message if before is None else discord.Object(id=before)
         if after is not None:
             after = discord.Object(id=after)
 
@@ -477,9 +472,7 @@ class Moderator(Plugin):
 
         def predicate(m):
             r = op(p(m) for p in predicates)
-            if args._not:
-                return not r
-            return r
+            return not r if args._not else r
 
         args.search = max(0, min(2000, args.search))  # clamp from 0-2000
         await self.do_removal(ctx, args.search, predicate, before=args.before, after=args.after)
@@ -488,8 +481,8 @@ class Moderator(Plugin):
     @commands.has_permissions(manage_roles=True)
     async def temp_mute(self, ctx, members: commands.Greedy[discord.Member], time: VexsTimeConverter, *, reason: str):
 
-        could_not_mute = list()
-        muted = list()
+        could_not_mute = []
+        muted = []
 
         g = await self.bot.get_guild_settings(ctx.guild.id)
         role = g.get_mute_role()
@@ -535,9 +528,9 @@ class Moderator(Plugin):
                 if member not in could_not_mute:
                     could_not_mute.append(member)
 
-        for member in muted:
-            query = "INSERT INTO temps (type, role_id, moderator_id, timestamp, user_id, reason, ends_at, guild_id) " \
+        query = "INSERT INTO temps (type, role_id, moderator_id, timestamp, user_id, reason, ends_at, guild_id) " \
                     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+        for member in muted:
             await self.bot.db.execute(query, 'temp_mute', role.id, ctx.author.id, now,
                                       member.id, reason, time_, ctx.guild.id)
 
@@ -548,7 +541,7 @@ class Moderator(Plugin):
 
         msg = f"{ctx.lang['muted_member']}: {', '.join([f'{member.mention} ({member})' for member in muted])} {ctx.lang['for']} `{reason}`."
 
-        if len(could_not_mute) > 0:
+        if could_not_mute:
             msg += f"\n{ctx.lang['could_not_mute']}: {', '.join([f'{member.mention} ({member})' for member in could_not_mute])}"
         await ctx.send(msg)
 
@@ -559,20 +552,18 @@ class Moderator(Plugin):
 
     @staticmethod
     async def punish(ctx, punishment, member, reason):
-        if punishment == 0:  # just to be sure
+        if punishment == 0 or punishment not in [1, 2]:  # just to be sure
             return
         elif punishment == 1:
             try:
                 await member.kick(reason=await ModerationReason().convert(ctx, reason))
             except discord.HTTPException:
                 return
-        elif punishment == 2:
+        else:
             try:
                 await member.ban(reason=await ModerationReason().convert(ctx, reason))
             except discord.HTTPException:
                 return
-        else:
-            return
 
     async def check(self, ctx, member, reason, all_warns, punish_without_asking):
         """
@@ -606,8 +597,7 @@ class Moderator(Plugin):
         warns = await self.bot.db.fetch("SELECT * FROM warns WHERE user_id = $1 AND guild_id = $2",
                                         member.id, member.guild.id)
 
-        id_ = len(warns) + 1
-        return id_
+        return len(warns) + 1
 
     async def add_warn(self, ctx, member, reason, *, punish_without_asking=False, check=True):
         id_ = await self._get_id(member)
@@ -653,10 +643,10 @@ class Moderator(Plugin):
         if not warns:
             return await ctx.send(ctx.lang['no_warns'])
 
-        z = []
-        for warn in warns:
-            z.append(f"#{warn['id']} - `{warn['reason']}` - moderator: {warn['moderator']}")
-
+        z = [
+            f"#{warn['id']} - `{warn['reason']}` - moderator: {warn['moderator']}"
+            for warn in warns
+        ]
         x = '\n'.join(z)
         return await ctx.send(f"```\n{x}\n```")
 
@@ -729,26 +719,26 @@ class Settings(Plugin):
         for key, value in guild:
             if key == "stars":
                 stars = json.loads(value)
-                    
+
                 z = ""
                 for key, value in stars.items():
-                    
+
                     if value == "color":
                         value = str(value).replace("0x", "#")
-                    
+
                     try:
                         channel_value = ctx.guild.get_channel(value)
                         value = channel_value.mention
                     except:
                         pass
-                    
+
                     z += f"**{key}**: {value}\n"
-                
+
                 e.add_field(name="stars", value=z, inline=False)
-            
+
             elif key == "security":
                 security = json.loads(value)
-                
+
                 z = ""
                 for key, value in security.items():
                     try:
@@ -756,22 +746,23 @@ class Settings(Plugin):
                         value = channel_value.mention
                     except:
                         pass
-                    
+
                     if key == 'anti':
                         z += f"**anti**:\n```"
-                        x = ""
-                        for anti_key, anti_value in value.items():
-                            x += f"{anti_key}: {anti_value}\n"
+                        x = "".join(
+                            f"{anti_key}: {anti_value}\n"
+                            for anti_key, anti_value in value.items()
+                        )
                         z += f"{x}```"
                     else:
                         z += f"{key}: `{value}`\n"
-                
+
                 e.add_field(name="security", value=z, inline=False)
-            
+
             elif key == "stats":
                 stats = json.loads(value)
                 print(stats)
-                
+
                 z = ""
                 for org_key, value in stats.items():
                     z += f"**{org_key}**:\n"
@@ -781,34 +772,31 @@ class Settings(Plugin):
                             value = channel_value.mention
                         except:
                             pass
-                        
+
                         z += f"{key}: `{value}`\n"
-                    
+
                 e.add_field(name="stats", value=z, inline=False)
-            
+
             else:
                 try:
                     channel_value = ctx.guild.get_channel(value)
                     value = channel_value.mention
                 except:
                     pass
-                
+
                 try:
                     role_value = ctx.guild.get_role(value)
                     value = role_value.mention
                 except:
                     pass
-                
+
                 e.add_field(name=key, value=value, inline=False)
         await ctx.send(embed=e)
 
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_guild=True)
     async def plugin(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @plugin.command(aliases=['on'])
@@ -842,10 +830,7 @@ class Settings(Plugin):
     @commands.group(name="set", invoke_without_command=True)
     @commands.has_permissions(manage_guild=True)
     async def set_(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @set_.command()
@@ -1046,7 +1031,11 @@ class Settings(Plugin):
 
         s = await guild.set('welcome_channel', channel.id)
         if s:
-            return await ctx.send(ctx.lang['updated_setting'].format('welcome_channel', '#' + str(channel)))
+            return await ctx.send(
+                ctx.lang['updated_setting'].format(
+                    'welcome_channel', f'#{str(channel)}'
+                )
+            )
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
@@ -1066,7 +1055,9 @@ class Settings(Plugin):
         s = await guild.set('logs', channel.id)
         ls = await guild.set('logs_webhook', webhook.id)
         if s and ls:
-            return await ctx.send(ctx.lang['updated_setting'].format('logs', '#' + str(channel)))
+            return await ctx.send(
+                ctx.lang['updated_setting'].format('logs', f'#{str(channel)}')
+            )
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
@@ -1102,7 +1093,11 @@ class Settings(Plugin):
 
         s = await guild.set('leave_channel', channel.id)
         if s:
-            return await ctx.send(ctx.lang['updated_setting'].format('leave_channel', '#' + str(channel)))
+            return await ctx.send(
+                ctx.lang['updated_setting'].format(
+                    'leave_channel', f'#{str(channel)}'
+                )
+            )
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
@@ -1113,7 +1108,11 @@ class Settings(Plugin):
 
         s = await guild.set('auto_role', role.id)
         if s:
-            return await ctx.send(ctx.lang['updated_setting'].format('leave_channel', '@' + str(role)))
+            return await ctx.send(
+                ctx.lang['updated_setting'].format(
+                    'leave_channel', f'@{str(role)}'
+                )
+            )
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
@@ -1125,17 +1124,16 @@ class Settings(Plugin):
         starboard = guild.get_starboard()
         if starboard and not channel:
             ch = await ctx.confirm(ctx.lang['confirm_removing_starboard'], ctx.author)
-            if ch:
-                await starboard.delete(reason=ctx.lang['created_new_starboard'])
-
-                overwrites = {
-                    ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False, read_messages=True),
-                }
-
-                channel = await ctx.guild.create_text_channel(name="starboard", overwrites=overwrites)
-            else:
+            if not ch:
                 return await ctx.send(ctx.lang['abort'])
 
+            await starboard.delete(reason=ctx.lang['created_new_starboard'])
+
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False, read_messages=True),
+            }
+
+            channel = await ctx.guild.create_text_channel(name="starboard", overwrites=overwrites)
         elif not channel:
             overwrites = {
                 ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False, read_messages=True),
@@ -1145,7 +1143,9 @@ class Settings(Plugin):
 
         s = await guild.set_stars('starboard', channel.id)
         if s:
-            return await ctx.send(ctx.lang['updated_setting'].format('starboard', '#' + str(channel)))
+            return await ctx.send(
+                ctx.lang['updated_setting'].format('starboard', f'#{str(channel)}')
+            )
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
@@ -1211,17 +1211,18 @@ class Settings(Plugin):
 
         s = await guild.set('stream_notification', channel.id)
         if s:
-            return await ctx.send(ctx.lang['updated_setting'].format('stream_notification', '#' + str(channel)))
+            return await ctx.send(
+                ctx.lang['updated_setting'].format(
+                    'stream_notification', f'#{str(channel)}'
+                )
+            )
         else:
             return await ctx.send(ctx.lang['something_happened'].format(ctx.prefix))
 
     @set_.group(invoke_without_command=True)
     @commands.has_permissions(manage_guild=True)
     async def stats(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @stats.command()
@@ -1322,8 +1323,8 @@ class Settings(Plugin):
             channel = await commands.TextChannelConverter().convert(ctx, channel)
             if not channel:
                 channel = await commands.VoiceChannelConverter().convert(ctx, channel)
-                if not channel:
-                    return await ctx.send(ctx.lang[''])
+            if not channel:
+                return await ctx.send(ctx.lang[''])
 
             await channel.edit(name=channel.name.replace("-", " ").replace("_", " "))
 

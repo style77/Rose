@@ -55,13 +55,11 @@ class SeleniumPhase:
         png = self.driver.get_screenshot_as_png()
         self.driver.close()
 
-        im = Image.open(BytesIO(png))
-        return im
+        return Image.open(BytesIO(png))
 
     async def take_screenshot(self, url):
         func = functools.partial(self._take_screenshot, url)
-        x = await self.bot.loop.run_in_executor(None, func)
-        return x
+        return await self.bot.loop.run_in_executor(None, func)
 
 
 class Plugin(commands.Cog):
@@ -81,12 +79,7 @@ class Plugin(commands.Cog):
 
     def get_all_commands(self):
 
-        commands_ = []
-
-        for command in self.walk_commands():
-            commands_.append(command)
-
-        return commands_
+        return list(self.walk_commands())
 
     async def turn_off(self, guild_id):
         guild = await self.bot.get_guild_settings(guild_id)

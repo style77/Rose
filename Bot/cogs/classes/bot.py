@@ -65,7 +65,7 @@ class Bot(commands.AutoShardedBot):
 
         self.wavelink = wavelink.Client(self)
 
-        self.exts = list()
+        self.exts = []
 
         self.usage = Counter()
 
@@ -87,15 +87,11 @@ class Bot(commands.AutoShardedBot):
         await self.invoke(ctx)
 
     def get_language_object(self, lang):
-        raw_lang = self.polish if lang == "PL" else self.english
-        return raw_lang
+        return self.polish if lang == "PL" else self.english
 
     def __validate_languages(self):
-        z = list()
-        i = 1
-
-        for key in self.polish.keys():
-            i += 1
+        z = []
+        for i, key in enumerate(self.polish.keys(), start=2):
             if key not in self.english.keys():
                 z.append(f"LINE {i} | {key} not found in _eng.json")
             elif self.polish[key] == self.english[key]:
@@ -146,10 +142,7 @@ class Bot(commands.AutoShardedBot):
 
     async def fetch_user_from_database(self, user_id):
         user = await self.db.fetchrow("SELECT * FROM users WHERE id = $1;", user_id)
-        if user:
-            return User(self, user)
-        else:
-            return User(self, await self.add_user(user_id))
+        return User(self, user) if user else User(self, await self.add_user(user_id))
 
     async def add_user(self, user_id):
         query = "INSERT INTO users (id) VALUES ($1) RETURNING *;"
@@ -159,8 +152,10 @@ class Bot(commands.AutoShardedBot):
         if not guild_id:
             return
 
-        new_guild = await self.db.fetchrow("INSERT INTO guild_settings (guild_id) VALUES ($1) RETURNING *;", guild_id)
-        return new_guild
+        return await self.db.fetchrow(
+            "INSERT INTO guild_settings (guild_id) VALUES ($1) RETURNING *;",
+            guild_id,
+        )
 
     async def clear_settings(self, guild_id):
         await self.db.execute("DELETE FROM guild_settings WHERE guild_id = $1;", guild_id)
@@ -184,7 +179,7 @@ class Bot(commands.AutoShardedBot):
                 all_messages += g['messages']
                 all_commands += g['commands']
 
-            total_commands = [i for i in self.walk_commands()]
+            total_commands = list(self.walk_commands())
 
             stats = [
                 "You.",
@@ -193,10 +188,10 @@ class Bot(commands.AutoShardedBot):
                 f"{len(self.guilds)} guilds.",
                 f"after {all_commands} commands.",
                 f"{len(total_commands)} total commands!",
-                f"Add me! /invite",
-                f"Join! /support",
+                "Add me! /invite",
+                "Join! /support",
                 "people usually forget about this bot in 5minutes.",
-                f"V2."
+                "V2.",
             ]
 
             status = random.choice(stats)

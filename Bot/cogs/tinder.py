@@ -29,7 +29,7 @@ class Tinder(Plugin):
         super().__init__(bot)
         self.bot = bot
 
-        self._creating_account = list()
+        self._creating_account = []
 
     async def find_similiar(self, user):
         # rating = 0
@@ -38,17 +38,11 @@ class Tinder(Plugin):
         # if user1.tinder['age'] - 3 <= user.tinder['age'] <= user1.tinder['age'] + 5:
         # rating = 1
         users = await self.bot.db.fetch("SELECT * FROM users WHERE $1 - 4 <= (users.tinder->>'age')::int AND (users.tinder->>'age')::int <= $1 + 4", user.tinder['age'])
-        if not users:
-            return None
-        else:
-            return users
+        return None if not users else users
 
     @commands.group(invoke_without_command=True)
     async def tinder(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @tinder.command()
@@ -138,11 +132,7 @@ class Tinder(Plugin):
             self._creating_account.remove(ctx.author.id)
             return await ch.send(ctx.lang['TimeoutError2'])
 
-        if desc.content.lower() in ['cancel', 'skip']:
-            desc = ''
-        else:
-            desc = desc.content
-
+        desc = '' if desc.content.lower() in ['cancel', 'skip'] else desc.content
         data['desc'] = desc
 
         data['data'] = {"skipped": [],
@@ -218,11 +208,11 @@ class Tinder(Plugin):
         def ch(r, u):
             return r.message.id == msg.id and u.id == ctx.author.id
 
-        reacted = list()
-        hearted = list()
-        skipped = list()
+        reacted = []
+        hearted = []
+        skipped = []
 
-        z = list()
+        z = []
         z.extend(author.tinder['data']['hearted'])
         z.extend(author.tinder['data']['skipped'])
 

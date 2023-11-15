@@ -26,9 +26,7 @@ class Stream(object):
 
     @property
     def is_live(self):
-        if self.data is not None:
-            return True
-        return False
+        return self.data is not None
 
     def _prepare_embed(self):
         if self.is_live:
@@ -95,14 +93,11 @@ class Streams(commands.Cog):
                         await online_streams.remove(_stream['guild_id'], _id['users'][0]["_id"])
                         continue
 
-                    z = self.bot.get_guild_settings(_stream['guild_id'])
-
-                    if z:
-                        notif_channel = z['stream_notification']
-                        language = z['lang']
-                    else:
+                    if not (z := self.bot.get_guild_settings(_stream['guild_id'])):
                         continue
 
+                    notif_channel = z['stream_notification']
+                    language = z['lang']
                     s = Stream(stream_ttv['stream'], channel_id=notif_channel, bot=self.bot,
                                guild_id=_stream['guild_id'], lang=language)
 
@@ -122,10 +117,7 @@ class Streams(commands.Cog):
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(manage_guild=True)
     async def stream(self, ctx):
-        z = []
-        for cmd in ctx.command.commands:
-            z.append(f"- {cmd.name}")
-
+        z = [f"- {cmd.name}" for cmd in ctx.command.commands]
         return await ctx.send(ctx.lang['commands_group'].format('\n'.join(z)))
 
     @stream.command()

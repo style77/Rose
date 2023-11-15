@@ -64,10 +64,7 @@ class Levels(Plugin):
     async def level_up(self, exp, guild):
         m = LEVEL_ALG_MAP[guild.leveling_type]
 
-        if exp >= (m * self._level_from_exp(exp, guild.leveling_type)):
-            return True
-        else:
-            return False
+        return exp >= m * self._level_from_exp(exp, guild.leveling_type)
 
     def _level_from_exp(self, exp, leveling_type):
         m = LEVEL_ALG_MAP[leveling_type]
@@ -90,31 +87,29 @@ class Levels(Plugin):
             return
 
         bucket = self._cd.get_bucket(message)
-        retry_after = bucket.update_rate_limit()
-        if retry_after:
+        if retry_after := bucket.update_rate_limit():
             return
+        user = await self.get_guild_profile(message.author.id, message.guild.id)
+        guild = await self.bot.get_guild_settings(message.guild.id)
+
+        if not guild.levels:
+            return
+
+        if message.author.id in self._bulk_data:
+            exp = new_exp = self._bulk_data[message.author.id]['new_exp'] + random.choice(EXP_MAP[guild.leveling_type])
         else:
-            user = await self.get_guild_profile(message.author.id, message.guild.id)
-            guild = await self.bot.get_guild_settings(message.guild.id)
+            exp = new_exp = random.choice(EXP_MAP[guild.leveling_type])
 
-            if not guild.levels:
-                return
+        if await self.level_up(exp, guild):
+            new_level = user['level'] + 1
 
-            if message.author.id in self._bulk_data:
-                exp = new_exp = self._bulk_data[message.author.id]['new_exp'] + random.choice(EXP_MAP[guild.leveling_type])
-            else:
-                exp = new_exp = random.choice(EXP_MAP[guild.leveling_type])
+            lang = self.bot.get_language_object(guild.lang)
 
-            if await self.level_up(exp, guild):
-                new_level = user['level'] + 1
+            await message.channel.send(lang['user_level_up'].format(message.author.mention, new_level, exp))
+        else:
+            new_level = user['level']
 
-                lang = self.bot.get_language_object(guild.lang)
-
-                await message.channel.send(lang['user_level_up'].format(message.author.mention, new_level, exp))
-            else:
-                new_level = user['level']
-
-            self._bulk_data[message.author.id] = {'new_level': new_level, 'new_exp': new_exp, 'guild_id': message.guild.id}
+        self._bulk_data[message.author.id] = {'new_level': new_level, 'new_exp': new_exp, 'guild_id': message.guild.id}
 
     @commands.command()
     async def servertop(self, ctx):
